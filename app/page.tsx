@@ -1,65 +1,185 @@
-import Image from "next/image";
+import Link from "next/link";
+import { TopBar } from "@/components/landing/topbar";
+import { SeasonsCarousel } from "@/components/landing/seasons-carousel";
+import { BeforeAfter } from "@/components/landing/before-after";
+import { FeatureDemos } from "@/components/landing/feature-demos";
+import { QuizCta } from "@/components/landing/quiz-cta";
+import { SocialProof } from "@/components/landing/social-proof";
+import { WaitlistForm } from "@/components/landing/waitlist-form";
+import { ScrollReveal } from "@/components/landing/scroll-reveal";
+import { FAQS, REVIEWS } from "@/lib/landing-data";
+import "./landing.css";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <>
+      <ScrollReveal />
+      <TopBar />
+
+      <section className="hero">
+        <div className="hero__main">
+          <div className="hero__copy">
+            <div className="hero__eyebrow">
+              <span className="kicker">personal color analysis</span>
+              <span className="hero__live">
+                <span className="pulse" />
+                free · 60 seconds
+              </span>
+            </div>
+            <p className="hero__logo wordmark">
+              palette<span className="me">me</span>
+            </p>
+            <h1 className="hero__mast">
+              Find the colors that make <span className="scr">you</span> glow
+            </h1>
+            <p className="hero__value">
+              Take a quick style quiz, upload a selfie — AI reveals your exact
+              seasonal palette with outfit picks matched to your coloring.
+            </p>
+            <div className="hero__cta">
+              <Link href="/quiz" className="cta-mini">
+                start color quiz
+              </Link>
+              <a href="#free" className="cta-mini cta-ghost">
+                see how it works
+              </a>
+            </div>
+            <div className="hero__note">
+              <span>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M2 8.5l4 4 8-9" />
+                </svg>
+                photo never leaves your device
+              </span>
+              <span>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M2 8.5l4 4 8-9" />
+                </svg>
+                no account needed
+              </span>
+            </div>
+          </div>
+          <div className="hero__preview">
+            <BeforeAfter />
+          </div>
+        </div>
+
+        <div className="hero__foot">
+          <div className="hero__steps">
+            <Link href="/quiz" className="hstep">
+              <span className="num">01</span>
+              <span>
+                <b>take the color quiz</b>
+                <small>5 questions about your natural coloring and style goals</small>
+              </span>
+            </Link>
+            <Link href="/dashboard" className="hstep">
+              <span className="num">02</span>
+              <span>
+                <b>upload your selfie</b>
+                <small>ai reads undertone, depth and contrast in seconds</small>
+              </span>
+            </Link>
+            <a href="#waitlist" className="hstep">
+              <span className="num">03</span>
+              <span>
+                <b>get your full palette</b>
+                <small>8 core colors + curated outfit picks matched to you</small>
+              </span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <SocialProof />
+
+      <FeatureDemos />
+
+      <SeasonsCarousel />
+
+      <QuizCta />
+
+      <section id="reviews" className="reviews">
+        <div className="wrap">
+          <div className="reviews__head reveal">
+            <div className="eyebrow">
+              <span className="kicker">reviews</span>
+            </div>
+            <h2>
+              What they&apos;re <span className="scr">saying</span>
+            </h2>
+          </div>
+          <div className="rgrid">
+            {REVIEWS.map((r) => (
+              <figure key={r.name} className="review">
+                <span className="stars">★★★★★</span>
+                <blockquote>&ldquo;{r.quote}&rdquo;</blockquote>
+                <figcaption>
+                  <div className="who">
+                    <b>{r.name}</b>
+                    <small>{r.role}</small>
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="faq">
+        <div className="wrap">
+          <div className="faq__head reveal">
+            <div className="eyebrow">
+              <span className="kicker">faq</span>
+            </div>
+            <h2>
+              Questions, <span className="scr">answered</span>
+            </h2>
+          </div>
+          <div className="faq__list">
+            {FAQS.map((item) => (
+              <details key={item.q}>
+                <summary>{item.q}</summary>
+                <p>{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <WaitlistForm />
+
+      <footer className="foot">
+        <div className="wrap">
+          <p className="foot__mast wordmark">
+            palette<span className="me">me</span>
           </p>
+          <div className="foot__grid">
+            <div>
+              <p className="blurb">
+                Upload a selfie. Get your colors. Look your best.
+              </p>
+            </div>
+            <div>
+              <h5>product</h5>
+              <a href="#free">free flow</a>
+              <a href="#features">all features</a>
+              <Link href="/quiz">quiz</Link>
+              <Link href="/dashboard">analysis</Link>
+            </div>
+            <div>
+              <h5>company</h5>
+              <a href="#waitlist">waitlist</a>
+              <a href="#faq">faq</a>
+              <a href="#">privacy</a>
+            </div>
+          </div>
+          <div className="foot__bottom">
+            <span>© 2026 PaletteMe</span>
+            <span>made with color science</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </footer>
+    </>
   );
 }

@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# waitlist data (local storage)
+/data/waitlist.json
+
 # vercel
 .vercel
 
