@@ -1,0 +1,367 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - link:
+      - /url: /quiz
+      - text: analyze my photo
+    - link:
+      - /url: "#waitlist"
+      - text: join waitlist
+  - banner [ref=e2]:
+    - link "paletteme" [ref=e3] [cursor=pointer]:
+      - /url: /
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]: "[ personal color analysis ]"
+          - generic [ref=e9]: free · 60 seconds
+        - paragraph [ref=e10]: paletteme
+        - heading "Find the colors that make you glow" [level=1] [ref=e11]:
+          - text: Find the colors that make
+          - generic [ref=e12]: you
+          - text: glow
+        - paragraph [ref=e13]: Take a quick style quiz, upload a selfie — AI reveals your exact seasonal palette with outfit picks matched to your coloring.
+        - generic [ref=e14]:
+          - link "start color quiz" [ref=e15] [cursor=pointer]:
+            - /url: /quiz
+          - link "see how it works" [ref=e16] [cursor=pointer]:
+            - /url: "#free"
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - img [ref=e19]
+            - text: photo never leaves your device
+          - generic [ref=e21]:
+            - img [ref=e22]
+            - text: no account needed
+      - generic [ref=e25]:
+        - generic [ref=e26]:
+          - img "Before — wearing colors that clash with skin tone" [ref=e29]
+          - img "After — wearing colors from her seasonal palette" [ref=e32]
+          - generic [ref=e33]: wrong colors
+          - generic [ref=e34]: your palette
+          - generic [ref=e42]: drag to compare
+          - img [ref=e45]
+        - generic [ref=e47]:
+          - figure "drains your complexion" [ref=e48]:
+            - generic [ref=e49]:
+              - img "Outfit in colors that don't match skin tone" [ref=e51]
+              - generic [ref=e52]: off-season
+            - generic [ref=e53]: drains your complexion
+          - figure "brightens your face" [ref=e55]:
+            - generic [ref=e56]:
+              - img "Outfit in seasonal palette colors" [ref=e58]
+              - generic [ref=e59]: in-season
+            - generic [ref=e60]: brightens your face
+    - generic [ref=e63]:
+      - link "01 take the color quiz 5 questions about your natural coloring and style goals" [ref=e64] [cursor=pointer]:
+        - /url: /quiz
+        - generic [ref=e65]: "01"
+        - generic [ref=e66]:
+          - generic [ref=e67]: take the color quiz
+          - generic [ref=e68]: 5 questions about your natural coloring and style goals
+      - link "02 upload your selfie ai reads undertone, depth and contrast in seconds" [ref=e69] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e70]: "02"
+        - generic [ref=e71]:
+          - generic [ref=e72]: upload your selfie
+          - generic [ref=e73]: ai reads undertone, depth and contrast in seconds
+      - link "03 get your full palette 8 core colors + curated outfit picks matched to you" [ref=e74] [cursor=pointer]:
+        - /url: "#waitlist"
+        - generic [ref=e75]: "03"
+        - generic [ref=e76]:
+          - generic [ref=e77]: get your full palette
+          - generic [ref=e78]: 8 core colors + curated outfit picks matched to you
+  - generic [ref=e80]:
+    - generic [ref=e81]:
+      - generic [ref=e83]: "[ transformations ]"
+      - heading "Real people. Real results." [level=2] [ref=e84]:
+        - text: Real people.
+        - generic [ref=e85]: Real
+        - text: results.
+      - paragraph [ref=e86]: One selfie. 60 seconds. They went from guessing to knowing — and their wardrobes changed overnight.
+    - generic [ref=e87]:
+      - article [ref=e88]:
+        - generic [ref=e90]:
+          - img "Maya K. — Soft Summer" [ref=e91]
+          - generic [ref=e92]:
+            - generic [ref=e93]: Summer
+            - generic [ref=e94]: Soft Summer
+        - blockquote [ref=e104]: “One selfie and I finally understood why certain colors made me look tired. Dusty blues and muted roses — I've been buying the wrong things my whole life.”
+        - generic [ref=e105]: Maya K.
+      - article [ref=e106]:
+        - generic [ref=e108]:
+          - img "Sofia R. — Bright Spring" [ref=e109]
+          - generic [ref=e110]:
+            - generic [ref=e111]: Spring
+            - generic [ref=e112]: Bright Spring
+        - blockquote [ref=e122]: “Corals and warm peaches. Two words that changed my entire wardrobe — and I found them in 60 seconds. Scary accurate.”
+        - generic [ref=e123]: Sofia R.
+      - article [ref=e124]:
+        - generic [ref=e126]:
+          - img "Layla M. — True Autumn" [ref=e127]
+          - generic [ref=e128]:
+            - generic [ref=e129]: Autumn
+            - generic [ref=e130]: True Autumn
+        - blockquote [ref=e140]: “Terracotta and rust — turns out I've had my power colors my whole life. I just didn't know it until now.”
+        - generic [ref=e141]: Layla M.
+    - generic [ref=e142]:
+      - link "discover your season" [ref=e143] [cursor=pointer]:
+        - /url: /quiz
+      - paragraph [ref=e144]: Your photo is analyzed and deleted immediately — never stored or shared.
+  - generic [ref=e146]:
+    - generic [ref=e147]:
+      - generic [ref=e149]: "[ how it works ]"
+      - heading "Selfie in. Palette out." [level=2] [ref=e150]:
+        - text: Selfie in.
+        - generic [ref=e151]: Palette
+        - text: out.
+      - paragraph [ref=e152]: Upload a photo, AI finds your seasonal colors, and you get curated marketplace picks matched to your type.
+    - generic [ref=e153]:
+      - figure "01 Upload a clear selfie" [ref=e154]:
+        - generic [ref=e155]:
+          - img "Upload your selfie" [ref=e156]
+          - generic [ref=e157]: upload
+        - generic [ref=e159]:
+          - generic [ref=e160]: "01"
+          - generic [ref=e161]: Upload a clear selfie
+      - figure "02 AI reads your coloring" [ref=e162]:
+        - generic [ref=e163]:
+          - img "AI analyzing your colors" [ref=e164]
+          - generic [ref=e166]: Soft Summer
+        - generic [ref=e167]:
+          - generic [ref=e168]: "02"
+          - generic [ref=e169]: AI reads your coloring
+      - figure "03 Picks matched to you" [ref=e170]:
+        - generic [ref=e171]:
+          - generic [ref=e172]:
+            - generic [ref=e173]:
+              - img "Silk Blouse" [ref=e174]
+              - generic [ref=e175]: 96%
+            - paragraph [ref=e177]: Silk Blouse
+          - generic [ref=e178]:
+            - generic [ref=e179]:
+              - img "Wool Coat" [ref=e180]
+              - generic [ref=e181]: 91%
+            - paragraph [ref=e183]: Wool Coat
+          - generic [ref=e184]:
+            - generic [ref=e185]:
+              - img "Linen Dress" [ref=e186]
+              - generic [ref=e187]: 88%
+            - paragraph [ref=e189]: Linen Dress
+        - generic [ref=e190]:
+          - generic [ref=e191]: "03"
+          - generic [ref=e192]: Picks matched to you
+    - link "start color quiz" [ref=e194] [cursor=pointer]:
+      - /url: /quiz
+  - generic [ref=e195]:
+    - generic [ref=e197]:
+      - generic [ref=e199]: "[ everything included ]"
+      - heading "Every feature , visualized" [level=2] [ref=e200]:
+        - text: Every
+        - generic [ref=e201]: feature
+        - text: ", visualized"
+      - paragraph [ref=e202]: Analyze your colors, match your style, scan outfits, and shop pieces curated for your palette.
+    - article [ref=e203]:
+      - generic [ref=e204]:
+        - generic [ref=e205]:
+          - generic [ref=e206]: "01"
+          - heading "Analyze your colors" [level=2] [ref=e207]:
+            - text: Analyze your
+            - generic [ref=e208]: colors
+          - paragraph [ref=e209]: AI reads undertone, contrast, and depth from your selfie — then assigns your exact seasonal type with 8 core swatches.
+          - link "start color quiz" [ref=e210] [cursor=pointer]:
+            - /url: /quiz
+        - generic [ref=e213]:
+          - generic [ref=e214]:
+            - img "Selfie analysis" [ref=e215]
+            - generic [ref=e216]: analyzing…
+          - generic [ref=e219]: your seasonSoft Summer
+    - article [ref=e221]:
+      - generic [ref=e222]:
+        - generic [ref=e223]:
+          - generic [ref=e224]: "02"
+          - heading "Shop your colors" [level=2] [ref=e225]:
+            - text: Shop your
+            - generic [ref=e226]: colors
+          - paragraph [ref=e227]: After analysis, get marketplace items scored against your palette — so every recommendation actually suits your coloring.
+        - generic [ref=e229]:
+          - generic:
+            - article:
+              - generic:
+                - generic:
+                  - img "Silk Blouse"
+                - generic: 96% match
+              - generic:
+                - generic:
+                  - paragraph: Silk Blouse
+                  - paragraph: COS
+                - generic: $89
+            - article:
+              - generic:
+                - generic:
+                  - img "Wool Coat"
+                - generic: 91% match
+              - generic:
+                - generic:
+                  - paragraph: Wool Coat
+                  - paragraph: Arket
+                - generic: $240
+            - article:
+              - generic:
+                - generic:
+                  - img "Linen Dress"
+                - generic: 88% match
+              - generic:
+                - generic:
+                  - paragraph: Linen Dress
+                  - paragraph: "& Other Stories"
+                - generic: $120
+          - paragraph [ref=e230]: Real picks matched to your palette — unlocks with early access
+    - article [ref=e231]:
+      - generic [ref=e232]:
+        - generic [ref=e233]:
+          - generic [ref=e235]: "[ coming soon ]"
+          - heading "More features on the way" [level=2] [ref=e236]:
+            - text: More
+            - generic [ref=e237]: features
+            - text: on the way
+          - paragraph [ref=e238]: Join early access — these unlock first for waitlist members.
+        - generic [ref=e239]:
+          - generic [ref=e240]:
+            - generic [ref=e241]: "03"
+            - heading "Style match" [level=3] [ref=e242]
+            - paragraph [ref=e243]: Score any outfit against your palette — know instantly if it works for your coloring.
+            - text: early access
+          - generic [ref=e244]:
+            - generic [ref=e245]: "04"
+            - heading "Outfit scanner" [level=3] [ref=e246]
+            - paragraph [ref=e247]: Point your camera at any garment for a live verdict. Suits you or doesn't.
+            - text: early access
+          - generic [ref=e248]:
+            - generic [ref=e249]: "05"
+            - heading "Marketplace" [level=3] [ref=e250]
+            - paragraph [ref=e251]: Browse products filtered and scored for your exact palette — shop only what truly suits you.
+            - text: early access
+  - generic [ref=e253]:
+    - generic [ref=e254]:
+      - generic [ref=e255]:
+        - heading "Find your season" [level=2] [ref=e256]:
+          - text: Find your
+          - generic [ref=e257]: season
+        - generic [ref=e258]: four palettes · one you
+      - generic [ref=e259]:
+        - button "Spring" [ref=e260] [cursor=pointer]
+        - button "Summer" [ref=e261] [cursor=pointer]
+        - button "Autumn" [ref=e262] [cursor=pointer]
+        - button "Winter" [ref=e263] [cursor=pointer]
+    - generic [ref=e265]:
+      - generic:
+        - generic: Spring
+      - generic [ref=e266]:
+        - generic [ref=e267]:
+          - img "Spring palette example" [ref=e269]
+          - generic [ref=e270]: Spring
+        - generic [ref=e280]:
+          - generic [ref=e281]: Spring palette
+          - generic [ref=e282]: 8 core swatches
+    - generic [ref=e283]:
+      - button "Previous season" [ref=e284] [cursor=pointer]:
+        - img [ref=e285]
+      - generic [ref=e287]:
+        - button "Spring" [ref=e288] [cursor=pointer]
+        - button "Summer" [ref=e289] [cursor=pointer]
+        - button "Autumn" [ref=e290] [cursor=pointer]
+        - button "Winter" [ref=e291] [cursor=pointer]
+      - button "Next season" [ref=e292] [cursor=pointer]:
+        - img [ref=e293]
+  - generic [ref=e297]:
+    - generic [ref=e298]:
+      - generic [ref=e300]: "[ color quiz ]"
+      - heading "Questions first , selfie second" [level=2] [ref=e301]:
+        - text: Questions
+        - generic [ref=e302]: first
+        - text: ", selfie second"
+      - paragraph [ref=e303]: Goals, undertone, body shape, style vibe — then one selfie to reveal your colors and outfit direction.
+    - link "start the quiz" [ref=e304] [cursor=pointer]:
+      - /url: /quiz
+  - generic [ref=e306]:
+    - generic [ref=e307]:
+      - generic [ref=e309]: "[ reviews ]"
+      - heading "What they're saying" [level=2] [ref=e310]:
+        - text: What they're
+        - generic [ref=e311]: saying
+    - generic [ref=e312]:
+      - figure "Maya K. Soft Summer" [ref=e313]:
+        - generic [ref=e314]: ★★★★★
+        - blockquote [ref=e315]: “I finally understand why certain colors made me look tired. PaletteMe nailed my season in one selfie.”
+        - generic [ref=e317]:
+          - generic [ref=e318]: Maya K.
+          - text: Soft Summer
+      - figure "Jordan L. True Autumn" [ref=e319]:
+        - generic [ref=e320]: ★★★★★
+        - blockquote [ref=e321]: “The palette changed how I shop. No more guessing — every outfit feels intentional now.”
+        - generic [ref=e323]:
+          - generic [ref=e324]: Jordan L.
+          - text: True Autumn
+      - figure "Sofia R. Bright Spring" [ref=e325]:
+        - generic [ref=e326]: ★★★★★
+        - blockquote [ref=e327]: “Stunning design and scary-accurate results. My whole wardrobe strategy shifted overnight.”
+        - generic [ref=e329]:
+          - generic [ref=e330]: Sofia R.
+          - text: Bright Spring
+  - generic [ref=e332]:
+    - generic [ref=e333]:
+      - generic [ref=e335]: "[ faq ]"
+      - heading "Questions, answered" [level=2] [ref=e336]:
+        - text: Questions,
+        - generic [ref=e337]: answered
+    - generic [ref=e338]:
+      - group [ref=e339]:
+        - generic "How does the AI color analysis work? +" [ref=e340] [cursor=pointer]
+      - group [ref=e341]:
+        - generic "What kind of photo should I upload? +" [ref=e342] [cursor=pointer]
+      - group [ref=e343]:
+        - generic "Is my photo stored or shared? +" [ref=e344] [cursor=pointer]
+      - group [ref=e345]:
+        - generic "Can I shop colors that suit me? +" [ref=e346] [cursor=pointer]
+      - group [ref=e347]:
+        - generic "How is this different from the quiz? +" [ref=e348] [cursor=pointer]
+  - generic [ref=e350]:
+    - generic [ref=e352]: "[ early access ]"
+    - heading "Your colors are waiting" [level=2] [ref=e353]:
+      - text: Your colors are
+      - generic [ref=e354]: waiting
+    - paragraph [ref=e355]: The free analysis is live now. Join the waitlist to unlock saved palettes, real product picks, and the outfit scanner.
+    - generic [ref=e356]:
+      - textbox "your@email.com" [ref=e357]
+      - button "join waitlist" [ref=e358] [cursor=pointer]
+    - paragraph [ref=e359]: Free · No spam · Unsubscribe anytime
+    - generic [ref=e366]: 2,400+ on the waitlist
+  - contentinfo [ref=e367]:
+    - generic [ref=e368]:
+      - paragraph [ref=e369]: paletteme
+      - generic [ref=e370]:
+        - paragraph [ref=e372]: Upload a selfie. Get your colors. Look your best.
+        - generic [ref=e373]:
+          - heading "product" [level=5] [ref=e374]
+          - link "free flow" [ref=e375] [cursor=pointer]:
+            - /url: "#free"
+          - link "all features" [ref=e376] [cursor=pointer]:
+            - /url: "#features"
+          - link "quiz" [ref=e377] [cursor=pointer]:
+            - /url: /quiz
+          - link "analysis" [ref=e378] [cursor=pointer]:
+            - /url: /dashboard
+        - generic [ref=e379]:
+          - heading "company" [level=5] [ref=e380]
+          - link "waitlist" [ref=e381] [cursor=pointer]:
+            - /url: "#waitlist"
+          - link "faq" [ref=e382] [cursor=pointer]:
+            - /url: "#faq"
+          - link "privacy" [ref=e383] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=e384]:
+        - generic [ref=e385]: © 2026 PaletteMe
+        - generic [ref=e386]: made with color science
+  - button "Open Next.js Dev Tools" [ref=e392] [cursor=pointer]:
+    - img [ref=e393]

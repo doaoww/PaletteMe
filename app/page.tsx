@@ -7,6 +7,7 @@ import { QuizCta } from "@/components/landing/quiz-cta";
 import { SocialProof } from "@/components/landing/social-proof";
 import { WaitlistForm } from "@/components/landing/waitlist-form";
 import { ScrollReveal } from "@/components/landing/scroll-reveal";
+import { MobileActionBar } from "@/components/landing/mobile-action-bar";
 import { FAQS, REVIEWS } from "@/lib/landing-data";
 import "./landing.css";
 
@@ -14,6 +15,7 @@ export default function Home() {
   return (
     <>
       <ScrollReveal />
+      <MobileActionBar />
       <TopBar />
 
       <section className="hero">

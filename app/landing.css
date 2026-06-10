@@ -91,33 +91,12 @@
   }
 }
 
-/* HAMBURGER */
-.hamburger {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  width: 40px;
-  height: 40px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: inherit;
-  padding: 8px 4px;
-  flex-shrink: 0;
-}
-
-.hamburger span {
-  display: block;
-  height: 2px;
-  background: currentColor;
-  border-radius: 2px;
-  transition: transform 0.3s var(--ease);
-}
-
-@media (max-width: 860px) {
-  .hamburger {
-    display: flex;
+@media (max-width: 600px) {
+  .topbar {
+    justify-content: center;
+  }
+  .topbar__cta-desktop {
+    display: none !important;
   }
 }
 
@@ -3611,3 +3590,313 @@ section {
 .waitlist__success-cta {
   margin-top: 28px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE — ≤ 600px  (desktop untouched above)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── MOBILE ACTION BAR ──────────────────────────────────── */
+.mob-bar {
+  display: none; /* desktop: hidden */
+}
+
+@media (max-width: 600px) {
+  /* ── ACTION BAR ── */
+  .mob-bar {
+    display: flex;
+    gap: 10px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    padding: 11px 16px calc(11px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--cream) 82%, transparent);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border-top: 1px solid var(--line);
+    transform: translateY(100%);
+    transition: transform 0.35s var(--ease);
+    pointer-events: none;
+  }
+
+  .mob-bar--show {
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .mob-bar__btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    border-radius: 100px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: lowercase;
+    letter-spacing: 0;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .mob-bar__btn--primary {
+    background: var(--pink-deep);
+    color: #fff;
+    border: 1.5px solid var(--pink-deep);
+  }
+
+  .mob-bar__btn--ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: auto;
+    padding-top: 80px;
+    padding-bottom: 28px;
+  }
+
+  .hero__main {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    text-align: center;
+  }
+
+  .hero__copy {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero__eyebrow {
+    justify-content: center;
+  }
+
+  .hero__logo {
+    font-size: 1.1rem;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .hero__mast {
+    font-size: clamp(2.2rem, 9vw, 3rem);
+    max-width: 100%;
+    text-align: center;
+    margin-inline: auto;
+  }
+
+  .hero__value {
+    font-size: 0.92rem;
+    max-width: 36ch;
+    text-align: center;
+    margin-inline: auto;
+  }
+
+  .hero__cta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .hero__cta .cta-mini {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    padding-inline: 22px;
+  }
+
+  .hero__note {
+    justify-content: center;
+    font-size: 0.76rem;
+    gap: 12px;
+  }
+
+  .hero__foot {
+    margin-top: 24px;
+  }
+
+  .hero__steps {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 14px 0 20px;
+  }
+
+  .hstep {
+    gap: 10px;
+  }
+
+  .hstep .num {
+    font-size: 1.1rem;
+  }
+
+  /* ── SECTION SPACING ── */
+  .free-flow,
+  .fdemo,
+  .seasons,
+  .reviews,
+  .faq,
+  .scan,
+  .sproof {
+    padding-top: 54px;
+    padding-bottom: 54px;
+  }
+
+  .waitlist {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+
+  /* ── SECTION HEADINGS ── */
+  .how__head h2,
+  .fdemo h2,
+  .reviews h2,
+  .faq h2,
+  .seasons h2,
+  .waitlist h2,
+  .sproof h2,
+  .free-flow h2 {
+    font-size: clamp(1.9rem, 7vw, 2.5rem);
+  }
+
+  /* ── FREE FLOW (how it works) ── */
+  .free-flow__grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    max-width: 360px;
+    margin-inline: auto;
+  }
+
+  /* ── FEATURE DEMOS ── */
+  .does__grid,
+  .fdemo__strip .wrap {
+    grid-template-columns: 1fr;
+  }
+
+  .fdemo__next-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    max-width: 360px;
+    margin-inline: auto;
+  }
+
+  /* ── SEASONS CAROUSEL ── */
+  .seasons__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .ctabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .ctab {
+    justify-content: center;
+    min-height: 44px;
+    font-size: 0.7rem;
+  }
+
+  .cstage {
+    margin-top: 20px;
+  }
+
+  .cslide {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .cside.l,
+  .cside.r {
+    display: none; /* hide side panels on phones, main panel is enough */
+  }
+
+  .cmain__photo {
+    aspect-ratio: 3/4;
+  }
+
+  /* ── REVIEWS ── */
+  .rgrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    max-width: 360px;
+    margin-inline: auto;
+  }
+
+  /* ── FAQ ── */
+  .faq__list details summary {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ── WAITLIST ── */
+  .waitlist h2 {
+    font-size: clamp(2rem, 8vw, 3rem);
+  }
+
+  .signup {
+    flex-direction: column;
+    border-radius: 16px;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .signup input {
+    padding: 10px 8px;
+    font-size: 1rem;
+  }
+
+  .signup button {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 10px;
+  }
+
+  /* ── FOOTER ── */
+  .foot {
+    padding-bottom: 104px; /* clear the action bar */
+  }
+
+  .foot__grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .foot__bottom {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+  }
+}
+
+/* 360px tweak — very small phones */
+@media (max-width: 360px) {
+  .hero__cta {
+    flex-direction: column;
+  }
+
+  .hero__cta .cta-mini {
+    width: 100%;
+  }
+
+  .mob-bar {
+    gap: 8px;
+    padding-inline: 12px;
+  }
+
+  .mob-bar__btn {
+    font-size: 0.82rem;
+  }
+}
+

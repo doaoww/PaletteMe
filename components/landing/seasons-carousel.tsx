@@ -6,10 +6,10 @@ import { IMAGES } from "@/lib/demo-images";
 import { SEASONS } from "@/lib/landing-data";
 
 const SEASON_PORTRAITS = [
-  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&q=85&fit=crop&crop=face",
-  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600&q=85&fit=crop&crop=face",
-  "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=85&fit=crop&crop=face",
-  "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=600&q=85&fit=crop&crop=face",
+  IMAGES.seasonSpring,
+  IMAGES.seasonSummer,
+  IMAGES.seasonAutumn,
+  IMAGES.seasonWinter,
 ];
 
 const SEASON_ACCENTS = [

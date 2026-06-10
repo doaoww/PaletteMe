@@ -1,21 +1,50 @@
-/** Demo imagery — Unsplash, used for MVP landing placeholders */
+/**
+ * Replace each path with your own image dropped into public/images/
+ * Supported formats: .jpg .jpeg .png .webp
+ *
+ * WHERE EACH IMAGE APPEARS:
+ *
+ * selfie          → "how it works" step 1 · feature demo (analyzing screen)
+ * selfie-alt      → "how it works" step 2 (AI reading coloring)
+ * portrait-man    → seasons carousel (was a male portrait)
+ * outfit-wrong    → before/after "wrong colors" side
+ * outfit-right    → before/after "your colors" side · seasons neutral mini
+ * fashion-1       → feature demos · seasons spring accent
+ * fashion-2       → seasons autumn main · "how it works" step 3 picks
+ * fashion-3       → seasons summer neutral mini
+ * fashion-4       → seasons summer accent mini
+ * wardrobe        → seasons autumn neutral mini
+ * mirror          → seasons winter neutral mini
+ * outfit-suits    → style match feature demo
+ * outfit-no-suit  → style match "doesn't suit" side
+ * clothing-flat   → outfit scanner feature demo
+ * jacket-scan     → jacket scan demo
+ * style-match     → style match overlay demo
+ * phone-outfit    → phone + outfit demo
+ */
 
 export const IMAGES = {
-  selfie: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=85&fit=crop&crop=face",
-  selfieAlt: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=85&fit=crop&crop=face",
-  portraitMan: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=85&fit=crop&crop=face",
-  outfitWrong: "https://images.unsplash.com/photo-1485968579580-b6d5bee91c1d?w=600&q=85&fit=crop",
-  outfitRight: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=85&fit=crop",
-  fashion1: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=85&fit=crop",
-  fashion2: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=85&fit=crop",
-  fashion3: "https://images.unsplash.com/photo-1483986769511-7bcc11e66f7d?w=600&q=85&fit=crop",
-  fashion4: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=85&fit=crop",
-  wardrobe: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=800&q=85&fit=crop",
-  mirror: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=800&q=85&fit=crop",
-  outfitSuits: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=700&q=85&fit=crop",
-  outfitNoSuit: "https://images.unsplash.com/photo-1485968579580-b6d5bee91c1d?w=700&q=85&fit=crop",
-  clothingFlat: "https://images.unsplash.com/photo-1558171813-0c0887dae586?w=700&q=85&fit=crop",
-  jacketScan: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700&q=85&fit=crop",
-  styleMatch: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=700&q=85&fit=crop",
-  phoneOutfit: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=700&q=85&fit=crop",
+  selfie:        "/images/selfie.jpg",
+  selfieAlt:     "/images/selfie-alt.jpg",
+  portraitMan:   "/images/portrait-man.jpg",
+  outfitWrong:   "/images/outfit-wrong.jpg",
+  outfitRight:   "/images/outfit-right.jpg",
+  fashion1:      "/images/fashion-1.jpg",
+  fashion2:      "/images/fashion-2.jpg",
+  fashion3:      "/images/fashion-3.jpg",
+  fashion4:      "/images/fashion-4.jpg",
+  wardrobe:      "/images/wardrobe.jpg",
+  mirror:        "/images/mirror.jpg",
+  outfitSuits:   "/images/outfit-suits.jpg",
+  outfitNoSuit:  "/images/outfit-no-suit.jpg",
+  clothingFlat:  "/images/clothing-flat.jpg",
+  jacketScan:    "/images/jacket-scan.jpg",
+  styleMatch:    "/images/style-match.jpg",
+  phoneOutfit:   "/images/phone-outfit.jpg",
+
+  // Seasons carousel — one portrait per season (spring / summer / autumn / winter)
+  seasonSpring:  "/images/season-spring.jpg",
+  seasonSummer:  "/images/season-summer.jpg",
+  seasonAutumn:  "/images/season-autumn.jpg",
+  seasonWinter:  "/images/season-winter.jpg",
 } as const;
