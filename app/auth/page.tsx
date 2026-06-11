@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase";
+import type { createClient as CreateClientType } from "@/lib/supabase";
 
 type Mode = "signin" | "signup";
+type SupabaseClient = Awaited<ReturnType<typeof CreateClientType>>;
 
 function AuthForm() {
   const router = useRouter();
@@ -15,9 +16,12 @@ function AuthForm() {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
-  const supabase = useRef(createClient());
+  const supabase = useRef<SupabaseClient | null>(null);
 
   useEffect(() => {
+    import("@/lib/supabase").then(({ createClient }) => {
+      supabase.current = createClient();
+    });
     if (params.get("mode") === "signin") setMode("signin");
     if (params.get("error") === "auth_failed") {
       setStatus("error");
@@ -31,6 +35,7 @@ function AuthForm() {
     setMessage("");
 
     const client = supabase.current;
+    if (!client) return;
 
     if (mode === "signup") {
       const { error } = await client.auth.signUp({
@@ -58,6 +63,7 @@ function AuthForm() {
 
   const handleGoogle = async () => {
     const client = supabase.current;
+    if (!client) return;
     await client.auth.signInWithOAuth({
       provider: "google",
       options: {
