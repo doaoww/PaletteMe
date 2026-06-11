@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
 type Mode = "signin" | "signup";
 
-export default function AuthPage() {
+function AuthForm() {
   const router = useRouter();
   const params = useSearchParams();
   const [mode, setMode] = useState<Mode>("signup");
@@ -67,6 +67,127 @@ export default function AuthPage() {
   };
 
   return (
+    <>
+      <div style={{ display: "flex", gap: 4, background: "var(--cream)", borderRadius: 10, padding: 4, marginBottom: 28 }}>
+        {(["signup", "signin"] as Mode[]).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            style={{
+              flex: 1,
+              fontFamily: "var(--sans)",
+              fontSize: "0.88rem",
+              fontWeight: 700,
+              border: "none",
+              borderRadius: 7,
+              padding: "9px 0",
+              cursor: "pointer",
+              transition: "all 0.2s",
+              background: mode === m ? "#fff" : "transparent",
+              color: mode === m ? "var(--ink)" : "var(--ink-soft)",
+              boxShadow: mode === m ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
+            }}
+          >
+            {m === "signup" ? "create account" : "sign in"}
+          </button>
+        ))}
+      </div>
+
+      <p className="font-serif" style={{ fontSize: "clamp(1.4rem,3vw,1.8rem)", lineHeight: 1.15, marginBottom: 24 }}>
+        {mode === "signup" ? (
+          <>Save your <span className="scr" style={{ color: "var(--pink)" }}>palette</span></>
+        ) : (
+          <>Welcome <span className="scr" style={{ color: "var(--pink)" }}>back</span></>
+        )}
+      </p>
+
+      {status === "done" ? (
+        <div style={{ textAlign: "center", padding: "20px 0" }}>
+          <p style={{ fontFamily: "var(--sans)", fontSize: "0.95rem", color: "var(--ink-soft)", lineHeight: 1.6 }}>
+            {message}
+          </p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email address"
+            required
+            style={inputStyle}
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            required
+            minLength={6}
+            style={inputStyle}
+          />
+
+          {status === "error" && message && (
+            <p style={{ fontFamily: "var(--sans)", fontSize: "0.82rem", color: "var(--pink)" }}>{message}</p>
+          )}
+
+          <button type="submit" className="btn" style={{ width: "100%", marginTop: 4 }} disabled={status === "loading"}>
+            {status === "loading" ? "please wait…" : mode === "signup" ? "create account" : "sign in"}
+          </button>
+
+          <div style={{ position: "relative", textAlign: "center", margin: "4px 0" }}>
+            <div style={{ position: "absolute", inset: "50% 0 auto", height: 1, background: "var(--hair)" }} />
+            <span style={{ position: "relative", fontFamily: "var(--sans)", fontSize: "0.75rem", color: "var(--ink-soft)", background: "#fff", padding: "0 12px" }}>
+              or
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogle}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              width: "100%",
+              fontFamily: "var(--sans)",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              border: "1px solid var(--hair)",
+              borderRadius: 100,
+              padding: "12px 0",
+              background: "#fff",
+              color: "var(--ink)",
+              cursor: "pointer",
+              transition: "border-color 0.2s",
+            }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--ink)")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--hair)")}
+          >
+            <GoogleIcon />
+            continue with Google
+          </button>
+        </form>
+      )}
+
+      <p style={{ fontFamily: "var(--sans)", fontSize: "0.78rem", color: "var(--ink-soft)", marginTop: 20 }}>
+        {mode === "signup" ? "Already have an account? " : "No account yet? "}
+        <button
+          type="button"
+          onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
+          style={{ background: "none", border: "none", color: "var(--pink)", cursor: "pointer", fontFamily: "var(--sans)", fontSize: "0.78rem", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}
+        >
+          {mode === "signup" ? "sign in" : "create one"}
+        </button>
+      </p>
+    </>
+  );
+}
+
+export default function AuthPage() {
+  return (
     <div
       style={{
         minHeight: "100svh",
@@ -92,125 +213,10 @@ export default function AuthPage() {
           boxShadow: "0 4px 32px rgba(23,18,26,0.08)",
         }}
       >
-        {/* Mode toggle */}
-        <div style={{ display: "flex", gap: 4, background: "var(--cream)", borderRadius: 10, padding: 4, marginBottom: 28 }}>
-          {(["signup", "signin"] as Mode[]).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMode(m)}
-              style={{
-                flex: 1,
-                fontFamily: "var(--sans)",
-                fontSize: "0.88rem",
-                fontWeight: 700,
-                border: "none",
-                borderRadius: 7,
-                padding: "9px 0",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                background: mode === m ? "#fff" : "transparent",
-                color: mode === m ? "var(--ink)" : "var(--ink-soft)",
-                boxShadow: mode === m ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
-              }}
-            >
-              {m === "signup" ? "create account" : "sign in"}
-            </button>
-          ))}
-        </div>
-
-        <p
-          className="font-serif"
-          style={{ fontSize: "clamp(1.4rem,3vw,1.8rem)", lineHeight: 1.15, marginBottom: 24 }}
-        >
-          {mode === "signup" ? (
-            <>Save your <span className="scr" style={{ color: "var(--pink)" }}>palette</span></>
-          ) : (
-            <>Welcome <span className="scr" style={{ color: "var(--pink)" }}>back</span></>
-          )}
-        </p>
-
-        {status === "done" ? (
-          <div style={{ textAlign: "center", padding: "20px 0" }}>
-            <p style={{ fontFamily: "var(--sans)", fontSize: "0.95rem", color: "var(--ink-soft)", lineHeight: 1.6 }}>
-              {message}
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
-              required
-              style={inputStyle}
-            />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              required
-              minLength={6}
-              style={inputStyle}
-            />
-
-            {status === "error" && message && (
-              <p style={{ fontFamily: "var(--sans)", fontSize: "0.82rem", color: "var(--pink)" }}>{message}</p>
-            )}
-
-            <button type="submit" className="btn" style={{ width: "100%", marginTop: 4 }} disabled={status === "loading"}>
-              {status === "loading" ? "please wait…" : mode === "signup" ? "create account" : "sign in"}
-            </button>
-
-            <div style={{ position: "relative", textAlign: "center", margin: "4px 0" }}>
-              <div style={{ position: "absolute", inset: "50% 0 auto", height: 1, background: "var(--hair)" }} />
-              <span style={{ position: "relative", fontFamily: "var(--sans)", fontSize: "0.75rem", color: "var(--ink-soft)", background: "#fff", padding: "0 12px" }}>
-                or
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGoogle}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-                width: "100%",
-                fontFamily: "var(--sans)",
-                fontSize: "0.9rem",
-                fontWeight: 600,
-                border: "1px solid var(--hair)",
-                borderRadius: 100,
-                padding: "12px 0",
-                background: "#fff",
-                color: "var(--ink)",
-                cursor: "pointer",
-                transition: "border-color 0.2s",
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--ink)")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--hair)")}
-            >
-              <GoogleIcon />
-              continue with Google
-            </button>
-          </form>
-        )}
+        <Suspense fallback={null}>
+          <AuthForm />
+        </Suspense>
       </div>
-
-      <p style={{ fontFamily: "var(--sans)", fontSize: "0.78rem", color: "var(--ink-soft)", marginTop: 20 }}>
-        {mode === "signup" ? "Already have an account? " : "No account yet? "}
-        <button
-          type="button"
-          onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-          style={{ background: "none", border: "none", color: "var(--pink)", cursor: "pointer", fontFamily: "var(--sans)", fontSize: "0.78rem", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}
-        >
-          {mode === "signup" ? "sign in" : "create one"}
-        </button>
-      </p>
     </div>
   );
 }
