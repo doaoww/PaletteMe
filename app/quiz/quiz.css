@@ -533,6 +533,80 @@
   font-size: 0.88rem;
 }
 
+/* Step preview chips on intro */
+.quiz__steps-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.quiz__step-chip {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: lowercase;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 100px;
+  padding: 6px 14px;
+  color: rgba(251, 241, 228, 0.7);
+}
+
+/* Style swipe grid */
+.quiz-page__swipe-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  max-width: 680px;
+}
+
+.quiz-page__swipe-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.25s var(--ease);
+  text-align: left;
+  color: var(--cream);
+}
+
+.quiz-page__swipe-card:hover {
+  border-color: var(--pink);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.quiz-page__swipe-img {
+  position: relative;
+  aspect-ratio: 3/4;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.quiz-page__swipe-label {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quiz-page__swipe-label strong {
+  font-family: var(--sans);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.quiz-page__swipe-label span {
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  opacity: 0.62;
+  line-height: 1.4;
+}
+
 @media (max-width: 720px) {
   .quiz-page__shapes {
     grid-template-columns: repeat(3, 1fr);
@@ -557,5 +631,13 @@
 
   .quiz-page__shapes {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .quiz-page__swipe-grid {
+    gap: 10px;
+  }
+
+  .quiz-page__swipe-label {
+    padding: 10px 12px;
   }
 }

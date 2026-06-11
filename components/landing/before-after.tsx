@@ -44,11 +44,11 @@ export function BeforeAfter() {
         <div className="ba__layer ba__before">
           <div className="ba__img">
             <Image
-              src={IMAGES.selfie}
+              src={IMAGES.selfieAlt}
               alt="Before — wearing colors that clash with skin tone"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              style={{ filter: "grayscale(0.5) contrast(0.9) brightness(1.05) sepia(0.15)" }}
+              style={{ objectPosition: "top center" }}
             />
           </div>
         </div>
@@ -59,7 +59,7 @@ export function BeforeAfter() {
               alt="After — wearing colors from her seasonal palette"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              style={{ filter: "saturate(1.2) contrast(1.05) brightness(1.02)" }}
+              style={{ objectPosition: "top center" }}
             />
           </div>
         </div>

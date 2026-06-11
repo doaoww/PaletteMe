@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
       "127.0.0.1";
-    const rl = checkRateLimit(ip, 5, 60_000);
+    const rl = await checkRateLimit(ip, 5, 60_000);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: "You've analyzed a few photos already — wait a moment and try again." },

@@ -1499,11 +1499,6 @@ section {
   min-height: 100%;
 }
 
-.review .rav {
-  position: relative;
-  overflow: hidden;
-}
-
 .step:nth-child(1) .step__art { transform: rotate(-2deg); }
 .step:nth-child(2) .step__art { transform: rotate(1.4deg); }
 .step:nth-child(3) .step__art { transform: rotate(-1.2deg); }
@@ -2384,10 +2379,6 @@ section {
   margin-bottom: clamp(30px, 4vw, 50px);
 }
 
-.reviews__head .eyebrow .kicker {
-  color: var(--berry);
-}
-
 .reviews__head h2 {
   font-size: clamp(2.4rem, 5.6vw, 4.2rem);
   line-height: 1.04;
@@ -2407,61 +2398,48 @@ section {
 .review {
   margin: 0;
   background: #fff;
-  border-radius: 3px;
-  padding: clamp(22px, 2.6vw, 30px);
+  border-radius: 12px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0;
   box-shadow: 0 22px 44px -26px rgba(94, 22, 58, 0.5);
+  overflow: hidden;
 }
 
 .review:nth-child(1) { transform: rotate(-1.6deg); }
 .review:nth-child(2) { transform: rotate(1deg); }
 .review:nth-child(3) { transform: rotate(-1deg); }
 
-.review .stars {
-  color: var(--pink);
-  font-size: 0.9rem;
-  letter-spacing: 0.16em;
-}
-
-.review blockquote {
-  margin: 0;
-  font-family: var(--serif);
-  font-size: 1.25rem;
-  line-height: 1.36;
-  color: var(--ink);
-}
-
-.review figcaption {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: auto;
-}
-
-.review .rav {
+.review__photo {
   position: relative;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  flex: none;
+  width: 100%;
+  aspect-ratio: 4/5;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
-.review .who b {
+.review__season-tag {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: #fff;
+  color: var(--ink);
   font-family: var(--sans);
-  font-weight: 800;
-  font-size: 0.9rem;
-  display: block;
-}
-
-.review .who small {
-  font-family: var(--sans);
-  font-size: 0.64rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 0.62rem;
   font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 100px;
+}
+
+.review__desc {
+  padding: 16px clamp(16px, 2.2vw, 24px) 20px;
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  line-height: 1.55;
   color: var(--ink-soft);
 }
 

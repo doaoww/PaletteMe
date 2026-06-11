@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { IMAGES } from "@/lib/demo-images";
 import { PRODUCTS, SEASONS } from "@/lib/landing-data";
 
-const PALETTE = SEASONS[1].palette;
+const PALETTE = SEASONS[2].palette;
 const MATCHED_PICKS = PRODUCTS.slice(0, 3);
 
 function FeatureRow({
@@ -61,11 +61,11 @@ export function FeatureDemos() {
             <figure className="free-flow__step polaroid">
               <div className="free-flow__photo">
                 <Image
-                  src={IMAGES.selfie}
+                  src={IMAGES.flow1}
                   alt="Upload your selfie"
                   fill
                   sizes="280px"
-                  style={{ objectFit: "cover" }}
+                  style={{ objectFit: "cover", objectPosition: "top center" }}
                 />
                 <span className="scard__chip">
                   <span className="dot" style={{ background: "#4ade80" }} />
@@ -81,16 +81,16 @@ export function FeatureDemos() {
             <figure className="free-flow__step polaroid">
               <div className="free-flow__photo free-flow__photo--analyze">
                 <Image
-                  src={IMAGES.selfieAlt}
+                  src={IMAGES.flow2}
                   alt="AI analyzing your colors"
                   fill
                   sizes="280px"
-                  style={{ objectFit: "cover" }}
+                  style={{ objectFit: "cover", objectPosition: "top center" }}
                 />
                 <div className="fdemo__scan-grid" aria-hidden />
                 <div className="fdemo__scan-line" aria-hidden />
                 <div className="free-flow__result">
-                  <span className="rn" style={{ fontSize: "1.1rem" }}>Soft Summer</span>
+                  <span className="rn" style={{ fontSize: "1.1rem" }}>True Autumn</span>
                   <div className="rp">
                     {PALETTE.slice(0, 6).map((c) => (
                       <i key={c} style={{ background: c }} />
@@ -105,25 +105,14 @@ export function FeatureDemos() {
             </figure>
 
             <figure className="free-flow__step polaroid">
-              <div className="free-flow__picks">
-                {MATCHED_PICKS.map((p) => (
-                  <div key={p.name} className="free-flow__pick">
-                    <div className="free-flow__pick-img">
-                      <Image
-                        src={p.image}
-                        alt={p.name}
-                        fill
-                        sizes="120px"
-                        style={{ objectFit: "cover" }}
-                      />
-                      <span className="product__match">
-                        <span className="dot" style={{ background: "var(--pink)" }} />
-                        {p.match}%
-                      </span>
-                    </div>
-                    <p className="free-flow__pick-name">{p.name}</p>
-                  </div>
-                ))}
+              <div className="free-flow__photo">
+                <Image
+                  src={IMAGES.flow3}
+                  alt="Picks matched to you"
+                  fill
+                  sizes="280px"
+                  style={{ objectFit: "cover", objectPosition: "top center" }}
+                />
               </div>
               <figcaption className="free-flow__cap">
                 <span className="num">03</span>
@@ -166,7 +155,7 @@ export function FeatureDemos() {
           <div className="fdemo__phone polaroid">
             <div className="fdemo__phone-screen">
               <div className="fdemo__analyze-photo">
-                <Image src={IMAGES.selfie} alt="Selfie analysis" fill sizes="300px" style={{ objectFit: "cover" }} />
+                <Image src={IMAGES.analyzeDemo} alt="Selfie analysis" fill sizes="300px" style={{ objectFit: "cover" }} />
                 <div className="fdemo__scan-grid" aria-hidden />
                 <span className="scard__chip">
                   <span className="dot" style={{ background: "var(--pink)" }} />
@@ -196,9 +185,9 @@ export function FeatureDemos() {
           desc="After analysis, get marketplace items scored against your palette — so every recommendation actually suits your coloring."
         >
           <div>
-            <div className="free-flow__picks free-flow__picks--large" style={{ pointerEvents: "none" }}>
+            <div className="free-flow__picks free-flow__picks--large">
               {MATCHED_PICKS.map((p) => (
-                <article key={p.name} className="product" style={{ cursor: "default" }}>
+                <a key={p.name} className="product" href={(p as any).url} target="_blank" rel="noopener noreferrer">
                   <div className="product__img">
                     <div className="ba__img">
                       <Image src={p.image} alt={p.name} fill sizes="200px" style={{ objectFit: "cover" }} />
@@ -215,10 +204,10 @@ export function FeatureDemos() {
                     </div>
                     <span className="pr">{p.price}</span>
                   </div>
-                </article>
+                </a>
               ))}
             </div>
-            <p className="fdemo__demo-note">Real picks matched to your palette — unlocks with early access</p>
+            <p className="fdemo__demo-note">Real picks from ASOS — matched to your palette</p>
           </div>
         </FeatureRow>
 

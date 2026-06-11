@@ -1,10 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { TopBar } from "@/components/landing/topbar";
 import { SeasonsCarousel } from "@/components/landing/seasons-carousel";
 import { BeforeAfter } from "@/components/landing/before-after";
 import { FeatureDemos } from "@/components/landing/feature-demos";
 import { QuizCta } from "@/components/landing/quiz-cta";
-import { SocialProof } from "@/components/landing/social-proof";
 import { WaitlistForm } from "@/components/landing/waitlist-form";
 import { ScrollReveal } from "@/components/landing/scroll-reveal";
 import { MobileActionBar } from "@/components/landing/mobile-action-bar";
@@ -93,8 +93,6 @@ export default function Home() {
         </div>
       </section>
 
-      <SocialProof />
-
       <FeatureDemos />
 
       <SeasonsCarousel />
@@ -104,24 +102,24 @@ export default function Home() {
       <section id="reviews" className="reviews">
         <div className="wrap">
           <div className="reviews__head reveal">
-            <div className="eyebrow">
-              <span className="kicker">reviews</span>
-            </div>
             <h2>
-              What they&apos;re <span className="scr">saying</span>
+              Find yourself in <span className="scr">your</span> colors
             </h2>
           </div>
           <div className="rgrid">
             {REVIEWS.map((r) => (
-              <figure key={r.name} className="review">
-                <span className="stars">★★★★★</span>
-                <blockquote>&ldquo;{r.quote}&rdquo;</blockquote>
-                <figcaption>
-                  <div className="who">
-                    <b>{r.name}</b>
-                    <small>{r.role}</small>
-                  </div>
-                </figcaption>
+              <figure key={r.role} className="review">
+                <div className="review__photo">
+                  <Image
+                    src={r.photo}
+                    alt={r.role}
+                    fill
+                    sizes="320px"
+                    style={{ objectFit: "cover", objectPosition: "top center" }}
+                  />
+                  <span className="review__season-tag">{r.role}</span>
+                </div>
+                <p className="review__desc">{r.desc}</p>
               </figure>
             ))}
           </div>

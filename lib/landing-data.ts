@@ -68,10 +68,9 @@ export const SEASONS: Season[] = [
 ];
 
 export const PRODUCTS = [
-  { name: "Silk Blouse", brand: "COS", price: "$89", match: 96, image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=500&q=85&fit=crop", swatches: ["#F9E4C8", "#FFDAB9", "#E8B4B8"] },
-  { name: "Wool Coat", brand: "Arket", price: "$240", match: 91, image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=500&q=85&fit=crop", swatches: ["#D4A574", "#BC8F8F", "#A0522D"] },
-  { name: "Linen Dress", brand: "& Other Stories", price: "$120", match: 88, image: "https://images.unsplash.com/photo-1483986769511-7bcc11e66f7d?w=500&q=85&fit=crop", swatches: ["#B8A9C9", "#E8B4B8", "#9DB4C0"] },
-  { name: "Cashmere Sweater", brand: "Uniqlo U", price: "$79", match: 94, image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=85&fit=crop", swatches: ["#A8D8EA", "#D5C6E0", "#FFFFFF"] },
+  { name: "V-Neck Maxi Slip Dress", brand: "ASOS DESIGN", price: "€33", match: 96, image: "/images/product-1.jpg", url: "https://www.asos.com/asos-design/asos-design-v-neck-maxi-slip-dress-in-green-laundered-stripe/prd/211084660", swatches: ["#4A7C59", "#6B9E7A", "#2D5A3D"] },
+  { name: "Knitted One Shoulder Top", brand: "Topshop", price: "€32", match: 91, image: "/images/product-2.jpg", url: "https://www.asos.com/topshop/topshop-knitted-asymmetric-one-shoulder-colour-pop-top-in-multi/prd/210944116", swatches: ["#E85D04", "#9B2335", "#2D6A8F"] },
+  { name: "Cami Top with Lace Hem", brand: "ASOS DESIGN", price: "€30", match: 93, image: "/images/product-3.jpg", url: "https://www.asos.com/asos-design/asos-design-cami-top-with-lace-hem-in-chocolate-polka-dot/prd/211167554", swatches: ["#5C3A1E", "#8B5E3C", "#3B2110"] },
 ];
 
 export type SeasonProduct = {
@@ -111,9 +110,21 @@ export const SEASON_PRODUCTS: Record<string, SeasonProduct[]> = {
 };
 
 export const REVIEWS = [
-  { quote: "I finally understand why certain colors made me look tired. PaletteMe nailed my season in one selfie.", name: "Maya K.", role: "Soft Summer", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=85&fit=crop&crop=face" },
-  { quote: "The palette changed how I shop. No more guessing — every outfit feels intentional now.", name: "Jordan L.", role: "True Autumn", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=85&fit=crop&crop=face" },
-  { quote: "Stunning design and scary-accurate results. My whole wardrobe strategy shifted overnight.", name: "Sofia R.", role: "Bright Spring", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=85&fit=crop&crop=face" },
+  {
+    role: "True Autumn",
+    photo: "/images/review-autumn.jpg",
+    desc: "Warm, rich, earthy tones. Terracotta, olive, camel, burnt orange.",
+  },
+  {
+    role: "True Spring",
+    photo: "/images/review-spring.jpg",
+    desc: "Fresh, warm, clear tones. Coral, peach, warm pink, golden yellow.",
+  },
+  {
+    role: "Soft Summer",
+    photo: "/images/review-summer.jpg",
+    desc: "Cool, muted, dusty tones. Lavender, dusty rose, soft teal, mauve.",
+  },
 ];
 
 export const SOCIAL_PROOF = [

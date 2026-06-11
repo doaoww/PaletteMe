@@ -26,6 +26,7 @@
 export const IMAGES = {
   selfie:        "/images/selfie.jpg",
   selfieAlt:     "/images/selfie-alt.jpg",
+  analyzeDemo:   "/images/analyze-demo.jpg",
   portraitMan:   "/images/portrait-man.jpg",
   outfitWrong:   "/images/outfit-wrong.jpg",
   outfitRight:   "/images/outfit-right.jpg",
@@ -42,9 +43,36 @@ export const IMAGES = {
   styleMatch:    "/images/style-match.jpg",
   phoneOutfit:   "/images/phone-outfit.jpg",
 
-  // Seasons carousel — one portrait per season (spring / summer / autumn / winter)
-  seasonSpring:  "/images/season-spring.jpg",
-  seasonSummer:  "/images/season-summer.jpg",
-  seasonAutumn:  "/images/season-autumn.jpg",
-  seasonWinter:  "/images/season-winter.jpg",
+  // "Selfie in. Palette out." — 3 steps in order
+  flow1:         "/images/flow-1.jpg",
+  flow2:         "/images/flow-2.jpg",
+  flow3:         "/images/flow-3.jpg",
+
+  // Spring
+  springOutfit1: "/images/spring-outfit-1.jpg",
+  springOutfit2: "/images/spring-outfit-2.jpg",
+  springPalette: "/images/spring-palette.jpg",
+  reviewSpring:  "/images/review-spring.jpg",
+  seasonSpring:  "/images/season-spring-celeb.jpg",
+
+  // Summer
+  summerOutfit1: "/images/summer-outfit-1.jpg",
+  summerOutfit2: "/images/summer-outfit-2.jpg",
+  summerPalette: "/images/summer-palette.jpg",
+  reviewSummer:  "/images/review-summer.jpg",
+  seasonSummer:  "/images/season-summer-celeb.jpg",
+
+  // Autumn
+  autumnOutfit1: "/images/autumn-outfit-1.jpg",
+  autumnOutfit2: "/images/autumn-outfit-2.jpg",
+  autumnPalette: "/images/autumn-palette.jpg",
+  reviewAutumn:  "/images/review-autumn.jpg",
+  seasonAutumn:  "/images/season-autumn-celeb.jpg",
+
+  // Winter
+  winterOutfit1: "/images/winter-outfit-1.jpg",
+  winterOutfit2: "/images/winter-outfit-2.jpg",
+  winterPalette: "/images/winter-palette.jpg",
+  reviewWinter:  "/images/review-winter.jpg",
+  seasonWinter:  "/images/season-winter-celeb.jpg",
 } as const;

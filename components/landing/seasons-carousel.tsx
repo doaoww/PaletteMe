@@ -6,24 +6,42 @@ import { IMAGES } from "@/lib/demo-images";
 import { SEASONS } from "@/lib/landing-data";
 
 const SEASON_PORTRAITS = [
+  IMAGES.reviewSpring,
+  IMAGES.reviewSummer,
+  IMAGES.reviewAutumn,
+  IMAGES.reviewWinter,
+];
+
+// left panel — top mini
+const SEASON_LEFT_TOP = [
+  IMAGES.springOutfit2,
+  IMAGES.summerOutfit2,
+  IMAGES.autumnOutfit2,
+  IMAGES.winterOutfit2,
+];
+
+// left panel — bottom mini
+const SEASON_LEFT_BOT = [
+  IMAGES.springOutfit1,
+  IMAGES.summerOutfit1,
+  IMAGES.autumnOutfit1,
+  IMAGES.winterOutfit1,
+];
+
+// right panel — top mini
+const SEASON_RIGHT_TOP = [
+  IMAGES.springPalette,
+  IMAGES.summerPalette,
+  IMAGES.autumnPalette,
+  IMAGES.winterPalette,
+];
+
+// right panel — bottom mini
+const SEASON_RIGHT_BOT = [
   IMAGES.seasonSpring,
   IMAGES.seasonSummer,
   IMAGES.seasonAutumn,
   IMAGES.seasonWinter,
-];
-
-const SEASON_ACCENTS = [
-  IMAGES.fashion1,
-  IMAGES.fashion4,
-  IMAGES.fashion2,
-  IMAGES.outfitRight,
-];
-
-const SEASON_NEUTRALS = [
-  IMAGES.outfitRight,
-  IMAGES.fashion3,
-  IMAGES.wardrobe,
-  IMAGES.mirror,
 ];
 
 export function SeasonsCarousel() {
@@ -85,7 +103,7 @@ export function SeasonsCarousel() {
                   <div className="cmini__pair">
                     <div className="cmini__photo ba__img" style={{ aspectRatio: "3/4" }}>
                       <Image
-                        src={SEASON_NEUTRALS[i]}
+                        src={SEASON_LEFT_TOP[i]}
                         alt={`${s.name} neutral outfit`}
                         fill
                         sizes="100px"
@@ -94,11 +112,11 @@ export function SeasonsCarousel() {
                     </div>
                     <div className="cmini__photo ba__img" style={{ aspectRatio: "3/4" }}>
                       <Image
-                        src={SEASON_PORTRAITS[i]}
-                        alt={`${s.name} portrait`}
+                        src={SEASON_LEFT_BOT[i]}
+                        alt={`${s.name} style`}
                         fill
                         sizes="100px"
-                        style={{ objectFit: "cover", objectPosition: "top" }}
+                        style={{ objectFit: "cover" }}
                       />
                     </div>
                   </div>
@@ -137,7 +155,7 @@ export function SeasonsCarousel() {
                   <div className="cmini__pair">
                     <div className="cmini__photo ba__img" style={{ aspectRatio: "3/4" }}>
                       <Image
-                        src={SEASON_ACCENTS[i]}
+                        src={SEASON_RIGHT_TOP[i]}
                         alt={`${s.name} accent color`}
                         fill
                         sizes="100px"
@@ -146,7 +164,7 @@ export function SeasonsCarousel() {
                     </div>
                     <div className="cmini__photo ba__img" style={{ aspectRatio: "3/4" }}>
                       <Image
-                        src={SEASON_NEUTRALS[i]}
+                        src={SEASON_RIGHT_BOT[i]}
                         alt={`${s.name} style`}
                         fill
                         sizes="100px"
