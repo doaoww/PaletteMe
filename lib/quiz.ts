@@ -1,5 +1,6 @@
 import { SEASONS, type Season } from "@/lib/landing-data";
 import type { SeasonId } from "@/lib/analysis";
+import type { QuizAnswersSnapshot } from "@/lib/supabase-db";
 import {
   GOAL_LABELS,
   STYLE_LABELS,
@@ -180,3 +181,104 @@ export const buildQuizResult = buildQuizProfile;
 export const saveQuizResult = saveQuizProfile;
 export const loadQuizResult = loadQuizProfile;
 export const clearQuizResult = clearQuizProfile;
+
+// ─── localStorage keys (Problem 9) ────────────────────────────────────────────
+
+export const LS_USER_ID = "palette_user_id";
+export const LS_QUIZ    = "palette_quiz";
+export const LS_COLORTYPE    = "palette_colortype";
+export const LS_BEST_COLORS  = "palette_best_colors";
+
+// ─── Derive quiz answer snapshot for Supabase / localStorage ──────────────────
+
+function mapStyle(aesthetics: string[] | undefined): QuizAnswersSnapshot["style"] {
+  const first = aesthetics?.[0]?.toLowerCase() ?? "";
+  const map: Record<string, QuizAnswersSnapshot["style"]> = {
+    minimalist: "minimalist",
+    classic: "classic",
+    edgy: "edgy",
+    romantic: "romantic",
+    bohemian: "bohemian",
+    feminine: "romantic",
+    casual: "classic",
+    preppy: "classic",
+    sporty: "classic",
+  };
+  return map[first] ?? "classic";
+}
+
+function mapOccasion(occasions: string[] | undefined): QuizAnswersSnapshot["occasion"] {
+  const occ = occasions?.[0]?.toLowerCase() ?? "";
+  const map: Record<string, QuizAnswersSnapshot["occasion"]> = {
+    office: "work",
+    work: "work",
+    evening: "going_out",
+    weekend: "everyday",
+    activewear: "everyday",
+    special: "special",
+  };
+  return map[occ] ?? "everyday";
+}
+
+function mapBodyConcern(bodyType: string | undefined): QuizAnswersSnapshot["body_concern"] {
+  const map: Record<string, QuizAnswersSnapshot["body_concern"]> = {
+    pear: "hips",
+    apple: "waist",
+    "inverted-triangle": "shoulders",
+    hourglass: "none",
+    rectangle: "none",
+  };
+  return map[bodyType ?? ""] ?? "none";
+}
+
+export function buildQuizSnapshot(profile: QuizProfile): QuizAnswersSnapshot {
+  return {
+    style: mapStyle(profile.styleVector?.aesthetics),
+    occasion: mapOccasion(profile.styleVector?.occasions),
+    body_concern: mapBodyConcern(profile.bodyType),
+    budget: "mid",
+  };
+}
+
+// ─── Save quiz to localStorage ─────────────────────────────────────────────────
+
+export function saveQuizToLocalStorage(profile: QuizProfile): void {
+  if (typeof window === "undefined") return;
+  const snapshot = buildQuizSnapshot(profile);
+  localStorage.setItem(LS_QUIZ, JSON.stringify(snapshot));
+}
+
+// ─── Save quiz to Supabase users table ────────────────────────────────────────
+// Returns the new user_id and also writes it + palette_quiz to localStorage.
+
+export async function saveQuizToSupabase(profile: QuizProfile): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) return null;
+
+  const snapshot = buildQuizSnapshot(profile);
+
+  try {
+    const { createClient } = await import("@/lib/supabase");
+    const db = createClient();
+
+    const { data, error } = await db
+      .from("users")
+      .insert({
+        colortype: profile.seasonId,
+        quiz_answers: snapshot,
+      })
+      .select("id")
+      .single();
+
+    if (error || !data) return null;
+
+    const userId = (data as { id: string }).id;
+    localStorage.setItem(LS_USER_ID, userId);
+    localStorage.setItem(LS_QUIZ, JSON.stringify(snapshot));
+    return userId;
+  } catch {
+    return null;
+  }
+}
