@@ -1,57 +1,39 @@
 import { NextResponse } from "next/server";
 import { sendTelegramMessage } from "@/lib/telegram";
-import { addToWaitlist } from "@/lib/waitlist-store";
-import { addToWaitlistDb, isSupabaseConfigured } from "@/lib/supabase-db";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const email = typeof body.email === "string" ? body.email.trim() : "";
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
 
     if (!email || !EMAIL_RE.test(email)) {
       return NextResponse.json({ error: "Invalid email address." }, { status: 400 });
     }
 
-    let isNew = true;
+    const message = [
+      "🎨 <b>PaletteMe — new waitlist signup</b>",
+      "",
+      `📧 <code>${email}</code>`,
+      `🕐 ${new Date().toLocaleString("en-GB", { timeZone: "UTC" })} UTC`,
+    ].join("\n");
 
-    // Supabase is the durable store — filesystem store is a dev-only fallback.
-    // The filesystem (lib/waitlist-store.ts) is read-only on Vercel in production.
-    if (isSupabaseConfigured()) {
-      const result = await addToWaitlistDb(email, "waitlist");
-      if (result === null) {
-        // Supabase insert failed — treat as new so Telegram still fires
-        isNew = true;
-      } else {
-        isNew = result.isNew;
-      }
-    } else {
-      // Dev fallback: filesystem (works locally, not on Vercel)
-      const result = await addToWaitlist(email, "waitlist");
-      isNew = result.isNew;
-    }
+    const sent = await sendTelegramMessage(message);
+    console.log("[waitlist] Telegram sent:", sent, "for", email);
 
-    if (isNew) {
-      const message = [
-        "🎨 <b>PaletteMe — new waitlist signup</b>",
-        "",
-        `📧 <code>${email.toLowerCase()}</code>`,
-        `🕐 ${new Date().toLocaleString("en-GB", { timeZone: "UTC" })} UTC`,
-        "",
-        "Reply manually when you're ready to email them.",
-      ].join("\n");
-
-      // Fire-and-forget — Telegram failure should never break the signup response
-      sendTelegramMessage(message).catch(() => {});
+    // Best-effort DB save — never blocks the response
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      import("@/lib/supabase-db").then(({ addToWaitlistDb }) => {
+        addToWaitlistDb(email, "waitlist").catch((e) =>
+          console.error("[waitlist] db save failed:", e)
+        );
+      });
     }
 
     return NextResponse.json({
       ok: true,
-      isNew,
-      message: isNew
-        ? "You're on the list — we'll be in touch."
-        : "You're already on the list.",
+      message: "You're on the list — we'll be in touch.",
     });
   } catch (error) {
     console.error("[waitlist] POST error:", error);
