@@ -45,6 +45,7 @@ next-env.d.ts
 
 # playwright debug output
 .playwright-mcp/
+.worktrees/
 .superpowers/
 *.png
 *.jpeg
