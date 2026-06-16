@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AnalysisResult } from "@/lib/analysis";
 import { saveAnalysisResult } from "@/lib/analysis-storage";
-import { PostQuizAuthScreen } from "@/components/auth/post-quiz-auth-screen";
 import { SelfieCapture } from "@/components/selfie/selfie-capture";
 import { getBodyShapeScreenOptions } from "@/components/quiz/body-shape-silhouettes";
 import {
@@ -46,7 +45,6 @@ import {
   type StyleDirection,
   type WardrobeType,
 } from "@/lib/quiz-data";
-import { isSupabaseAuthConfigured, resolvePostQuizAuthAction } from "@/lib/auth-flow";
 import { resizeImageForAnalysis } from "@/lib/resize-image";
 import { SEASONS } from "@/lib/landing-data";
 import { validateSelfieFile } from "@/lib/selfie-capture";
@@ -87,8 +85,7 @@ type Step =
   | "photo-decision"
   | "color-entry"
   | "color-selfie"
-  | "color-analyzing"
-  | "color-result";
+  | "color-analyzing";
 
 const FOOTER_STEPS: Step[] = [
   "wardrobe-type",
@@ -116,7 +113,6 @@ const STEP_ORDER: Step[] = [
   "color-entry",
   "color-selfie",
   "color-analyzing",
-  "color-result",
 ];
 
 const STEP_BACK: Partial<Record<Step, Step>> = (() => {
@@ -126,14 +122,9 @@ const STEP_BACK: Partial<Record<Step, Step>> = (() => {
     const prev = STEP_ORDER[i - 1];
     if (step !== "intro") map[step] = prev;
   }
-  map["color-result"] = "photo-decision";
   return map;
 })();
 
-const SUPABASE_AUTH_ENV = {
-  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-};
 
 function stepProgress(step: Step): number {
   const idx = STEP_ORDER.indexOf(step);
@@ -156,7 +147,6 @@ function stepBarTitle(step: Step): string {
       "color-entry",
       "color-selfie",
       "color-analyzing",
-      "color-result",
     ].includes(step)
   ) {
     return "your colors";
@@ -220,7 +210,6 @@ export function QuizFlow() {
   const [selfieError, setSelfieError] = useState<string | null>(null);
   const [selfieHardReject, setSelfieHardReject] = useState(false);
   const [selfieQualityWarning, setSelfieQualityWarning] = useState<SelfieQualityWarning | null>(null);
-  const [postQuizAuthProfile, setPostQuizAuthProfile] = useState<QuizProfile | null>(null);
 
   const progress = stepProgress(step);
   const backStep = STEP_BACK[step];
@@ -337,11 +326,6 @@ export function QuizFlow() {
     }
   };
 
-  const continueToProfile = useCallback(() => {
-    setPostQuizAuthProfile(null);
-    router.push("/profile");
-  }, [router]);
-
   const finishAndSaveProfile = useCallback(
     async (result: ColorResult) => {
       const profile: QuizProfile = buildQuizProfile(enrichedAnswers, scores, {
@@ -355,28 +339,7 @@ export function QuizFlow() {
       saveQuizProfile(profile);
       saveQuizToLocalStorage(profile);
       saveQuizToSupabase(profile).catch(() => {});
-
-      if (!isSupabaseAuthConfigured(SUPABASE_AUTH_ENV)) {
-        setPostQuizAuthProfile(profile);
-        return;
-      }
-
-      try {
-        const { createClient } = await import("@/lib/supabase");
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (resolvePostQuizAuthAction(user) === "continue-to-profile") {
-          router.push("/profile");
-          return;
-        }
-      } catch {
-        // Session check failed — require registration before results.
-      }
-
-      setPostQuizAuthProfile(profile);
+      router.push("/profile");
     },
     [enrichedAnswers, scores, router]
   );
@@ -495,15 +458,6 @@ export function QuizFlow() {
               : undefined;
 
   const screenPanel = "quiz-page__panel quiz-page__panel--screen on";
-
-  if (postQuizAuthProfile) {
-    return (
-      <PostQuizAuthScreen
-        profile={postQuizAuthProfile}
-        onComplete={continueToProfile}
-      />
-    );
-  }
 
   return (
     <div

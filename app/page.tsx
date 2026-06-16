@@ -195,7 +195,7 @@ export default function Home() {
               <h5>company</h5>
               <a href="#waitlist">waitlist</a>
               <a href="#faq">faq</a>
-              <a href="#">privacy</a>
+              <a href="#faq">privacy</a>
             </div>
           </div>
           <div className="foot__bottom">

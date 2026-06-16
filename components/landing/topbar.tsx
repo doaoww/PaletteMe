@@ -48,27 +48,11 @@ export function TopBar() {
         </nav>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {isSignedIn ? (
-            <Link
-              href="/profile"
-              style={{
-                fontFamily: "var(--sans)",
-                fontSize: "0.82rem",
-                color: "var(--ink-soft)",
-                textDecoration: "none",
-              }}
-            >
+            <Link href="/profile" className="cta-mini cta-ghost">
               my palette
             </Link>
           ) : (
-            <Link
-              href="/login"
-              style={{
-                fontFamily: "var(--sans)",
-                fontSize: "0.82rem",
-                color: "var(--ink-soft)",
-                textDecoration: "none",
-              }}
-            >
+            <Link href="/login" className="cta-mini cta-ghost">
               sign in
             </Link>
           )}

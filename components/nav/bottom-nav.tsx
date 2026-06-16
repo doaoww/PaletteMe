@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 const NAV = [
   { href: "/home", label: "home" },
   { href: "/scan", label: "scan" },
-  { href: "/wardrobe", label: "wardrobe" },
+  { href: "/feed", label: "shop" },
   { href: "/profile", label: "profile" },
 ] as const;
 
@@ -18,7 +18,8 @@ export function BottomNav() {
       {NAV.map((item) => {
         const active =
           pathname === item.href ||
-          (item.href === "/scan" && pathname.startsWith("/scan"));
+          (item.href === "/scan" && pathname.startsWith("/scan")) ||
+          (item.href === "/feed" && (pathname.startsWith("/feed") || pathname.startsWith("/saved")));
         return (
           <Link
             key={item.href}

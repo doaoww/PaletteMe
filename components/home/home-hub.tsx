@@ -8,7 +8,8 @@ import { loadQuizProfile, type QuizProfile } from "@/lib/quiz";
 import { SEASONS } from "@/lib/landing-data";
 import { buildPreviewColors } from "@/lib/result-palette";
 import { wardrobeItemCount } from "@/lib/wardrobe-store";
-import { canAccessColorResults, isSupabaseAuthConfigured } from "@/lib/auth-flow";
+import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
+import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan-feature";
 import { createClient } from "@/lib/supabase";
 
 const AUTH_ENV = {
@@ -58,6 +59,8 @@ function seasonDescriptor(profile: QuizProfile): string {
 export function HomeHub() {
   const router = useRouter();
   const authConfigured = isSupabaseAuthConfigured(AUTH_ENV);
+  const scanEnabled = isScanFeatureEnabled();
+  const scanCopy = getScanComingSoonCopy();
   const [profile, setProfile] = useState<QuizProfile | null>(null);
   const [displayName, setDisplayName] = useState("there");
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -67,7 +70,11 @@ export function HomeHub() {
   const [waitlistError, setWaitlistError] = useState<string | null>(null);
 
   async function joinWaitlist(feature: string) {
-    if (!userEmail || waitlistJoined || waitlistLoading) return;
+    if (!userEmail) {
+      router.push("/login?next=/home");
+      return;
+    }
+    if (waitlistJoined || waitlistLoading) return;
     setWaitlistError(null);
     setWaitlistLoading(feature);
     try {
@@ -105,15 +112,12 @@ export function HomeHub() {
           data: { user },
         } = await supabase.auth.getUser();
 
-        if (!canAccessColorResults(user, authConfigured)) {
-          router.replace("/profile");
-          return;
-        }
-
         if (!cancelled) {
           setDisplayName(displayNameFromEmail(user?.email));
           setUserEmail(user?.email ?? null);
         }
+      } else if (!cancelled) {
+        setDisplayName("there");
       }
 
       if (!cancelled) {
@@ -144,9 +148,9 @@ export function HomeHub() {
   return (
     <div className="app-shell home-hub">
       <header className="home-hub__topbar glass-nav">
-        <button type="button" className="home-hub__icon-btn" aria-label="Menu">
+        <Link href="/profile" className="home-hub__icon-btn" aria-label="Your palette report">
           <span aria-hidden>☰</span>
-        </button>
+        </Link>
         <Link href="/home" className="home-hub__wordmark">
           palette<span>me</span>
         </Link>
@@ -181,32 +185,60 @@ export function HomeHub() {
 
         <section className="home-hub__section">
           <h2 className="home-hub__section-title">What do you want to do?</h2>
-          <Link href="/scan" className="home-hub__action-card">
-            <span className="home-hub__action-icon" aria-hidden>
-              <svg viewBox="0 0 48 48" fill="none">
-                <rect x="6" y="14" width="36" height="26" rx="4" stroke="currentColor" strokeWidth="2" />
-                <circle cx="24" cy="27" r="7" stroke="currentColor" strokeWidth="2" />
-              </svg>
-            </span>
-            <span>
-              <strong>Scan an item</strong>
-              <small>Check if it matches your colors</small>
-            </span>
-          </Link>
-          <Link href="/scan" className="home-hub__cta">
-            scan now →
-          </Link>
+          {scanEnabled ? (
+            <>
+              <Link href="/scan" className="home-hub__action-card">
+                <span className="home-hub__action-icon" aria-hidden>
+                  <svg viewBox="0 0 48 48" fill="none">
+                    <rect x="6" y="14" width="36" height="26" rx="4" stroke="currentColor" strokeWidth="2" />
+                    <circle cx="24" cy="27" r="7" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                </span>
+                <span>
+                  <strong>Scan an item</strong>
+                  <small>Check if it matches your colors</small>
+                </span>
+              </Link>
+              <Link href="/scan" className="home-hub__cta">
+                scan now →
+              </Link>
+            </>
+          ) : (
+            <article className="home-hub__action-card home-hub__action-card--muted">
+              <span className="home-hub__action-icon" aria-hidden>
+                <svg viewBox="0 0 48 48" fill="none">
+                  <rect x="6" y="14" width="36" height="26" rx="4" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="24" cy="27" r="7" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              </span>
+              <span>
+                <strong>{scanCopy.title}</strong>
+                <small>{scanCopy.body}</small>
+              </span>
+            </article>
+          )}
+          <div className="home-hub__quick-links">
+            <Link href="/feed">shop picks</Link>
+            <Link href="/saved">saved items</Link>
+            <Link href="/wardrobe">my wardrobe</Link>
+          </div>
         </section>
 
         <section className="home-hub__section">
           <div className="home-hub__section-head">
             <p className="home-hub__card-kicker">recent scans</p>
-            <Link href="/scan" className="home-hub__text-link">view all</Link>
+            {scanEnabled ? (
+              <Link href="/scan" className="home-hub__text-link">view all</Link>
+            ) : null}
           </div>
           <div className="home-hub__recent-scroll">
             <article className="home-hub__recent-empty">
-              <p>Your scan history will appear here after your first check.</p>
-              <Link href="/scan">scan something</Link>
+              <p>
+                {scanEnabled
+                  ? "Your scan history will appear here after your first check."
+                  : scanCopy.note}
+              </p>
+              {scanEnabled ? <Link href="/scan">scan something</Link> : null}
             </article>
           </div>
         </section>
@@ -233,9 +265,11 @@ export function HomeHub() {
               >
                 {waitlistJoined
                   ? "on the list"
-                  : waitlistLoading === item.title
-                    ? "joining…"
-                    : "join waitlist"}
+                  : !userEmail
+                    ? "sign in to join"
+                    : waitlistLoading === item.title
+                      ? "joining…"
+                      : "join waitlist"}
               </button>
             </article>
           ))}

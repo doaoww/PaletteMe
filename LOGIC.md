@@ -34,14 +34,15 @@ Affiliate links are a secondary revenue layer. Product links must continue worki
   -> quiz color evidence
   -> optional selfie confirmation
   -> analysis result
-  -> /profile
-  -> free result + locked report
-  -> Stripe Payment Link
-  -> /profile?paid=report
-  -> full report unlocked
-  -> Pro upsell
-  -> scanner / feed / saved products
+  -> /profile (immediate results, no account required)
+  -> optional save via SaveBanner or /login
+  -> /home dashboard
+  -> scan / wardrobe / feed / saved (scan gated by NEXT_PUBLIC_SCAN_FEATURE_ENABLED)
+  -> Stripe Payment Link (dormant while free testing mode is on)
+  -> /profile?paid=report or /profile?paid=pro when monetization reopens
 ```
+
+Progressive auth rule: users finish the quiz and see `/profile` results before signing in. Auth is asked when saving the profile, restoring history, or joining the waitlist with email delivery.
 
 ## Main Pages
 
@@ -50,6 +51,9 @@ Affiliate links are a secondary revenue layer. Product links must continue worki
 | `/` | Landing, quiz CTA, waitlist |
 | `/quiz` | Onboarding and selfie/color analysis |
 | `/profile` | Result, paid report, Pro upsell |
+| `/home` | Post-result dashboard and feature hub |
+| `/scan` | Style checks (coming soon when feature flag is off) |
+| `/wardrobe` | Saved wardrobe items |
 | `/feed` | Product recommendations |
 | `/saved` | Saved products |
 | `/login` | Single account flow for saving/restoring profile |

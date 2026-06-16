@@ -15,6 +15,7 @@ import {
   buildPreviewColors,
   buildSeasonAvoidSwatches,
   buildSeasonMetalSwatches,
+  buildSeasonNeutralSwatches,
   buildSeasonPaletteSwatches,
   type ResultSwatch,
 } from "@/lib/result-palette";
@@ -25,6 +26,7 @@ import {
   getBrowserScanCreditState,
   type ScanCreditState,
 } from "@/lib/scan-credits";
+import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan-feature";
 
 const SLIDE_COUNT = 5;
 const ONBOARDING_SLIDE_COUNT = 3;
@@ -671,6 +673,7 @@ export function ResultCarousel({
   const palette12 = buildSeasonPaletteSwatches(season, subSeason);
   const shoppingSkip = buildSeasonAvoidSwatches(season, undefined, 5, subSeason);
   const metalSwatches = buildSeasonMetalSwatches(season, report, subSeason);
+  const neutralSwatches = buildSeasonNeutralSwatches(season, report, subSeason);
   const downloadSeasonName = subSeason || season.name;
   const onboardingCopy = buildResultOnboardingCopy({
     seasonId: season.id,
@@ -691,6 +694,8 @@ export function ResultCarousel({
   const archetype = styleArchetype(season, subSeason);
   const weeklyAllowance = creditState?.allowance ?? DEFAULT_WEEKLY_SCAN_CREDITS;
   const weeklyUsed = Math.min(weeklyAllowance, creditState?.used ?? 0);
+  const scanEnabled = isScanFeatureEnabled();
+  const scanCopy = getScanComingSoonCopy();
   const weeklyProgress = `${Math.round((weeklyUsed / weeklyAllowance) * 100)}%`;
 
   const goNext = useCallback(() => setSlide((s) => Math.min(s + 1, SLIDE_COUNT - 1)), []);
@@ -854,6 +859,14 @@ export function ResultCarousel({
                 <LabSwatchRow key={`glow-${swatch.name}`} swatch={swatch} reason={glowReason(swatch.name, season)} />
               ))}
             </div>
+            <article className="rc-lab-insight-card">
+              <p className="rc-lab-card-kicker">your best neutrals</p>
+              <div className="rc-lab-metal-row">
+                {neutralSwatches.slice(0, 4).map((swatch) => (
+                  <ColorCircle key={swatch.name} hex={swatch.hex} size={34} label={swatch.name} border={swatch.border} />
+                ))}
+              </div>
+            </article>
             <article className="rc-lab-insight-card rc-lab-insight-card--stylist">
               <p className="rc-lab-card-kicker">stylist note</p>
               <p>Wear these closest to your face — tops, scarves, lipstick, and jewelry — and your skin will look brighter without trying harder.</p>
@@ -981,8 +994,15 @@ export function ResultCarousel({
             </article>
 
             <div className="rc-lab-cta-stack">
-              <Link href="/scan" className="rc-lab-cta">
-                scan something
+              {scanEnabled ? (
+                <Link href="/scan" className="rc-lab-cta">
+                  scan something
+                </Link>
+              ) : (
+                <span className="rc-lab-text-link rc-lab-text-link--muted">{scanCopy.title}</span>
+              )}
+              <Link href="/login?next=/profile" className="rc-lab-text-link">
+                save my palette
               </Link>
               <span className="rc-lab-text-link rc-lab-text-link--muted">more usage options coming later</span>
               <button type="button" className="rc-lab-text-link" onClick={() => void sharePalette()}>

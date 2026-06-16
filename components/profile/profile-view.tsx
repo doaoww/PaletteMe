@@ -166,8 +166,12 @@ function SaveBanner() {
           Check your email
         </p>
         <p style={bannerSub}>
-          We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.
+          We sent a confirmation link to <strong>{email}</strong>. Open it to
+          save your palette across devices.
         </p>
+        <Link href="/home" className="btn" style={{ display: "inline-block", marginTop: 16 }}>
+          view results on this device
+        </Link>
       </section>
     );
   }

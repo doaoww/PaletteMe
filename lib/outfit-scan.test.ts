@@ -85,10 +85,10 @@ test("builds personalized scan profile payload from a quiz profile", () => {
   assert.equal(payload.colortype, "autumn");
   assert.equal(payload.seasonId, "autumn");
   assert.equal(payload.subSeason, "Dark Autumn");
-  assert.ok(payload.bestColors.includes("Dark Burgundy #770E0E"));
+  assert.ok(payload.bestColors.includes("Dark Burgundy #800505"));
   assert.ok(payload.colorsToAvoid.includes("Light Pink #FFB6C1"));
   assert.match(payload.profileSummary, /Dark Autumn/);
-  assert.match(payload.profileSummary, /Best colors near the face: Dark Burgundy #770E0E/);
+  assert.match(payload.profileSummary, /Best colors near the face: Dark Burgundy #800505/);
   assert.match(payload.profileSummary, /Colors to use carefully or away from face: Light Pink #FFB6C1/);
 });
 
@@ -122,7 +122,7 @@ test("builds scanner form data directly from a quiz profile", () => {
   assert.equal(formData.get("colortype"), "autumn");
   assert.equal(formData.get("seasonId"), "autumn");
   assert.equal(formData.get("subSeason"), "Dark Autumn");
-  assert.match(String(formData.get("bestColors")), /Dark Burgundy #770E0E/);
+  assert.match(String(formData.get("bestColors")), /Dark Burgundy #800505/);
   assert.match(String(formData.get("colorsToAvoid")), /Light Pink #FFB6C1/);
   assert.match(String(formData.get("profileSummary")), /Dark Autumn/);
 });

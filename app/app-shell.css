@@ -366,6 +366,26 @@
   box-shadow: 0 16px 34px -20px color-mix(in srgb, var(--primary) 72%, #000);
 }
 
+.home-hub__action-card--muted {
+  opacity: 0.92;
+  cursor: default;
+  pointer-events: none;
+}
+
+.home-hub__quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 14px;
+}
+
+.home-hub__quick-links a {
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .home-hub__recent-scroll {
   display: flex;
   gap: 12px;

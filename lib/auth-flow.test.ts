@@ -117,8 +117,13 @@ test("resolves post-quiz auth gate from the current session user", () => {
   assert.equal(authFlow.resolvePostQuizAuthAction?.({ id: "" }), "show-auth-prompt");
 });
 
-test("requires an authenticated session before color results when auth is configured", () => {
-  assert.equal(authFlow.canAccessColorResults({ id: "auth-user-1" }, true), true);
-  assert.equal(authFlow.canAccessColorResults(null, true), false);
-  assert.equal(authFlow.canAccessColorResults({ id: "auth-user-1" }, false), false);
+test("allows local color results without a signed-in session", () => {
+  assert.equal(authFlow.canAccessColorResults(null, true, true), true);
+  assert.equal(authFlow.canAccessColorResults(null, true, false), false);
+  assert.equal(authFlow.canAccessColorResults({ id: "auth-user-1" }, false, false), false);
+});
+
+test("detects signed-in users for progressive save prompts", () => {
+  assert.equal(authFlow.isUserSignedIn({ id: "auth-user-1" }), true);
+  assert.equal(authFlow.isUserSignedIn(null), false);
 });

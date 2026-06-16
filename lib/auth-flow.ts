@@ -55,10 +55,14 @@ export function resolvePostQuizAuthAction(
 }
 
 export function canAccessColorResults(
-  user: { id?: string | null } | null | undefined,
-  authConfigured: boolean
+  _user: { id?: string | null } | null | undefined,
+  _authConfigured: boolean,
+  hasLocalProfile = false
 ): boolean {
-  if (!authConfigured) return false;
+  return hasLocalProfile;
+}
+
+export function isUserSignedIn(user: { id?: string | null } | null | undefined): boolean {
   return Boolean(user?.id);
 }
 

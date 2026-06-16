@@ -204,11 +204,11 @@ function LoginContent() {
             <p style={iconStyle}>✉️</p>
             <h1 style={heading}>check your email</h1>
             <p style={sub}>
-              We sent a link to <strong>{email}</strong>. Click it to confirm
-              your account.
+              We sent a link to <strong>{email}</strong>. Click it to save your
+              palette across devices.
             </p>
             <button style={btnPrimary} onClick={() => router.push(next)}>
-              go to my palette
+              view results on this device
             </button>
           </div>
         )}

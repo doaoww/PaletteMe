@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AnalysisResult } from "@/lib/analysis";
 import { loadQuizProfile, type QuizProfile } from "@/lib/quiz";
@@ -13,7 +13,7 @@ import {
 import { getPaymentUrls, isFreeTestingMode, resolvePremiumLevel, type PremiumLevel } from "@/lib/premium";
 import { ProfileView } from "@/components/profile/profile-view";
 import { PostQuizAuthScreen } from "@/components/auth/post-quiz-auth-screen";
-import { canAccessColorResults, isSupabaseAuthConfigured } from "@/lib/auth-flow";
+import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
 import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe-store";
 import "./profile.css";
 import "../app-shell.css";
@@ -46,15 +46,8 @@ function ProfileContent() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [premiumLevel, setPremiumLevel] = useState<PremiumLevel>(freeTestingMode ? "pro" : "free");
   const [ready, setReady] = useState(false);
-  const [needsAuth, setNeedsAuth] = useState(false);
-  const [authRevision, setAuthRevision] = useState(0);
+  const [requiresAuth, setRequiresAuth] = useState(false);
   const paymentUrls = getPaymentUrls(PROFILE_PREMIUM_ENV);
-
-  const handleAuthComplete = useCallback(() => {
-    setNeedsAuth(false);
-    setReady(false);
-    setAuthRevision((value) => value + 1);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,7 +74,6 @@ function ProfileContent() {
               if (cancelled) return;
               setProfile(restored.profile);
               setAnalysisResult(restored.analysisResult as AnalysisResult | null);
-              setNeedsAuth(false);
               setReady(true);
               return;
             }
@@ -99,7 +91,6 @@ function ProfileContent() {
         if (cancelled) return;
         setProfile(localProfile);
         setAnalysisResult(localAnalysisResult);
-        setNeedsAuth(!canAccessColorResults(signedInUser, authConfigured));
         setReady(true);
 
         if (signedInUser && supabaseClient) {
@@ -109,6 +100,8 @@ function ProfileContent() {
             profile: localProfile,
             analysisResult: localAnalysisResult,
           }).catch(() => {});
+        } else if (authConfigured) {
+          setRequiresAuth(true);
         }
         return;
       }
@@ -120,17 +113,17 @@ function ProfileContent() {
     return () => {
       cancelled = true;
     };
-  }, [router, searchParams, authRevision, authConfigured]);
+  }, [router, searchParams, authConfigured]);
 
   if (!ready || !profile) {
     return <ProfileLoading />;
   }
 
-  if (needsAuth) {
+  if (requiresAuth) {
     return (
       <PostQuizAuthScreen
         profile={profile}
-        onComplete={handleAuthComplete}
+        onComplete={() => setRequiresAuth(false)}
       />
     );
   }

@@ -17,6 +17,7 @@ import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe-store";
 type Props = {
   profile: QuizProfile;
   onComplete: () => void;
+  onSkip?: () => void;
 };
 
 type Mode = "choice" | "email" | "loading" | "check-email";
@@ -26,7 +27,7 @@ const SUPABASE_AUTH_ENV = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 };
 
-export function PostQuizAuthScreen({ profile, onComplete }: Props) {
+export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
   const [mode, setMode] = useState<Mode>("choice");
   const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState("");
@@ -151,8 +152,13 @@ export function PostQuizAuthScreen({ profile, onComplete }: Props) {
           <h1 style={heading}>Confirm your email</h1>
           <p style={sub}>
             We sent a confirmation link to <strong>{email}</strong>. Open it to
-            activate your account, then sign in to see your color results.
+            save your palette across devices.
           </p>
+          {onSkip ? (
+            <button type="button" style={btnPrimary} onClick={onSkip}>
+              view results on this device
+            </button>
+          ) : null}
         </section>
       </main>
     );
@@ -165,10 +171,10 @@ export function PostQuizAuthScreen({ profile, onComplete }: Props) {
           <button type="button" style={backBtn} onClick={() => setMode("choice")}>
             back
           </button>
-          <h1 style={heading}>Create your account</h1>
+          <h1 style={heading}>Save your results</h1>
           <p style={sub}>
-            {isSignUp ? "Sign up" : "Sign in"} to unlock your personal color
-            results.
+            {isSignUp ? "Create a free account" : "Sign in"} to see your palette
+            and keep it on any device.
           </p>
           <form onSubmit={handleEmailSubmit} style={form}>
             <input
@@ -204,6 +210,11 @@ export function PostQuizAuthScreen({ profile, onComplete }: Props) {
           >
             {isSignUp ? "already have an account? sign in" : "no account? create one"}
           </button>
+          {onSkip ? (
+            <button type="button" style={skipBtn} onClick={onSkip}>
+              skip for now
+            </button>
+          ) : null}
         </section>
       </main>
     );
@@ -212,11 +223,11 @@ export function PostQuizAuthScreen({ profile, onComplete }: Props) {
   return (
     <main style={screen}>
       <section style={card}>
-        <p style={kicker}>your results are ready</p>
-        <h1 style={heading}>Create your account</h1>
+        <p style={kicker}>one last step</p>
+        <h1 style={heading}>Save your results</h1>
         <p style={sub}>
-          Register to unlock your color season, full palette report, and home
-          dashboard.
+          Create a free account to see your palette, quiz answers, and style
+          profile — and keep them with you on any device.
         </p>
 
         <button type="button" style={btnGoogle} onClick={handleGoogle}>
@@ -228,6 +239,11 @@ export function PostQuizAuthScreen({ profile, onComplete }: Props) {
           continue with email
         </button>
 
+        {onSkip ? (
+          <button type="button" style={skipBtn} onClick={onSkip}>
+            skip for now
+          </button>
+        ) : null}
         {errorMsg && <p style={errorStyle}>{errorMsg}</p>}
       </section>
     </main>

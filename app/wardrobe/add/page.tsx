@@ -1,14 +1,22 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AddItemFlow } from "@/components/wardrobe/add-item-flow";
+import { loadQuizProfile } from "@/lib/quiz";
 import "../../app-shell.css";
 import "../../quiz/quiz.css";
 
-export const metadata = {
-  title: "Add item — PaletteMe",
-  description: "Photograph a wardrobe piece and save it to your closet.",
-};
-
 export default function WardrobeAddPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loadQuizProfile()) {
+      router.replace("/quiz");
+    }
+  }, [router]);
+
   return (
     <div className="app-shell">
       <header className="app-topbar glass-nav">
