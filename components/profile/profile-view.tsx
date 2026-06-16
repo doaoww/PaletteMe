@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ResultCarousel } from "@/components/profile/result-carousel";
-import { BottomNav } from "@/components/nav/bottom-nav";
+import { AppChrome } from "@/components/nav/app-chrome";
 import { useEffect, useRef, useState } from "react";
 import { SEASONS } from "@/lib/landing-data";
 import { LS_USER_ID } from "@/lib/quiz";
@@ -688,7 +688,8 @@ export function ProfileView({
   const visiblePalette = hasReport ? report.bestColors : getFreeColorPreview(report, 4);
 
   return (
-    <div className={`app-shell profile-shell${hasReport ? " profile-shell--result" : ""}`}>
+    <AppChrome className={hasReport ? "app-chrome--profile-result" : "app-chrome--profile"}>
+      <div className={`app-shell profile-shell${hasReport ? " profile-shell--result" : ""}`}>
 
       {!hasReport && (
       <header className="app-topbar glass-nav" style={{
@@ -806,8 +807,7 @@ export function ProfileView({
         )}
 
       </div>
-
-      {!hasReport && <BottomNav />}
-    </div>
+      </div>
+    </AppChrome>
   );
 }

@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AnalysisResult } from "@/lib/analysis";
+import { PostQuizAuthScreen } from "@/components/auth/post-quiz-auth-screen";
+import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
+import { createClient } from "@/lib/supabase";
 import { saveAnalysisResult } from "@/lib/analysis-storage";
 import { SelfieCapture } from "@/components/selfie/selfie-capture";
 import { getBodyShapeScreenOptions } from "@/components/quiz/body-shape-silhouettes";
@@ -182,6 +185,11 @@ type AnalyzeResponse = {
   message?: string;
 };
 
+const SUPABASE_AUTH_ENV = {
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+};
+
 function toggleStyleDirection(current: StyleDirection[], id: StyleDirection): StyleDirection[] {
   if (current.includes(id)) return current.filter((item) => item !== id);
   if (current.length >= 2) return [current[1], id];
@@ -195,6 +203,7 @@ export function QuizFlow() {
   const [answers, setAnswers] = useState<QuizAnswers>({ styleDirections: [], occasions: [] });
   const [scores, setScores] = useState<QuizScores>(emptyScores());
   const [colorResult, setColorResult] = useState<ColorResult | null>(null);
+  const [pendingAuthProfile, setPendingAuthProfile] = useState<QuizProfile | null>(null);
 
   const [pendingWardrobe, setPendingWardrobe] = useState<WardrobeType | undefined>();
   const [pendingChallenge, setPendingChallenge] = useState<QuizAnswers["styleChallenge"]>();
@@ -339,7 +348,23 @@ export function QuizFlow() {
       saveQuizProfile(profile);
       saveQuizToLocalStorage(profile);
       saveQuizToSupabase(profile).catch(() => {});
-      router.push("/profile");
+
+      if (!isSupabaseAuthConfigured(SUPABASE_AUTH_ENV)) {
+        router.push("/profile");
+        return;
+      }
+
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user?.id) {
+        router.push("/profile");
+        return;
+      }
+
+      setPendingAuthProfile(profile);
     },
     [enrichedAnswers, scores, router]
   );
@@ -458,6 +483,15 @@ export function QuizFlow() {
               : undefined;
 
   const screenPanel = "quiz-page__panel quiz-page__panel--screen on";
+
+  if (pendingAuthProfile) {
+    return (
+      <PostQuizAuthScreen
+        profile={pendingAuthProfile}
+        onComplete={() => router.push("/profile")}
+      />
+    );
+  }
 
   return (
     <div

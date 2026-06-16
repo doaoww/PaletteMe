@@ -20,6 +20,7 @@ export function SocialProof() {
         </div>
 
         <div className="sproof__grid">
+          {/* TODO(asset-replace): testimonial avatars from SOCIAL_PROOF are women-only Unsplash portraits. */}
           {SOCIAL_PROOF.map((person) => {
             const season = SEASONS.find((s) => s.id === person.seasonId) ?? SEASONS[0];
             return (

@@ -4,12 +4,13 @@ import { IMAGES } from "@/lib/demo-images";
 import { SEASONS } from "@/lib/landing-data";
 
 const STEPS = [
+  // TODO(asset-replace): step photos (selfie, selfieAlt, outfitRight) are women-only stock.
   {
     n: "01",
     title: "Upload a selfie",
     desc: "Take a clear photo in natural light — no makeup filters, no studio needed.",
     image: IMAGES.selfie,
-    alt: "Woman taking a selfie for color analysis",
+    alt: "Person taking a selfie for color analysis",
   },
   {
     n: "02",
@@ -24,7 +25,7 @@ const STEPS = [
     title: "Get your palette",
     desc: "Receive your seasonal type plus 8 core colors for clothes, makeup, and style.",
     image: IMAGES.outfitRight,
-    alt: "Woman wearing colors from her seasonal palette",
+    alt: "Outfit in colors from your seasonal palette",
     palette: SEASONS[1].palette,
     season: "Soft Summer",
   },

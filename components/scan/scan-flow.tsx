@@ -1,20 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SelfieCapture } from "@/components/selfie/selfie-capture";
-import { BottomNav } from "@/components/nav/bottom-nav";
+import { AppChrome } from "@/components/nav/app-chrome";
+import { ScanPaywallModal } from "@/components/billing/scan-paywall-modal";
 import { loadQuizProfile, type QuizProfile } from "@/lib/quiz";
 import {
-  SCAN_API_ENDPOINT,
   adaptAiScanResultToOutfitScanResult,
   buildOutfitScanFormData,
-  formatScanHistoryItems,
+  parseDetectedColorToken,
   requestAiScanResult,
   type OutfitScanResult,
-  type ScanHistoryApiRecord,
-  type ScanHistoryItemForUi,
   type ScanRequestType,
   validateOutfitImage,
 } from "@/lib/outfit-scan";
@@ -23,7 +20,6 @@ import {
   saveRestoredQuizProfileToBrowserStorage,
 } from "@/lib/profile-restore";
 import { createClient } from "@/lib/supabase";
-import { QuizStepHead } from "@/components/quiz/quiz-picker";
 import {
   addWardrobeItem,
   fileToDataUrl,
@@ -66,7 +62,7 @@ const SCAN_TYPES: { id: ScanRequestType; title: string; sub: string; tip: string
   },
 ];
 
-type Step = "type" | "upload" | "processing" | "result";
+type Step = "upload" | "processing" | "result";
 
 const PROCESSING_MSGS = ["Reading colors...", "Matching to your palette...", "Building your verdict..."];
 
@@ -74,32 +70,20 @@ export function ScanFlow() {
   const router = useRouter();
   const scanFeatureEnabled = isScanFeatureEnabled();
   const [profile, setProfile] = useState<QuizProfile | null>(null);
-  const [step, setStep] = useState<Step>("type");
+  const [step, setStep] = useState<Step>("upload");
   const [scanType, setScanType] = useState<ScanRequestType>("clothing_item");
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<OutfitScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
-  const [scanHistory, setScanHistory] = useState<ScanHistoryItemForUi[]>([]);
+  const [displayName, setDisplayName] = useState("there");
+  const [dragOver, setDragOver] = useState(false);
   const [processingMsg, setProcessingMsg] = useState(PROCESSING_MSGS[0]);
   const [creditState, setCreditState] = useState<ScanCreditState | null>(null);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [scanSubtitle, setScanSubtitle] = useState("Scan it before you buy it");
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const refreshScanHistory = useCallback(async () => {
-    if (!scanFeatureEnabled) return;
-
-    try {
-      const res = await fetch(SCAN_API_ENDPOINT);
-      if (!res.ok) {
-        setScanHistory([]);
-        return;
-      }
-      const data = (await res.json()) as { scans?: ScanHistoryApiRecord[] };
-      setScanHistory(formatScanHistoryItems(data.scans ?? []));
-    } catch {
-      setScanHistory([]);
-    }
-  }, [scanFeatureEnabled]);
 
   useEffect(() => {
     if (step !== "processing") return;
@@ -111,6 +95,16 @@ export function ScanFlow() {
     }, 2200);
     return () => window.clearInterval(id);
   }, [step]);
+
+  useEffect(() => {
+    if (!file) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   useEffect(() => {
     if (!scanFeatureEnabled) return;
@@ -130,6 +124,12 @@ export function ScanFlow() {
             data: { user },
           } = await supabase.auth.getUser();
           if (!cancelled) setIsSignedIn(Boolean(user));
+          if (!cancelled && user?.email) {
+            const local = user.email.split("@")[0]?.trim();
+            setDisplayName(
+              local ? local.charAt(0).toUpperCase() + local.slice(1) : "there"
+            );
+          }
 
           if (user) {
             const restored = await loadSupabaseQuizProfile(supabase, user.id);
@@ -169,17 +169,6 @@ export function ScanFlow() {
     setCreditState(getBrowserScanCreditState());
   }, [scanFeatureEnabled]);
 
-  useEffect(() => {
-    if (!scanFeatureEnabled) return;
-
-    if (!isSignedIn) {
-      setScanHistory([]);
-      return;
-    }
-
-    void refreshScanHistory();
-  }, [isSignedIn, refreshScanHistory, scanFeatureEnabled]);
-
   const selectedType = SCAN_TYPES.find((t) => t.id === scanType) ?? SCAN_TYPES[0];
 
   const handleFile = async (next: File) => {
@@ -192,7 +181,7 @@ export function ScanFlow() {
     const creditAttempt = consumeBrowserScanCredits(scanType);
     setCreditState(creditAttempt);
     if (!creditAttempt.ok) {
-      setError(creditAttempt.message ?? "Your free weekly style checks are used for this week.");
+      setPaywallOpen(true);
       return;
     }
 
@@ -213,7 +202,6 @@ export function ScanFlow() {
       const data = await requestAiScanResult(formData);
       setResult(adaptAiScanResultToOutfitScanResult(data));
       setStep("result");
-      if (isSignedIn) void refreshScanHistory();
     } catch (err) {
       console.error("[scan] Scan flow failed", err);
       setCreditState(refundBrowserScanCredits(scanType));
@@ -222,123 +210,272 @@ export function ScanFlow() {
     }
   };
 
+  useEffect(() => {
+    if (!profile) return;
+    const sub = profile.subSeason ?? profile.seasonId;
+    const subs = [
+      `Let's see if this works for your ${sub} palette`,
+      "Your palette knows best — let's check",
+      "Not sure about that piece? Let's find out",
+      "Scan it before you buy it",
+    ];
+    setScanSubtitle(subs[Math.floor(Math.random() * subs.length)] ?? subs[0]!);
+  }, [profile]);
+
+  const tryOpenPaywall = () => {
+    const state = creditState ?? getBrowserScanCreditState();
+    const cost = getScanCreditCost(scanType);
+    if (state.remaining < cost) {
+      setPaywallOpen(true);
+      return true;
+    }
+    return false;
+  };
+
+  const resetScan = () => {
+    setFile(null);
+    setResult(null);
+    setError(null);
+    setStep("upload");
+  };
+
+  const subSeason = profile?.subSeason ?? profile?.seasonId ?? "palette";
+  const remaining = creditState?.remaining ?? DEFAULT_WEEKLY_SCAN_CREDITS;
+  const outOfScans = remaining <= 0;
+
   if (!scanFeatureEnabled) {
     return <ScanComingSoon />;
   }
 
   if (!profile) {
     return (
-      <div className="app-shell">
-        <p style={{ textAlign: "center", padding: 48, fontFamily: "var(--sans)", color: "var(--ink-soft)" }}>
-          Loading…
-        </p>
-      </div>
+      <AppChrome className="app-chrome--scan">
+        <div className="app-shell">
+          <p style={{ textAlign: "center", padding: 48, fontFamily: "var(--sans)", color: "var(--ink-soft)" }}>
+            Loading…
+          </p>
+        </div>
+      </AppChrome>
     );
   }
 
   return (
-    <div className="app-shell">
-      <header className="app-topbar glass-nav">
-        <Link href="/home" className="wordmark app-topbar__wordmark">
-          palette<span className="me">me</span>
-        </Link>
-        <span className="app-chip app-chip--pink">
-          {creditState ? `${creditState.remaining}/${creditState.allowance} weekly` : "scan"}
-        </span>
-      </header>
+    <AppChrome className="app-chrome--scan">
+      <div className="app-shell scan-page">
+        <ScanPaywallModal open={paywallOpen} onClose={() => setPaywallOpen(false)} />
 
-      <main className="app-shell__main">
-        {step === "type" && (
-          <>
-            <QuizStepHead kicker="scan" title="What are you scanning?" />
-            <div className="scan-type-grid">
+        <main className="scan-page__main">
+          <header className="scan-page__hero">
+            <div className="scan-page__hero-copy">
+              <p className="scan-page__eyebrow">
+                ready to scan, {displayName.toLowerCase()} <span aria-hidden>✦</span>
+              </p>
+              <h1 className="scan-page__title">
+                Scan an <span className="scan-page__title-script">item</span>
+              </h1>
+              <p className="scan-page__subtitle">{scanSubtitle}</p>
+            </div>
+            <p className="scan-page__credits-pill" aria-live="polite">
+              <span aria-hidden>✦</span> {remaining} scans left
+            </p>
+          </header>
+
+          <section className="scan-page__type-panel" aria-label="Scan type">
+            <p className="scan-page__type-label">What are you scanning?</p>
+            <div className="scan-page__type-row" role="tablist">
               {SCAN_TYPES.map((opt) => (
                 <button
                   key={opt.id}
                   type="button"
-                  className={`scan-type-card${scanType === opt.id ? " scan-type-card--selected" : ""}`}
+                  role="tab"
+                  aria-selected={scanType === opt.id}
+                  className={`scan-page__type-chip${scanType === opt.id ? " scan-page__type-chip--active" : ""}`}
                   onClick={() => setScanType(opt.id)}
                 >
-                  <span className="scan-type-card__title">{opt.title}</span>
-                  <span className="scan-type-card__sub">{opt.sub}</span>
-                  <span className="scan-type-card__credit">
-                    {getScanCreditCost(opt.id)} {getScanCreditCost(opt.id) === 1 ? "credit" : "credits"}
-                  </span>
+                  {opt.title}
                 </button>
               ))}
             </div>
-            <CreditBank state={creditState} />
-            <button type="button" className="btn" style={{ width: "100%", marginTop: 20 }} onClick={() => setStep("upload")}>
-              continue
-            </button>
-          </>
-        )}
+          </section>
 
-        {step === "upload" && (
-          <>
-            <QuizStepHead kicker="upload" title={`Upload your ${selectedType.title.toLowerCase()}`} />
-            <SelfieCapture
-              onFile={handleFile}
-              maxWidth={720}
-              title="Take photo or upload"
-              cameraFacingMode="environment"
-              captureLabel="capture item"
-              capturedFilePrefix="paletteme-scan"
-              detail="JPG, PNG, or WebP · max 10 MB"
-            />
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              hidden
-              onChange={(e) => {
-                const next = e.target.files?.[0];
-                if (next) void handleFile(next);
-              }}
-            />
-            <p className="scan-tip">{selectedType.tip}</p>
-            <CreditBank state={creditState} cost={getScanCreditCost(scanType)} />
-            {error ? <p className="quiz-page__inline-error">{error}</p> : null}
-            {isSignedIn ? <ScanHistoryList items={scanHistory} /> : null}
-            <button type="button" className="quiz__redo" onClick={() => setStep("type")}>
-              change scan type
-            </button>
-          </>
-        )}
-
-        {step === "processing" && (
-          <div className="quiz-page__panel on quiz-page__calculating" style={{ display: "block" }}>
-            <div className="quiz-page__spinner" />
-            <p className="quiz-page__wait">{processingMsg}</p>
-          </div>
-        )}
-
-        {step === "result" && result && (
-          <>
-            <ScanResultView result={result} scanType={scanType} file={file} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 20 }}>
-              <button
-                type="button"
-                className="btn"
-                style={{ width: "100%" }}
-                onClick={() => {
-                  setFile(null);
-                  setResult(null);
-                  setStep("type");
+          <div className="scan-page__workspace">
+            <section className="scan-page__upload-col">
+              <div
+                className={`scan-page__card scan-page__dropzone${dragOver ? " scan-page__dropzone--active" : ""}${outOfScans ? " scan-page__dropzone--locked" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (!outOfScans) setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  if (outOfScans || tryOpenPaywall()) return;
+                  const dropped = e.dataTransfer.files?.[0];
+                  if (dropped) void handleFile(dropped);
                 }}
               >
-                scan something else
-              </button>
-              <Link href="/home" className="p2-result__cta-link" style={{ textAlign: "center" }}>
-                back to home
-              </Link>
-            </div>
-          </>
-        )}
-      </main>
+                {!previewUrl ? (
+                  <div className="scan-page__dropzone-empty">
+                    <span className="scan-page__dropzone-icon" aria-hidden>
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <rect x="4" y="7" width="16" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+                        <circle cx="12" cy="13" r="3" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M9 7V5.5A2.5 2.5 0 0 1 11.5 3h1A2.5 2.5 0 0 1 15 5.5V7" stroke="currentColor" strokeWidth="1.8" />
+                      </svg>
+                    </span>
+                    <h2 className="scan-page__dropzone-title">
+                      Take a photo or upload from gallery
+                    </h2>
+                    <p className="scan-page__dropzone-sub">
+                      Drag &amp; drop here, or use a button below.
+                    </p>
+                    <div className="scan-page__dropzone-actions">
+                      <button
+                        type="button"
+                        className="scan-page__primary-btn"
+                        onClick={() => {
+                          if (tryOpenPaywall()) return;
+                          inputRef.current?.click();
+                        }}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+                          <rect x="4" y="7" width="16" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+                          <circle cx="12" cy="13" r="3" stroke="currentColor" strokeWidth="1.8" />
+                          <path d="M9 7V5.5A2.5 2.5 0 0 1 11.5 3h1A2.5 2.5 0 0 1 15 5.5V7" stroke="currentColor" strokeWidth="1.8" />
+                        </svg>
+                        Take photo
+                      </button>
+                      <button
+                        type="button"
+                        className="scan-page__ghost-btn"
+                        onClick={() => {
+                          if (tryOpenPaywall()) return;
+                          inputRef.current?.click();
+                        }}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+                          <path d="M12 16V4m0 0 4 4m-4-4-4 4M4 18v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        </svg>
+                        Upload image
+                      </button>
+                    </div>
+                    <p className="scan-page__dropzone-meta">JPG, PNG — clothing, makeup, accessories</p>
+                  </div>
+                ) : (
+                  <div className="scan-page__upload-active">
+                    <div className="scan-page__upload-thumb-wrap">
+                      {previewUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={previewUrl} alt="Scanned item" className="scan-page__upload-thumb" />
+                      ) : null}
+                      {step === "processing" ? (
+                        <div className="scan-page__upload-thumb-overlay" aria-hidden>
+                          <div className="quiz-page__spinner" />
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="scan-page__upload-status">
+                      {step === "processing" ? (
+                        <>
+                          <p className="scan-page__upload-kicker">working</p>
+                          <h3 className="scan-page__upload-title scan-page__upload-title--pulse">
+                            {processingMsg}
+                          </h3>
+                          <p className="scan-page__upload-sub">
+                            Reading hues, undertone and contrast.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="scan-page__upload-kicker">ready</p>
+                          <h3 className="scan-page__upload-title">Your scan is in.</h3>
+                          <button type="button" className="scan-page__ghost-btn" onClick={resetScan}>
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+                              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                            </svg>
+                            Try another image
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
 
-      <BottomNav />
-    </div>
+                {outOfScans ? (
+                  <div className="scan-page__lock-overlay">
+                    <span className="scan-page__lock-icon" aria-hidden>
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.6" />
+                        <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="1.6" />
+                      </svg>
+                    </span>
+                    <h3>You&apos;ve used all your free scans</h3>
+                    <p>Unlock more to keep checking pieces before you buy.</p>
+                    <button type="button" className="home-hub__scan-cta" onClick={() => setPaywallOpen(true)}>
+                      get more scans
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+                hidden
+                onChange={(e) => {
+                  const next = e.target.files?.[0];
+                  if (next) void handleFile(next);
+                }}
+              />
+              {error ? <p className="quiz-page__inline-error">{error}</p> : null}
+            </section>
+
+            <section className="scan-page__result-col">
+              {step === "result" && result ? (
+                <div className="scan-page__card scan-page__result-card scan-page__result-card--solid">
+                  <ReferenceScanResult
+                    result={result}
+                    scanType={scanType}
+                    file={file}
+                    onScanAnother={resetScan}
+                  />
+                </div>
+              ) : step === "processing" ? (
+                <div className="scan-page__card scan-page__result-card scan-page__result-card--solid">
+                  <div className="scan-page__placeholder scan-page__placeholder--loading">
+                    <div className="scan-page__skeleton scan-page__skeleton--tiny" aria-hidden />
+                    <div className="scan-page__skeleton scan-page__skeleton--title" aria-hidden />
+                    <div className="scan-page__skeleton scan-page__skeleton--short" aria-hidden />
+                    <div className="scan-page__skeleton scan-page__skeleton--circle" aria-hidden />
+                    <div className="scan-page__skeleton scan-page__skeleton--bar" aria-hidden />
+                  </div>
+                </div>
+              ) : (
+                <div className="scan-page__card scan-page__result-card">
+                  <p className="scan-page__result-kicker">result</p>
+                  <h3 className="scan-page__placeholder-title">Your result will appear here</h3>
+                  <p className="scan-page__placeholder-sub">
+                    <span className="scan-page__placeholder-sub--desktop">
+                      Upload an item on the left and we&apos;ll match it against your{" "}
+                      <strong>{subSeason}</strong> palette.
+                    </span>
+                    <span className="scan-page__placeholder-sub--mobile">
+                      Upload an item above and we&apos;ll match it against your{" "}
+                      <strong>{subSeason}</strong> palette.
+                    </span>
+                  </p>
+                </div>
+              )}
+            </section>
+          </div>
+
+          <p className="scan-page__hint">{selectedType.tip}</p>
+        </main>
+      </div>
+    </AppChrome>
   );
 }
 
@@ -346,14 +483,8 @@ function ScanComingSoon() {
   const copy = getScanComingSoonCopy();
 
   return (
-    <div className="app-shell">
-      <header className="app-topbar glass-nav">
-        <Link href="/home" className="wordmark app-topbar__wordmark">
-          palette<span className="me">me</span>
-        </Link>
-        <span className="app-chip app-chip--pink">soon</span>
-      </header>
-
+    <AppChrome className="app-chrome--scan">
+      <div className="app-shell">
       <main className="app-shell__main">
         <section className="scan-coming-soon" aria-labelledby="scan-coming-soon-title">
           <p className="scan-coming-soon__kicker">{copy.kicker}</p>
@@ -376,63 +507,8 @@ function ScanComingSoon() {
           </div>
         </section>
       </main>
-
-      <BottomNav />
-    </div>
-  );
-}
-
-function CreditBank({
-  state,
-  cost,
-}: {
-  state: ScanCreditState | null;
-  cost?: number;
-}) {
-  const remaining = state?.remaining ?? DEFAULT_WEEKLY_SCAN_CREDITS;
-  const allowance = state?.allowance ?? DEFAULT_WEEKLY_SCAN_CREDITS;
-  const width = `${Math.round((remaining / allowance) * 100)}%`;
-
-  return (
-    <aside className="scan-credit-bank" aria-label="Weekly scan credits">
-      <div className="scan-credit-bank__top">
-        <span>weekly style checks</span>
-        <strong>{remaining} left</strong>
       </div>
-      <div className="scan-credit-bank__bar" aria-hidden>
-        <span style={{ width }} />
-      </div>
-      <p>
-        {cost
-          ? `This scan uses ${cost} ${cost === 1 ? "credit" : "credits"}. Credits refresh every week.`
-          : "Your first weekly checks are free while we test accuracy. Later, heavier usage may move to scan packs or Pro."}
-      </p>
-    </aside>
-  );
-}
-
-function ScanHistoryList({ items }: { items: ScanHistoryItemForUi[] }) {
-  if (items.length === 0) return null;
-
-  return (
-    <>
-      {items.map((item) => (
-        <article key={item.id} className="scan-result">
-          {item.thumbnailUrl && (
-            <div className="wardrobe-card__img" style={{ width: 72, marginBottom: 12 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.thumbnailUrl} alt={`${item.scanTypeLabel} scan`} />
-            </div>
-          )}
-          <span className={`scan-result__badge scan-result__badge--${item.verdictTone}`}>
-            {item.verdictLabel}
-          </span>
-          <p className="scan-result__score">{item.scoreText}</p>
-          <h3 className="scan-result__heading">{item.scanTypeLabel}</h3>
-          <p className="p2-result__prose">{item.dateScanned}</p>
-        </article>
-      ))}
-    </>
+    </AppChrome>
   );
 }
 
@@ -449,26 +525,38 @@ function scanVerdict(result: OutfitScanResult): { label: string; tone: "yes" | "
   return { label: "Skip this one", tone: "no" };
 }
 
-function ScanResultView({
+function buySkipVerdict(result: OutfitScanResult): { action: "buy" | "skip"; reason: string } {
+  const verdict = scanVerdict(result);
+  const reason = result.reason?.trim() || result.suggestion?.trim() || "Based on your palette match.";
+  if (verdict.tone === "yes") {
+    return { action: "buy", reason };
+  }
+  return { action: "skip", reason };
+}
+
+function ReferenceScanResult({
   result,
   scanType,
   file,
+  onScanAnother,
 }: {
   result: OutfitScanResult;
   scanType: ScanRequestType;
   file: File | null;
+  onScanAnother: () => void;
 }) {
-  const score10 = (result.score / 10).toFixed(1);
-  const verdict = scanVerdict(result);
+  const verdict = buySkipVerdict(result);
+  const isYes = verdict.action === "buy";
+  const matchPct = Math.round(result.score);
+  const parsedColor = parseDetectedColorToken(result.dominant_colors[0]);
   const [saved, setSaved] = useState(false);
 
   const saveToWardrobe = async () => {
     if (!file || scanType === "makeup" || scanType === "product_screenshot") return;
     const imageDataUrl = await fileToDataUrl(file);
-    const dominant = result.dominant_colors[0] ?? "Detected color";
     addWardrobeItem({
       category: scanType === "outfit" ? "Outfit" : "Top",
-      color: dominant,
+      color: parsedColor.name,
       paletteMatch: scanScoreToMatch(result.score),
       imageDataUrl,
     });
@@ -476,65 +564,70 @@ function ScanResultView({
   };
 
   return (
-    <div className="scan-result">
-      <span className={`scan-result__badge scan-result__badge--${verdict.tone}`}>
-        {verdict.label}
-      </span>
-      <p className="scan-result__score">{score10} / 10</p>
-      {result.confidence != null ? (
-        <p className="p2-result__prose">Confidence: {result.confidence}%</p>
+    <article className="scan-ref-result">
+      <div className={`scan-ref-result__head scan-ref-result__head--${isYes ? "yes" : "skip"}`}>
+        <span className="scan-ref-result__badge" aria-hidden>
+          {isYes ? (
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M5 12l4 4L19 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          )}
+        </span>
+        <h3 className="scan-ref-result__verdict">
+          {isYes ? "YES — this works for you" : "SKIP — doesn't suit your palette"}
+        </h3>
+      </div>
+
+      <p className="scan-ref-result__reason">{verdict.reason}</p>
+
+      <div className="scan-ref-result__color">
+        <span
+          className="scan-ref-result__swatch"
+          style={{ background: parsedColor.hex ?? "var(--blush)" }}
+          aria-hidden
+        />
+        <div className="scan-ref-result__color-copy">
+          <p className="scan-ref-result__color-kicker">color detected</p>
+          <p className="scan-ref-result__color-name">{parsedColor.name}</p>
+        </div>
+        {parsedColor.hex ? (
+          <code className="scan-ref-result__color-hex">{parsedColor.hex}</code>
+        ) : null}
+      </div>
+
+      <div className="scan-ref-result__match">
+        <div className="scan-ref-result__match-top">
+          <span>match with your palette</span>
+          <strong>{matchPct}%</strong>
+        </div>
+        <div className="scan-ref-result__match-bar" aria-hidden>
+          <span style={{ width: `${matchPct}%` }} />
+        </div>
+      </div>
+
+      {result.suggestion ? (
+        <p className="scan-ref-result__tip">{result.suggestion}</p>
       ) : null}
-      <h3 className="scan-result__heading">Why</h3>
-      <p className="p2-result__prose">{result.reason}</p>
-      <h3 className="scan-result__heading">What to change</h3>
-      <p className="p2-result__prose">{result.suggestion}</p>
-      {result.dominant_colors.length > 0 && (
-        <>
-          <h3 className="scan-result__heading">Color read</h3>
-          <div className="scan-result__alts">
-            {result.dominant_colors.slice(0, 3).map((c) => (
-              <span key={c} className="app-chip">
-                {c}
-              </span>
-            ))}
-          </div>
-        </>
-      )}
-      {result.stylingTips.length > 0 && (
-        <>
-          <h3 className="scan-result__heading">Styling tips</h3>
-          <div className="scan-result__alts">
-            {result.stylingTips.slice(0, 3).map((tip) => (
-              <span key={tip} className="app-chip">
-                {tip}
-              </span>
-            ))}
-          </div>
-        </>
-      )}
-      {result.betterAlternatives.length > 0 && (
-        <>
-          <h3 className="scan-result__heading">Better alternatives</h3>
-          <div className="scan-result__alts">
-            {result.betterAlternatives.slice(0, 3).map((alternative) => (
-              <span key={alternative} className="app-chip">
-                {alternative}
-              </span>
-            ))}
-          </div>
-        </>
-      )}
-      {(scanType === "clothing_item" || scanType === "outfit") && file && (
-        <button
-          type="button"
-          className="btn btn--ghost"
-          style={{ width: "100%", marginTop: 16 }}
-          disabled={saved}
-          onClick={() => void saveToWardrobe()}
-        >
-          {saved ? "saved to wardrobe" : "save to wardrobe"}
+
+      <div className="scan-ref-result__actions">
+        <button type="button" className="home-hub__scan-cta" onClick={onScanAnother}>
+          scan another
         </button>
-      )}
-    </div>
+        {(scanType === "clothing_item" || scanType === "outfit") && file ? (
+          <button
+            type="button"
+            className="scan-page__ghost-btn"
+            disabled={saved}
+            onClick={() => void saveToWardrobe()}
+          >
+            {saved ? "saved to wardrobe" : "save this result"}
+          </button>
+        ) : null}
+      </div>
+    </article>
   );
 }

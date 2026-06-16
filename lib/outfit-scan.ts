@@ -101,6 +101,8 @@ export type ScanHistoryItemForUi = {
   verdictTone: "yes" | "no";
   scoreText: string;
   scanTypeLabel: string;
+  colorLabel: string;
+  colorHex: string | null;
   dateScanned: string;
 };
 
@@ -258,6 +260,7 @@ export function formatScanHistoryItems(
       const result = record.result ?? {};
       const score = clampScore(result.score);
       const works = result.verdict === "great" || result.verdict === "works_with_styling" || score >= 60;
+      const parsedColor = parseDetectedColorToken(result.item?.colors?.[0]);
       return {
         id: record.id ?? `${record.createdAt ?? "scan"}-${index}`,
         thumbnailUrl: result.image_url ?? result.image?.url ?? null,
@@ -265,6 +268,8 @@ export function formatScanHistoryItems(
         verdictTone: works ? "yes" : "no",
         scoreText: `${(score / 10).toFixed(1)} / 10`,
         scanTypeLabel: scanTypeLabel(record.scanType ?? result.scanType),
+        colorLabel: parsedColor.name,
+        colorHex: parsedColor.hex,
         dateScanned: formatScanDate(record.createdAt, locale),
       };
     });
@@ -285,6 +290,17 @@ function formatNamedColors(hexes: string[], names: string[] = []): string[] {
     const name = names[index]?.trim();
     return name ? `${name} ${hex}` : hex;
   });
+}
+
+export function parseDetectedColorToken(raw: string | undefined): { name: string; hex: string | null } {
+  if (!raw?.trim()) {
+    return { name: "Detected color", hex: null };
+  }
+
+  const hexMatch = raw.match(/#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})\b/);
+  const hex = hexMatch?.[0] ?? (raw.trim().startsWith("#") ? raw.trim() : null);
+  const name = raw.replace(/#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})\b/g, "").trim() || raw.trim();
+  return { name, hex };
 }
 
 function scanTypeLabel(value: string | undefined): string {

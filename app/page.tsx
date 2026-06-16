@@ -131,6 +131,7 @@ export default function Home() {
             </h2>
           </div>
           <div className="rgrid">
+            {/* TODO(asset-replace): REVIEWS portraits are women-only stock — see lib/landing-data.ts. */}
             {REVIEWS.map((r) => (
               <figure key={r.role} className="review">
                 <div className="review__photo">

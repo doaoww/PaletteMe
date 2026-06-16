@@ -171,10 +171,10 @@ export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
           <button type="button" style={backBtn} onClick={() => setMode("choice")}>
             back
           </button>
-          <h1 style={heading}>Save your results</h1>
+          <h1 style={heading}>Save your color results</h1>
           <p style={sub}>
-            {isSignUp ? "Create a free account" : "Sign in"} to see your palette
-            and keep it on any device.
+            {isSignUp ? "Create a free account" : "Sign in"} with email and password
+            to unlock your full palette report.
           </p>
           <form onSubmit={handleEmailSubmit} style={form}>
             <input
@@ -223,11 +223,11 @@ export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
   return (
     <main style={screen}>
       <section style={card}>
-        <p style={kicker}>one last step</p>
-        <h1 style={heading}>Save your results</h1>
+        <p style={kicker}>your results are ready</p>
+        <h1 style={heading}>Save your color results</h1>
         <p style={sub}>
-          Create a free account to see your palette, quiz answers, and style
-          profile — and keep them with you on any device.
+          Create a free account with email and password so your palette, season,
+          and style profile stay with you on any device.
         </p>
 
         <button type="button" style={btnGoogle} onClick={handleGoogle}>

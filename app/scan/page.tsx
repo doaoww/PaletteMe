@@ -1,5 +1,6 @@
 import { ScanFlow } from "@/components/scan/scan-flow";
 import "../app-shell.css";
+import "./scan.css";
 import "../quiz/quiz.css";
 
 export const metadata = {

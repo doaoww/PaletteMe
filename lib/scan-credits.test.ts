@@ -37,8 +37,8 @@ test("starts each new weekly period with the default allowance", () => {
   const nextWeek = new Date("2026-06-22T10:00:00.000Z");
 
   assert.equal(getScanCreditState(storage, firstWeek).remaining, DEFAULT_WEEKLY_SCAN_CREDITS);
-  assert.equal(consumeScanCredits(storage, "outfit", firstWeek).remaining, 3);
-  assert.equal(getScanCreditState(storage, firstWeek).remaining, 3);
+  assert.equal(consumeScanCredits(storage, "outfit", firstWeek).remaining, 1);
+  assert.equal(getScanCreditState(storage, firstWeek).remaining, 1);
   assert.equal(getScanCreditState(storage, nextWeek).remaining, DEFAULT_WEEKLY_SCAN_CREDITS);
 });
 
@@ -59,7 +59,7 @@ test("refunds consumed credits without exceeding the weekly allowance", () => {
   const storage = new MemoryStorage();
   const now = new Date("2026-06-15T10:00:00.000Z");
 
-  assert.equal(consumeScanCredits(storage, "outfit", now).remaining, 3);
-  assert.equal(refundScanCredits(storage, "outfit", now).remaining, 5);
-  assert.equal(refundScanCredits(storage, "outfit", now).remaining, 5);
+  assert.equal(consumeScanCredits(storage, "outfit", now).remaining, 1);
+  assert.equal(refundScanCredits(storage, "outfit", now).remaining, 3);
+  assert.equal(refundScanCredits(storage, "outfit", now).remaining, 3);
 });

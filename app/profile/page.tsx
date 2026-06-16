@@ -16,6 +16,7 @@ import { PostQuizAuthScreen } from "@/components/auth/post-quiz-auth-screen";
 import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
 import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe-store";
 import "./profile.css";
+import "./color-insights-report.css";
 import "../app-shell.css";
 
 const PROFILE_PREMIUM_ENV = {

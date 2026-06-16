@@ -249,6 +249,7 @@ export const SEASON_PRODUCTS: Record<string, SeasonProduct[]> = {
 };
 
 export const REVIEWS = [
+  // TODO(asset-replace): review-autumn/spring/summer photos are women-only portraits.
   {
     role: "True Autumn",
     photo: "/images/review-autumn.jpg",
@@ -267,6 +268,7 @@ export const REVIEWS = [
 ];
 
 export const SOCIAL_PROOF = [
+  // TODO(asset-replace): Unsplash avatars below are women-only — diversify for launch.
   {
     name: "Maya K.",
     seasonId: "summer",

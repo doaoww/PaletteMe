@@ -6,6 +6,7 @@ import { IMAGES } from "@/lib/demo-images";
 import { SEASONS } from "@/lib/landing-data";
 
 const SEASON_PORTRAITS = [
+  // TODO(asset-replace): season review portraits are women-only stock.
   IMAGES.reviewSpring,
   IMAGES.reviewSummer,
   IMAGES.reviewAutumn,
@@ -13,6 +14,7 @@ const SEASON_PORTRAITS = [
 ];
 
 // left panel — top mini
+// TODO(asset-replace): season outfit/palette demo images are women-only stock.
 const SEASON_LEFT_TOP = [
   IMAGES.springOutfit2,
   IMAGES.summerOutfit2,

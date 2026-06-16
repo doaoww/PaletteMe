@@ -42,8 +42,7 @@ export function TopBar() {
         <nav className="navlinks">
           <a href="#free">how it works</a>
           <a href="#features">features</a>
-          <Link href="/quiz">quiz</Link>
-          <a href="#waitlist">waitlist</a>
+          <a href="#pricing">pricing</a>
           <a href="#faq">faq</a>
         </nav>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

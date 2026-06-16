@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { CreditPill } from "@/components/nav/credit-pill";
 import { LS_USER_ID, type QuizProfile } from "@/lib/quiz";
 import type { Season } from "@/lib/landing-data";
 import type { ColorIntelligenceReport } from "@/lib/color-intelligence";
@@ -26,7 +27,7 @@ import {
   getBrowserScanCreditState,
   type ScanCreditState,
 } from "@/lib/scan-credits";
-import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan-feature";
+import { ColorInsightsReport } from "@/components/profile/color-insights-report";
 
 const SLIDE_COUNT = 5;
 const ONBOARDING_SLIDE_COUNT = 3;
@@ -38,12 +39,6 @@ type ExportMode = "png" | "pdf" | null;
 type OnboardingState = "checking" | "show" | "seen";
 
 const carouselViewportStyle: React.CSSProperties = {
-  width: "100vw",
-  maxWidth: "100vw",
-  height: "100dvh",
-  minHeight: "620px",
-  marginLeft: "calc(50% - 50vw)",
-  marginRight: "calc(50% - 50vw)",
   background: "var(--cream-3)",
 };
 
@@ -67,6 +62,10 @@ const centeredSlideContentStyle: React.CSSProperties = {
   maxWidth: 480,
   marginLeft: "auto",
   marginRight: "auto",
+};
+
+const scrollSectionStyle: React.CSSProperties = {
+  width: "100%",
 };
 
 const centeredSlideControlStyle: React.CSSProperties = {
@@ -107,12 +106,12 @@ function makeupOneLiner(season: Season, report: ColorIntelligenceReport): string
     const lips = report.makeup.lips[0]?.toLowerCase() ?? "peachy lips";
     const eyes = report.makeup.eyes[0]?.toLowerCase() ?? "bronze shadow";
     const metal = report.jewelry.metals[0]?.toLowerCase() ?? "gold jewelry";
-    return `${lips} · ${eyes} · ${metal}`;
+    return `${lips} В· ${eyes} В· ${metal}`;
   }
   const lips = report.makeup.lips[0]?.toLowerCase() ?? "rose lips";
   const eyes = report.makeup.eyes[0]?.toLowerCase() ?? "taupe shadow";
   const metal = report.jewelry.metals[0]?.toLowerCase() ?? "silver jewelry";
-  return `${lips} · ${eyes} · ${metal}`;
+  return `${lips} В· ${eyes} В· ${metal}`;
 }
 
 function formatUndertoneIdentity(value: string): string {
@@ -343,7 +342,10 @@ function LabTopbar({
       <Link href="/home" className="rc-lab-icon" aria-label="Close results">
         x
       </Link>
-      <span className="rc-lab-wordmark">paletteme</span>
+      <div className="rc-lab-topbar__center">
+        <span className="rc-lab-wordmark">paletteme</span>
+        <CreditPill />
+      </div>
       <button
         type="button"
         className={`rc-lab-menu${menuOpen ? " rc-lab-menu--open" : ""}`}
@@ -351,7 +353,7 @@ function LabTopbar({
         aria-expanded={menuOpen}
         onClick={onMenuToggle}
       >
-        <span aria-hidden>···</span>
+        <span aria-hidden>В·В·В·</span>
       </button>
     </header>
   );
@@ -431,8 +433,8 @@ function LabFooter({
         <span>previous</span>
       </button>
       {isLast ? (
-        <Link href="/home" className="rc-lab-footer__primary">
-          <span>home</span>
+        <Link href="/scan" className="rc-lab-footer__primary">
+          <span>Scan your first clothing item</span>
           <span aria-hidden>{"\u2192"}</span>
         </Link>
       ) : (
@@ -489,13 +491,13 @@ function LabSwatchRow({
   return (
     <article className={`rc-lab-swatch-row${swatch.muted ? " rc-lab-swatch-row--muted" : ""}`}>
       <span
-        className="rc-lab-swatch"
+        className="rc-lab-swatch rc-lab-swatch--circle"
         style={buildResultSwatchStyle({
           hex: swatch.hex,
-          size: 54,
+          size: 48,
           border: swatch.border,
           gradient: swatch.gradient,
-          shape: "rect",
+          shape: "circle",
         })}
         aria-hidden
       />
@@ -504,6 +506,59 @@ function LabSwatchRow({
         <span>{reason}</span>
       </span>
     </article>
+  );
+}
+
+function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <header className="rc-section-header">
+      <h2 className="rc-section-header__title">{title}</h2>
+      {subtitle ? <p className="rc-section-header__sub">{subtitle}</p> : null}
+    </header>
+  );
+}
+
+function SwatchPreviewGrid({ swatches, muted }: { swatches: Swatch[]; muted?: boolean }) {
+  return (
+    <div className={`rc-swatch-preview-grid${muted ? " rc-swatch-preview-grid--muted" : ""}`} aria-hidden>
+      {swatches.map((swatch) => (
+        <span
+          key={swatch.name}
+          className="rc-swatch-preview-grid__item"
+          style={buildResultSwatchStyle({
+            hex: swatch.hex,
+            size: 44,
+            border: swatch.border,
+            gradient: swatch.gradient,
+            shape: "circle",
+          })}
+          title={swatch.name}
+        />
+      ))}
+    </div>
+  );
+}
+
+function PaletteGrid({ swatches }: { swatches: Swatch[] }) {
+  return (
+    <div className="rc-palette-grid">
+      {swatches.map((swatch) => (
+        <div key={swatch.name} className="rc-palette-grid__item">
+          <span
+            className="rc-palette-grid__swatch"
+            style={buildResultSwatchStyle({
+              hex: swatch.hex,
+              size: 56,
+              border: swatch.border,
+              gradient: swatch.gradient,
+              shape: "rect",
+            })}
+            aria-hidden
+          />
+          <span className="rc-palette-grid__label">{swatch.name}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -658,22 +713,12 @@ export function ResultCarousel({
   subSeason: string;
   confidence?: number;
 }) {
-  const [slide, setSlide] = useState(0);
   const [onboardingState, setOnboardingState] = useState<OnboardingState>("checking");
   const [onboardingUserId, setOnboardingUserId] = useState<string | null>(null);
   const [exportMode, setExportMode] = useState<ExportMode>(null);
-  const [creditState, setCreditState] = useState<ScanCreditState | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
   const exportStackRef = useRef<HTMLDivElement>(null);
-  const exportSlideRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const animatedConfidence = useCountUp(confidence);
 
   const palette12 = buildSeasonPaletteSwatches(season, subSeason);
-  const shoppingSkip = buildSeasonAvoidSwatches(season, undefined, 5, subSeason);
-  const metalSwatches = buildSeasonMetalSwatches(season, report, subSeason);
-  const neutralSwatches = buildSeasonNeutralSwatches(season, report, subSeason);
   const downloadSeasonName = subSeason || season.name;
   const onboardingCopy = buildResultOnboardingCopy({
     seasonId: season.id,
@@ -683,23 +728,6 @@ export function ResultCarousel({
   });
 
   const previewColors = buildPreviewColors(season, 5, subSeason);
-  const identityFacts = [
-    formatUndertoneIdentity(profile.undertoneHint),
-    formatContrastIdentity(profile),
-    secondaryInfluence(season, subSeason),
-  ];
-  const glowList = palette12.slice(0, 5);
-  const avoidList = shoppingSkip.slice(0, 4);
-  const energyWords = styleEnergyWords(season);
-  const archetype = styleArchetype(season, subSeason);
-  const weeklyAllowance = creditState?.allowance ?? DEFAULT_WEEKLY_SCAN_CREDITS;
-  const weeklyUsed = Math.min(weeklyAllowance, creditState?.used ?? 0);
-  const scanEnabled = isScanFeatureEnabled();
-  const scanCopy = getScanComingSoonCopy();
-  const weeklyProgress = `${Math.round((weeklyUsed / weeklyAllowance) * 100)}%`;
-
-  const goNext = useCallback(() => setSlide((s) => Math.min(s + 1, SLIDE_COUNT - 1)), []);
-  const goPrev = useCallback(() => setSlide((s) => Math.max(s - 1, 0)), []);
 
   useEffect(() => {
     try {
@@ -711,10 +739,6 @@ export function ResultCarousel({
     }
   }, [profile.completedAt]);
 
-  useEffect(() => {
-    setCreditState(getBrowserScanCreditState());
-  }, []);
-
   const completeResultOnboarding = useCallback(() => {
     try {
       markResultOnboardingSeen(window.localStorage, onboardingUserId);
@@ -723,26 +747,6 @@ export function ResultCarousel({
     }
     setOnboardingState("seen");
   }, [onboardingUserId]);
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current == null || touchStartY.current == null) return;
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    if (Math.abs(deltaY) > Math.abs(deltaX)) {
-      touchStartX.current = null;
-      touchStartY.current = null;
-      return;
-    }
-    if (deltaX < -50) goNext();
-    else if (deltaX > 50) goPrev();
-    touchStartX.current = null;
-    touchStartY.current = null;
-  };
 
   const downloadResultPng = async () => {
     if (exportMode) return;
@@ -762,8 +766,8 @@ export function ResultCarousel({
     setExportMode("pdf");
     try {
       await waitForExportStackRender();
-      const slides = exportSlideRefs.current.filter((node): node is HTMLDivElement => Boolean(node));
-      await downloadSlidesPdf(slides, buildDownloadFilename(downloadSeasonName, "pdf"));
+      if (!exportStackRef.current) return;
+      await downloadSlidesPdf([exportStackRef.current], buildDownloadFilename(downloadSeasonName, "pdf"));
     } finally {
       setExportMode(null);
     }
@@ -793,431 +797,17 @@ export function ResultCarousel({
   }
 
   return (
-    <>
-    <div
-      className="rc-carousel rc-carousel--lab"
-      style={carouselViewportStyle}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      role="region"
-      aria-label="Your color results"
-      aria-roledescription="carousel"
-    >
-      <LabTopbar menuOpen={menuOpen} onMenuToggle={() => setMenuOpen((open) => !open)} />
-      <LabActionMenu
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        onShare={() => void sharePalette()}
-        onPng={downloadResultPng}
-        onPdf={downloadResultPdf}
-        exporting={exportMode != null}
-      />
-      <div className="rc-track" style={carouselTrackStyle(slide)}>
-        {/* SLIDE 1 - IDENTITY */}
-        <div className="rc-slide" style={labSlideStyle}>
-          <div className="rc-slide__body rc-lab-page rc-lab-page--identity" style={centeredSlideContentStyle}>
-            <p className="rc-lab-kicker">analysis result</p>
-            <h1 className="rc-lab-title">Your Color Identity</h1>
-            <p className="rc-lab-subtitle">Your palette is not just a label. It explains why some colors make you look calm, expensive, and alive.</p>
-
-            <article className="rc-lab-identity-card">
-              <p className="rc-lab-card-kicker">main season</p>
-              <h2>{subSeason || season.name}</h2>
-              <p className="rc-lab-identity-quote">{seasonRevealQuote(season, subSeason)}</p>
-              <div className="rc-lab-facts">
-                {identityFacts.map((fact) => (
-                  <span key={fact}>{fact}</span>
-                ))}
-                {animatedConfidence != null ? (
-                  <span className="rc-lab-fact-strong">{animatedConfidence}% profile match</span>
-                ) : null}
-              </div>
-            </article>
-
-            <article className="rc-lab-palette-card">
-              <p className="rc-lab-card-kicker">your season palette</p>
-              <div className="rc-lab-palette-strip">
-                {previewColors.map((hex, i) => (
-                  <ColorCircle key={`${hex}-${i}`} hex={hex} size={54} shape="rect" />
-                ))}
-              </div>
-              <p>{season.id === "winter" ? "Cool · crisp · clear · polished" : season.id === "summer" ? "Cool · soft · refined · graceful" : season.id === "spring" ? "Warm · fresh · bright · clear" : "Warm · soft · muted · natural"}</p>
-            </article>
-          </div>
-        </div>
-
-        {/* SLIDE 2 - GLOW COLORS */}
-        <div className="rc-slide" style={labSlideStyle}>
-          <div className="rc-slide__body rc-lab-page rc-lab-page--tones" style={centeredSlideContentStyle}>
-            <p className="rc-lab-kicker">color findings</p>
-            <h2 className="rc-lab-title">Colors That Make You Glow</h2>
-            <p className="rc-lab-subtitle">
-              These tones create harmony with your natural features and make your skin look brighter.
-            </p>
-            <div className="rc-lab-swatch-list">
-              {glowList.map((swatch) => (
-                <LabSwatchRow key={`glow-${swatch.name}`} swatch={swatch} reason={glowReason(swatch.name, season)} />
-              ))}
-            </div>
-            <article className="rc-lab-insight-card">
-              <p className="rc-lab-card-kicker">your best neutrals</p>
-              <div className="rc-lab-metal-row">
-                {neutralSwatches.slice(0, 4).map((swatch) => (
-                  <ColorCircle key={swatch.name} hex={swatch.hex} size={34} label={swatch.name} border={swatch.border} />
-                ))}
-              </div>
-            </article>
-            <article className="rc-lab-insight-card rc-lab-insight-card--stylist">
-              <p className="rc-lab-card-kicker">stylist note</p>
-              <p>Wear these closest to your face — tops, scarves, lipstick, and jewelry — and your skin will look brighter without trying harder.</p>
-            </article>
-          </div>
-        </div>
-
-        {/* SLIDE 3 - AVOID COLORS */}
-        <div className="rc-slide" style={labSlideStyle}>
-          <div className="rc-slide__body rc-lab-page rc-lab-page--tones rc-lab-page--avoid" style={centeredSlideContentStyle}>
-            <p className="rc-lab-kicker">contrast warning</p>
-            <h2 className="rc-lab-title">Colors That Overpower Your Features</h2>
-            <p className="rc-lab-subtitle">
-              These shades are not forbidden. Use them away from your face, or balance them with your best colors.
-            </p>
-            <div className="rc-lab-swatch-list rc-lab-swatch-list--avoid">
-              {avoidList.map((swatch) => (
-                <LabSwatchRow key={`avoid-${swatch.name}`} swatch={swatch} reason={avoidReason(swatch.name, season)} />
-              ))}
-            </div>
-            <article className="rc-lab-insight-card rc-lab-insight-card--large">
-              <p className="rc-lab-card-kicker">why old clothes felt wrong</p>
-              <p>{oldClothesHook(season)}</p>
-              <p className="rc-lab-secret">The secret: keep these shades in accessories, bottoms, or bags instead of directly beside your face.</p>
-            </article>
-          </div>
-        </div>
-
-        {/* SLIDE 4 - STYLE ENERGY */}
-        <div className="rc-slide" style={labSlideStyle}>
-          <div className="rc-slide__body rc-lab-page rc-lab-page--energy" style={centeredSlideContentStyle}>
-            <p className="rc-lab-kicker">style archetype</p>
-            <h2 className="rc-lab-title">Your Style Energy</h2>
-            <p className="rc-lab-subtitle">
-              This is the vibe your palette naturally supports. Own it, then shop around it.
-            </p>
-
-            <article className="rc-lab-archetype-card">
-              <p className="rc-lab-card-kicker">identity</p>
-              <h3>{archetype}</h3>
-              <div className="rc-lab-traits">
-                {energyWords.slice(0, 3).map((word) => (
-                  <span key={word}>{word}</span>
-                ))}
-              </div>
-            </article>
-
-            <div className="rc-lab-duo">
-              <article className="rc-lab-mini-card">
-                <p className="rc-lab-card-kicker">jewelry</p>
-                <h3>{report.jewelry.metals[0] ?? "gold"} suits you best.</h3>
-                <div className="rc-lab-metal-row">
-                  {metalSwatches.slice(0, 3).map((swatch) => (
-                    <ColorCircle
-                      key={swatch.name}
-                      hex={swatch.hex}
-                      size={34}
-                      label={swatch.name}
-                      gradient={swatch.gradient}
-                    />
-                  ))}
-                </div>
-              </article>
-
-              <article className="rc-lab-mini-card">
-                <p className="rc-lab-card-kicker">makeup</p>
-                <p className="rc-lab-makeup-line">{makeupOneLiner(season, report)}</p>
-                <div className="rc-lab-shade-bars">
-                  <span className="rc-lab-shade-bar rc-lab-shade-bar--lips">lips</span>
-                  <span className="rc-lab-shade-bar rc-lab-shade-bar--cheek">cheek</span>
-                  <span className="rc-lab-shade-bar rc-lab-shade-bar--eyes">eyes</span>
-                </div>
-              </article>
-            </div>
-
-            <article className="rc-lab-insight-card rc-lab-insight-card--remember">
-              <p className="rc-lab-card-kicker">remember</p>
-              <p>You do not need to follow trends. You just need colors that feel like you.</p>
-            </article>
-          </div>
-        </div>
-
-        {/* SLIDE 5 - WEEKLY CREDITS */}
-        <div className="rc-slide" style={labSlideStyle}>
-          <div className="rc-slide__body rc-lab-page rc-lab-page--credits" style={centeredSlideContentStyle}>
-            <p className="rc-lab-kicker">laboratory status</p>
-            <h2 className="rc-lab-title">Your Weekly Style Checks</h2>
-            <p className="rc-lab-subtitle">
-              Refining your personal style, one thoughtful scan at a time.
-            </p>
-
-            <article className="rc-lab-usage-card">
-              <div>
-                <h3>{weeklyUsed}/{weeklyAllowance} used</h3>
-                <p>{weeklyAllowance} free style checks per week</p>
-              </div>
-              <span>resetting monday</span>
-              <div className="rc-lab-progress" aria-hidden>
-                <i style={{ width: weeklyProgress }} />
-              </div>
-            </article>
-
-            <div className="rc-lab-credit-costs">
-              <article>
-                <span className="rc-lab-cost-icon" aria-hidden>
-                  <ScanCostIcon />
-                </span>
-                <p className="rc-lab-card-kicker">scans</p>
-                <h3>1 credit</h3>
-                <p>single item analysis</p>
-              </article>
-              <article>
-                <span className="rc-lab-cost-icon" aria-hidden>
-                  <OutfitCostIcon />
-                </span>
-                <p className="rc-lab-card-kicker">outfits</p>
-                <h3>2 credits</h3>
-                <p>full look composition</p>
-              </article>
-            </div>
-
-            <article className="rc-lab-insight-card rc-lab-insight-card--credits">
-              <p className="rc-lab-card-kicker">why credits?</p>
-              <p>Weekly checks stay free so your first result stays generous. The limit keeps testing sustainable — heavier usage can expand later without turning this report into a paywall.</p>
-            </article>
-
-            <div className="rc-lab-cta-stack">
-              {scanEnabled ? (
-                <Link href="/scan" className="rc-lab-cta">
-                  scan something
-                </Link>
-              ) : (
-                <span className="rc-lab-text-link rc-lab-text-link--muted">{scanCopy.title}</span>
-              )}
-              <Link href="/login?next=/profile" className="rc-lab-text-link">
-                save my palette
-              </Link>
-              <span className="rc-lab-text-link rc-lab-text-link--muted">more usage options coming later</span>
-              <button type="button" className="rc-lab-text-link" onClick={() => void sharePalette()}>
-                share my palette
-              </button>
-              <div className="rc-lab-mini-actions">
-                <button type="button" onClick={() => void downloadResultPng()}>png</button>
-                <button type="button" onClick={() => void downloadResultPdf()}>pdf</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <LabFooter active={slide} onPrev={goPrev} onNext={goNext} />
-    </div>
-
-    {exportMode && (
-    <div
+    <ColorInsightsReport
       ref={exportStackRef}
-      className="rc-carousel rc-carousel--export"
-      aria-hidden
-      style={{
-        position: "fixed",
-        top: 0,
-        left: -10000,
-        zIndex: -1000,
-        width: EXPORT_SLIDE_WIDTH,
-        height: EXPORT_SLIDE_HEIGHT * SLIDE_COUNT,
-        overflow: "visible",
-        pointerEvents: "none",
-        background: "#fff0f5",
-      }}
-    >
-      <div
-        ref={(node) => {
-          exportSlideRefs.current[0] = node;
-        }}
-        className="rc-slide"
-        style={{ width: EXPORT_SLIDE_WIDTH, height: EXPORT_SLIDE_HEIGHT, minHeight: EXPORT_SLIDE_HEIGHT }}
-      >
-        <ProgressDots active={0} total={SLIDE_COUNT} />
-        <div className="rc-slide__body rc-slide__body--identity">
-          <ReportTopline number="01" />
-          <p className="rc-eyebrow rc-eyebrow--pill">your personal result</p>
-          <h1 className="rc-title rc-title--identity">Your Color Identity</h1>
-          <article className="rc-identity-arch">
-            <p className="rc-card-label">main season</p>
-            <h2>{subSeason || season.name}</h2>
-            <p className="rc-identity-quote">{seasonRevealQuote(season, subSeason)}</p>
-            <div className="rc-identity-facts">
-              {identityFacts.map((fact) => (
-                <span key={`export-fact-${fact}`}>{fact}</span>
-              ))}
-            </div>
-            <div className="rc-row rc-row--center rc-row--identity-palette">
-              {previewColors.map((hex, i) => (
-                <ColorCircle key={`export-preview-${hex}-${i}`} hex={hex} size={44} />
-              ))}
-            </div>
-            {confidence != null ? <p className="rc-identity-match">{confidence}% profile match</p> : null}
-          </article>
-        </div>
-      </div>
-
-      <div
-        ref={(node) => {
-          exportSlideRefs.current[1] = node;
-        }}
-        className="rc-slide"
-        style={{ width: EXPORT_SLIDE_WIDTH, height: EXPORT_SLIDE_HEIGHT, minHeight: EXPORT_SLIDE_HEIGHT }}
-      >
-        <ProgressDots active={1} total={SLIDE_COUNT} />
-        <div className="rc-slide__body rc-slide__body--tones">
-          <ReportTopline number="02" />
-          <h2 className="rc-title rc-title--editorial">Colors That Make You Glow</h2>
-          <p className="rc-subtitle rc-subtitle--wide">
-            These tones create harmony with your natural features and make your skin look brighter.
-          </p>
-          <div className="rc-tone-list">
-            {glowList.map((swatch) => (
-              <ToneRow key={`export-glow-${swatch.name}`} swatch={swatch} reason={glowReason(swatch.name, season)} />
-            ))}
-          </div>
-          <article className="rc-insight-card">
-            <p className="rc-card-label rc-card-label--glow">tip</p>
-            <p>Put these colors closest to your face: tops, scarves, jewelry, hoodies, and lipstick.</p>
-          </article>
-        </div>
-      </div>
-
-      <div
-        ref={(node) => {
-          exportSlideRefs.current[2] = node;
-        }}
-        className="rc-slide"
-        style={{ width: EXPORT_SLIDE_WIDTH, height: EXPORT_SLIDE_HEIGHT, minHeight: EXPORT_SLIDE_HEIGHT }}
-      >
-        <ProgressDots active={2} total={SLIDE_COUNT} />
-        <div className="rc-slide__body rc-slide__body--tones rc-slide__body--avoid-tones">
-          <ReportTopline number="03" />
-          <h2 className="rc-title rc-title--editorial">Colors That Overpower Your Features</h2>
-          <p className="rc-subtitle rc-subtitle--wide">
-            These shades are not forbidden. Use them away from your face, or balance them with your best colors.
-          </p>
-          <div className="rc-tone-list">
-            {avoidList.map((swatch) => (
-              <ToneRow key={`export-avoid-${swatch.name}`} swatch={swatch} reason={avoidReason(swatch.name, season)} />
-            ))}
-          </div>
-          <article className="rc-insight-card rc-insight-card--warm">
-            <p className="rc-card-label rc-card-label--avoid">why old clothes felt wrong</p>
-            <p>{oldClothesHook(season)}</p>
-          </article>
-        </div>
-      </div>
-
-      <div
-        ref={(node) => {
-          exportSlideRefs.current[3] = node;
-        }}
-        className="rc-slide"
-        style={{ width: EXPORT_SLIDE_WIDTH, height: EXPORT_SLIDE_HEIGHT, minHeight: EXPORT_SLIDE_HEIGHT }}
-      >
-        <ProgressDots active={3} total={SLIDE_COUNT} />
-        <div className="rc-slide__body rc-slide__body--energy">
-          <ReportTopline number="04" />
-          <h2 className="rc-title rc-title--editorial">Your Style Energy</h2>
-          <p className="rc-subtitle rc-subtitle--wide">
-            This is the vibe your palette naturally supports. Own it, then shop around it.
-          </p>
-          <article className="rc-jewelry-card">
-            <div>
-              <p className="rc-card-label">jewelry</p>
-              <h3>{report.jewelry.metals[0] ?? "Your best metal"} suits you best</h3>
-            </div>
-            <div className="rc-row rc-row--center">
-              {metalSwatches.slice(0, 3).map((swatch) => (
-                <ColorCircle
-                  key={`export-metal-${swatch.name}`}
-                  hex={swatch.hex}
-                  size={42}
-                  label={swatch.name}
-                  gradient={swatch.gradient}
-                />
-              ))}
-            </div>
-          </article>
-          <article className="rc-archetype-card">
-            <p className="rc-card-label">your style vibe</p>
-            <h3>{archetype}</h3>
-            <div className="rc-energy-grid">
-              {energyWords.map((word) => (
-                <span key={`export-energy-${word}`}>{word}</span>
-              ))}
-            </div>
-          </article>
-          <article className="rc-makeup-line-card">
-            <p className="rc-card-label">makeup in one line</p>
-            <p>{makeupOneLiner(season, report)}</p>
-            <div className="rc-row rc-row--center rc-row--makeup">
-              <MakeupSwatch type="lips" label="Lips" />
-              <MakeupSwatch type="cheek" label="Cheek" />
-              <MakeupSwatch type="eyes" label="Eyes" />
-              <MakeupSwatch type="metal" label="Metal" />
-            </div>
-          </article>
-        </div>
-      </div>
-
-      <div
-        ref={(node) => {
-          exportSlideRefs.current[4] = node;
-        }}
-        className="rc-slide"
-        style={{ width: EXPORT_SLIDE_WIDTH, height: EXPORT_SLIDE_HEIGHT, minHeight: EXPORT_SLIDE_HEIGHT }}
-      >
-        <ProgressDots active={4} total={SLIDE_COUNT} />
-        <div className="rc-slide__body rc-slide__body--credits">
-          <ReportTopline number="05" />
-          <h2 className="rc-title rc-title--editorial">Your Weekly Style Checks</h2>
-          <p className="rc-subtitle rc-subtitle--wide">
-            The report stays free while we test accuracy. Scans use weekly credits so the app stays sustainable.
-          </p>
-          <article className="rc-credit-card">
-            <div className="rc-credit-orb">
-              <strong>{DEFAULT_WEEKLY_SCAN_CREDITS}</strong>
-              <span>free checks per week</span>
-            </div>
-            <div className="rc-credit-rates">
-              <span>clothing, makeup, product</span>
-              <strong>1 credit</strong>
-              <span>full outfit</span>
-              <strong>2 credits</strong>
-            </div>
-            <p>When paid plans open, extra credits and Pro will add more scans without hiding your first result.</p>
-          </article>
-          <div className="rc-duo-cards">
-            <article className="rc-card rc-card--small">
-              <p className="rc-card-title rc-card-title--left">save your report</p>
-              <p className="rc-card-caption">paletteMe-{sanitizeFilenamePart(downloadSeasonName)}</p>
-            </article>
-            <article className="rc-card rc-card--small rc-card--passport">
-              <div className="rc-passport-grid" aria-hidden>
-                {palette12.map((s, i) => (
-                  <span key={`export-passport-${i}`} className="rc-passport-dot" style={{ background: s.hex }} />
-                ))}
-              </div>
-              <p className="rc-card-caption">your color passport</p>
-            </article>
-          </div>
-        </div>
-      </div>
-    </div>
-    )}
-    </>
+      profile={profile}
+      season={season}
+      report={report}
+      subSeason={subSeason}
+      confidence={confidence}
+      onShare={() => void sharePalette()}
+      onDownloadPng={() => void downloadResultPng()}
+      onDownloadPdf={() => void downloadResultPdf()}
+      exporting={exportMode != null}
+    />
   );
 }

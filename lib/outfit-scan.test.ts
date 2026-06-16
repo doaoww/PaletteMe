@@ -274,6 +274,8 @@ test("formats the latest five scan history records for the scan UI", () => {
   assert.equal(items[1].verdictLabel, "Skip this");
   assert.equal(items[0].scoreText, "9.2 / 10");
   assert.equal(items[0].scanTypeLabel, "Clothing item");
+  assert.equal(items[0].colorLabel, "olive");
+  assert.equal(items[0].colorHex, null);
   assert.equal(items[0].dateScanned, "Jun 15, 2026");
 });
 

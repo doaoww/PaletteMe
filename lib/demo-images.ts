@@ -2,6 +2,10 @@
  * Replace each path with your own image dropped into public/images/
  * Supported formats: .jpg .jpeg .png .webp
  *
+ * TODO(asset-replace): Most current landing photos are women-only stock.
+ * Replace with gender-inclusive portraits and outfit examples (menswear,
+ * womenswear, unisex) before public launch.
+ *
  * WHERE EACH IMAGE APPEARS:
  *
  * selfie          → "how it works" step 1 · feature demo (analyzing screen)

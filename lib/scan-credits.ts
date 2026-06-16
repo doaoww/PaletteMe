@@ -2,7 +2,7 @@ import type { ScanRequestType } from "./outfit-scan.ts";
 
 type CreditStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-export const DEFAULT_WEEKLY_SCAN_CREDITS = 5;
+export const DEFAULT_WEEKLY_SCAN_CREDITS = 3;
 export const SCAN_CREDIT_STORAGE_KEY = "paletteme_weekly_scan_credits";
 
 export type ScanCreditState = {

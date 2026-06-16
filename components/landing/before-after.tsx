@@ -36,6 +36,7 @@ export function BeforeAfter() {
 
   return (
     <div>
+      {/* TODO(asset-replace): selfie/outfit demo photos are women-only stock — swap for inclusive portraits. */}
       <div
         ref={baRef}
         className="ba"
@@ -56,7 +57,7 @@ export function BeforeAfter() {
           <div className="ba__img">
             <Image
               src={IMAGES.selfie}
-              alt="After — wearing colors from her seasonal palette"
+              alt="After — wearing colors from your seasonal palette"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               style={{ objectPosition: "top center" }}

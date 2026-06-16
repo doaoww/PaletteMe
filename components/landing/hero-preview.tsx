@@ -8,6 +8,7 @@ const PICKS = PRODUCTS.slice(0, 3);
 export function HeroPreview() {
   return (
     <div className="hero__preview">
+      {/* TODO(asset-replace): hero selfie preview is women-only stock. */}
       <div className="hero__preview-card polaroid">
         <div className="hero__preview-photo">
           <Image
