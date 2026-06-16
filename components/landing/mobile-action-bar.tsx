@@ -32,7 +32,7 @@ export function MobileActionBar() {
   return (
     <div className={`mob-bar${show ? " mob-bar--show" : ""}`} aria-hidden={!show}>
       <Link href="/quiz" className="mob-bar__btn mob-bar__btn--primary">
-        analyze my photo
+        let&apos;s start
       </Link>
       <a href="#waitlist" className="mob-bar__btn mob-bar__btn--ghost">
         join waitlist

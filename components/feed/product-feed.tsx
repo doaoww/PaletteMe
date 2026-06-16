@@ -172,6 +172,10 @@ export function ProductFeed({ profile }: { profile: QuizProfile }) {
 
   return (
     <div>
+      <p style={{ fontFamily: "var(--sans)", fontSize: "0.76rem", color: "var(--ink-soft)", opacity: 0.72, marginBottom: 16 }}>
+        Some product links may be affiliate links. PaletteMe may earn a commission.
+      </p>
+
       {source === "demo" && (
         <p style={{ fontFamily: "var(--sans)", fontSize: "0.76rem", color: "var(--ink-soft)", opacity: 0.6, marginBottom: 20 }}>
           Showing placeholder picks — real ShopStyle feed coming soon

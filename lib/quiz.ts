@@ -1,22 +1,50 @@
-import { SEASONS, type Season } from "@/lib/landing-data";
-import type { SeasonId } from "@/lib/analysis";
-import type { QuizAnswersSnapshot } from "@/lib/supabase-db";
+import { SEASONS, type Season } from "./landing-data.ts";
+import type { SeasonId } from "./analysis.ts";
+import type { QuizAnswersSnapshot } from "./supabase-db.ts";
 import {
   GOAL_LABELS,
   STYLE_LABELS,
+  STYLE_CHALLENGE_LABELS,
   SUN_OPTIONS,
   VEIN_OPTIONS,
+  WARDROBE_TYPE_LABELS,
   STYLE_PAIRS,
+  type BodyShape,
   type BodyType,
+  type ContrastPref,
+  type HairColor,
   type QuizAnswers,
+  type SkinTone,
   type StyleSwipePick,
   type StyleTrend,
   type StyleVector,
-} from "@/lib/quiz-data";
+} from "./quiz-data.ts";
 
 export const QUIZ_STORAGE_KEY = "paletteme_quiz_result";
 
 export type QuizScores = Record<SeasonId, number>;
+
+type WarmCoolWinner = "warm" | "cool" | "neutral";
+type DepthWinner = "light" | "deep" | "medium";
+type ClarityWinner = "bright" | "muted" | "balanced";
+
+export type QuizAxisScore<TWinner extends string> = {
+  first: number;
+  second: number;
+  winner: TWinner;
+  confidence: number;
+};
+
+export type QuizColorEvidence = {
+  warmCool: QuizAxisScore<WarmCoolWinner> & { warm: number; cool: number };
+  depth: QuizAxisScore<DepthWinner> & { light: number; deep: number };
+  clarity: QuizAxisScore<ClarityWinner> & { bright: number; muted: number };
+  seasonId: SeasonId;
+  subSeason: string;
+  confidence: number;
+  evidenceCount: number;
+  reasons: string[];
+};
 
 export type QuizProfile = {
   answers: QuizAnswers;
@@ -25,6 +53,8 @@ export type QuizProfile = {
   seasonName: string;
   undertoneHint: "warm" | "cool" | "neutral";
   completedAt: string;
+  quizColorEvidence: QuizColorEvidence;
+  quizConfidence: number;
   // Phase 2 + 3 fields
   bodyType?: BodyType;
   styleVector?: StyleVector;
@@ -64,7 +94,421 @@ export function getUndertoneHint(answers: QuizAnswers): "warm" | "cool" | "neutr
   return sun?.undertone ?? "neutral";
 }
 
+function addEvidence(
+  reasons: string[],
+  reason: string,
+  add: () => void
+): number {
+  add();
+  reasons.push(reason);
+  return 1;
+}
+
+function confidenceFromScores(first: number, second: number): number {
+  const total = first + second;
+  if (total <= 0) return 50;
+  const diff = Math.abs(first - second);
+  return Math.round(50 + (diff / total) * 50);
+}
+
+function warmCoolScore(warm: number, cool: number): QuizAxisScore<WarmCoolWinner> & { warm: number; cool: number } {
+  const winner: WarmCoolWinner = warm === cool ? "neutral" : warm > cool ? "warm" : "cool";
+  return {
+    first: warm,
+    second: cool,
+    warm,
+    cool,
+    winner,
+    confidence: confidenceFromScores(warm, cool),
+  };
+}
+
+function depthScore(light: number, deep: number): QuizAxisScore<DepthWinner> & { light: number; deep: number } {
+  const winner: DepthWinner = light === deep ? "medium" : light > deep ? "light" : "deep";
+  return {
+    first: light,
+    second: deep,
+    light,
+    deep,
+    winner,
+    confidence: confidenceFromScores(light, deep),
+  };
+}
+
+function clarityScore(bright: number, muted: number): QuizAxisScore<ClarityWinner> & { bright: number; muted: number } {
+  const winner: ClarityWinner = bright === muted ? "balanced" : bright > muted ? "bright" : "muted";
+  return {
+    first: bright,
+    second: muted,
+    bright,
+    muted,
+    winner,
+    confidence: confidenceFromScores(bright, muted),
+  };
+}
+
+function scoreSkinTone(
+  skinTone: SkinTone,
+  scores: { light: number; deep: number; bright: number; muted: number }
+): void {
+  if (skinTone === "very-fair" || skinTone === "fair") scores.light += 2;
+  if (skinTone === "medium") {
+    scores.light += 1;
+    scores.deep += 1;
+  }
+  if (skinTone === "olive") {
+    scores.deep += 1;
+    scores.muted += 1;
+  }
+  if (skinTone === "deep" || skinTone === "very-deep") scores.deep += 2;
+}
+
+function scoreHairColor(
+  hairColor: HairColor,
+  scores: { warm: number; cool: number; light: number; deep: number }
+): void {
+  if (hairColor === "black") {
+    scores.cool += 1;
+    scores.deep += 2;
+  }
+  if (hairColor === "dark-brown") {
+    scores.warm += 0.5;
+    scores.deep += 2;
+  }
+  if (hairColor === "brown" || hairColor === "medium-brown") {
+    scores.warm += 1;
+    scores.deep += 1;
+  }
+  if (hairColor === "light-brown") scores.light += 0.5;
+  if (hairColor === "warm-blonde" || hairColor === "blonde") {
+    scores.warm += 1;
+    scores.light += 2;
+  }
+  if (hairColor === "cool-blonde") {
+    scores.cool += 1;
+    scores.light += 2;
+  }
+  if (hairColor === "red") {
+    scores.warm += 1.5;
+    scores.deep += 1;
+  }
+  if (hairColor === "grey-white") {
+    scores.cool += 0.5;
+    scores.light += 1;
+  }
+}
+
+function scoreContrast(
+  contrast: ContrastPref,
+  scores: { light: number; deep: number; bright: number; muted: number }
+): void {
+  if (contrast === "high") {
+    scores.deep += 1;
+    scores.bright += 1;
+  }
+  if (contrast === "medium") {
+    scores.deep += 0.5;
+    scores.light += 0.5;
+  }
+  if (contrast === "low") {
+    scores.light += 1;
+    scores.muted += 1;
+  }
+}
+
+function mapAxesToSeason(
+  warmCool: WarmCoolWinner,
+  depth: DepthWinner,
+  clarity: ClarityWinner,
+  contrast?: ContrastPref
+): { seasonId: SeasonId; subSeason: string } {
+  // ── WARM ──────────────────────────────────────────────────────────────────
+  if (warmCool === "warm") {
+    if (depth === "deep") {
+      // Deep + muted = earthy rich autumn; deep + clear = darker warm autumn
+      return {
+        seasonId: "autumn",
+        subSeason: clarity === "muted" ? "Deep Autumn" : "Dark Autumn",
+      };
+    }
+    if (depth === "medium") {
+      // Warm medium + low contrast or muted = autumn territory
+      if (contrast === "low") return { seasonId: "autumn", subSeason: "Soft Autumn" };
+      if (clarity === "muted") return { seasonId: "autumn", subSeason: "True Autumn" };
+      // Warm medium + bright or balanced = spring
+      if (clarity === "bright") return { seasonId: "spring", subSeason: "Bright Spring" };
+      return { seasonId: "spring", subSeason: "True Spring" };
+    }
+    // Warm + light
+    if (contrast === "high") return { seasonId: "spring", subSeason: "Bright Spring" };
+    if (contrast === "medium" && clarity === "bright") return { seasonId: "spring", subSeason: "True Spring" };
+    if (contrast === "low" && clarity === "muted") return { seasonId: "spring", subSeason: "Light Spring" };
+    if (clarity === "bright") return { seasonId: "spring", subSeason: "Bright Spring" };
+    return { seasonId: "spring", subSeason: "True Spring" };
+  }
+
+  // ── COOL ──────────────────────────────────────────────────────────────────
+  if (warmCool === "cool") {
+    if (depth === "deep") {
+      // Cool deep + high contrast + clear = True Winter (vivid cool)
+      if (contrast === "high" && clarity === "bright") {
+        return { seasonId: "winter", subSeason: "True Winter" };
+      }
+      return { seasonId: "winter", subSeason: "Dark Winter" };
+    }
+    // Cool + high contrast + clear = True Winter even at lighter depth
+    if (contrast === "high" && clarity === "bright") {
+      return { seasonId: "winter", subSeason: "True Winter" };
+    }
+    // Cool + light + clear = Bright Winter (cool person with vivid bright coloring)
+    if (depth === "light" && clarity === "bright") {
+      return { seasonId: "winter", subSeason: "Bright Winter" };
+    }
+    // Cool + medium depth or medium contrast = True Summer
+    if (depth === "medium" || contrast === "medium") {
+      return { seasonId: "summer", subSeason: "True Summer" };
+    }
+    // Cool + light + low contrast = Light Summer; muted = Soft Summer
+    if (clarity === "muted") return { seasonId: "summer", subSeason: "Soft Summer" };
+    return { seasonId: "summer", subSeason: "Light Summer" };
+  }
+
+  // ── NEUTRAL ───────────────────────────────────────────────────────────────
+  if (depth === "deep") {
+    return clarity === "bright"
+      ? { seasonId: "winter", subSeason: "Dark Winter" }
+      : { seasonId: "autumn", subSeason: "Dark Autumn" };
+  }
+  if (depth === "light") {
+    return clarity === "bright"
+      ? { seasonId: "spring", subSeason: "Light Spring" }
+      : { seasonId: "summer", subSeason: "Light Summer" };
+  }
+  // Neutral + medium: muted → Soft Summer; balanced/clear → True Spring
+  if (clarity === "muted") return { seasonId: "summer", subSeason: "Soft Summer" };
+  return { seasonId: "spring", subSeason: "True Spring" };
+}
+
+export function scoreQuizColorEvidence(answers: QuizAnswers): QuizColorEvidence {
+  const scores = {
+    warm: 0,
+    cool: 0,
+    light: 0,
+    deep: 0,
+    bright: 0,
+    muted: 0,
+  };
+  const reasons: string[] = [];
+  let evidenceCount = 0;
+
+  if (answers.veinColor === "blue-purple") {
+    evidenceCount += addEvidence(reasons, "blue or purple veins point cool", () => {
+      scores.cool += 2;
+    });
+  }
+  if (answers.veinColor === "green") {
+    evidenceCount += addEvidence(reasons, "green veins point warm", () => {
+      scores.warm += 2;
+    });
+  }
+  if (answers.veinColor === "greenish") {
+    evidenceCount += addEvidence(reasons, "greenish veins point warm", () => {
+      scores.warm += 2;
+    });
+  }
+  if (answers.veinColor === "mix") {
+    evidenceCount += addEvidence(reasons, "mixed veins keep undertone neutral", () => {
+      scores.warm += 1;
+      scores.cool += 1;
+    });
+  }
+
+  if (answers.metalPref === "gold") {
+    evidenceCount += addEvidence(reasons, "gold preference supports warmth", () => {
+      scores.warm += 1;
+    });
+  }
+  if (answers.metalPref === "silver") {
+    evidenceCount += addEvidence(reasons, "silver preference supports coolness", () => {
+      scores.cool += 1;
+    });
+  }
+  if (answers.metalPref === "both") {
+    evidenceCount += addEvidence(reasons, "both metals keep undertone balanced", () => {
+      scores.warm += 0.5;
+      scores.cool += 0.5;
+    });
+  }
+
+  if (answers.sunReaction === "burns") {
+    evidenceCount += addEvidence(reasons, "burning easily supports coolness", () => {
+      scores.cool += 2;
+    });
+  }
+  if (answers.sunReaction === "burns-tans") {
+    evidenceCount += addEvidence(reasons, "burning then tanning is neutral", () => {
+      scores.warm += 1;
+      scores.cool += 1;
+    });
+  }
+  if (answers.sunReaction === "tans") {
+    evidenceCount += addEvidence(reasons, "tanning easily supports warmth", () => {
+      scores.warm += 1;
+    });
+  }
+  if (answers.sunReaction === "never-burns") {
+    evidenceCount += addEvidence(reasons, "never burning supports warmth and depth", () => {
+      scores.warm += 2;
+      scores.deep += 1;
+    });
+  }
+
+  if (answers.skinTone) {
+    evidenceCount += addEvidence(reasons, `${answers.skinTone} skin tone informs depth`, () => {
+      scoreSkinTone(answers.skinTone as SkinTone, scores);
+    });
+  }
+
+  if (answers.naturalHairColor) {
+    evidenceCount += addEvidence(reasons, `${answers.naturalHairColor} hair informs temperature and depth`, () => {
+      scoreHairColor(answers.naturalHairColor as HairColor, scores);
+    });
+  }
+
+  if (answers.eyeColor) {
+    evidenceCount += addEvidence(reasons, `${answers.eyeColor} eyes inform temperature and chroma`, () => {
+      if (answers.eyeColor === "blue" || answers.eyeColor === "blue-green") {
+        scores.cool += 1;
+        scores.bright += 2;
+      }
+      if (answers.eyeColor === "green") {
+        scores.warm += 0.5;
+        scores.bright += 1;
+      }
+      if (answers.eyeColor === "grey") {
+        scores.cool += 1;
+        scores.muted += 1;
+      }
+      if (answers.eyeColor === "hazel") {
+        scores.warm += 1;
+        scores.muted += 1;
+      }
+      if (answers.eyeColor === "warm-brown") {
+        scores.warm += 1;
+        scores.deep += 0.5;
+        scores.muted += 1;
+      }
+      if (answers.eyeColor === "dark-brown") {
+        scores.deep += 1;
+        scores.muted += 1;
+      }
+    });
+  } else if (answers.eyeFamily) {
+    evidenceCount += addEvidence(reasons, `${answers.eyeFamily} eye family informs temperature`, () => {
+      if (answers.eyeFamily === "cool") scores.cool += 1;
+      if (answers.eyeFamily === "warm") scores.warm += 1;
+      if (answers.eyeFamily === "both") {
+        scores.warm += 0.5;
+        scores.cool += 0.5;
+      }
+    });
+  }
+
+  if (answers.whitePref === "white") {
+    evidenceCount += addEvidence(reasons, "pure white preference supports cool brightness", () => {
+      scores.cool += 0.5;
+      scores.bright += 1;
+    });
+  }
+  if (answers.whitePref === "cream") {
+    evidenceCount += addEvidence(reasons, "cream preference supports warm softness", () => {
+      scores.warm += 0.5;
+      scores.muted += 0.5;
+    });
+  }
+
+  if (answers.contrastPref) {
+    evidenceCount += addEvidence(reasons, `${answers.contrastPref} contrast informs depth and clarity`, () => {
+      scoreContrast(answers.contrastPref as ContrastPref, scores);
+    });
+  }
+
+  if (answers.intensityPref === "vivid") {
+    evidenceCount += addEvidence(reasons, "vivid colors support bright clarity", () => {
+      scores.bright += 2;
+    });
+  }
+  if (answers.intensityPref === "muted") {
+    evidenceCount += addEvidence(reasons, "muted colors support soft earthy clarity", () => {
+      scores.muted += 2;
+    });
+  }
+
+  const warmCool = warmCoolScore(scores.warm, scores.cool);
+  const depth = depthScore(scores.light, scores.deep);
+  const clarity = clarityScore(scores.bright, scores.muted);
+  console.log("[quiz debug] undertone score:", { warm: scores.warm, cool: scores.cool, winner: warmCool.winner, confidence: warmCool.confidence });
+  console.log("[quiz debug] depth:", { light: scores.light, deep: scores.deep, winner: depth.winner, confidence: depth.confidence });
+  console.log("[quiz debug] contrast (contrastPref):", answers.contrastPref);
+  console.log("[quiz debug] chroma (clarity):", { bright: scores.bright, muted: scores.muted, winner: clarity.winner, confidence: clarity.confidence });
+  const mapped = mapAxesToSeason(
+    warmCool.winner,
+    depth.winner,
+    clarity.winner,
+    answers.contrastPref
+  );
+  console.log("[quiz debug] final season result:", mapped);
+
+  const confidence = Math.max(
+    50,
+    Math.min(
+      95,
+      Math.round(
+        (warmCool.confidence + depth.confidence + clarity.confidence) / 3 +
+          Math.min(evidenceCount, 10)
+      )
+    )
+  );
+
+  return {
+    warmCool,
+    depth,
+    clarity,
+    seasonId: mapped.seasonId,
+    subSeason: mapped.subSeason,
+    confidence,
+    evidenceCount,
+    reasons,
+  };
+}
+
+export function enrichColorAnswers(answers: QuizAnswers): QuizAnswers {
+  const next = { ...answers };
+  if (!next.intensityPref && next.contrastPref) {
+    next.intensityPref = next.contrastPref === "high" ? "vivid" : "muted";
+  }
+  if (!next.whitePref && next.veinColor) {
+    next.whitePref = next.veinColor === "blue-purple" ? "white" : "cream";
+  }
+  return next;
+}
+
 export function deriveBodyType(answers: QuizAnswers): BodyType {
+  if (answers.bodyShape) {
+    const map: Partial<Record<BodyShape, BodyType>> = {
+      hourglass: "hourglass",
+      pear: "pear",
+      rectangle: "rectangle",
+      apple: "apple",
+      "inverted-triangle": "inverted-triangle",
+      trapezoid: "inverted-triangle",
+      oval: "apple",
+      triangle: "pear",
+      petite: "rectangle",
+    };
+    return map[answers.bodyShape] ?? "rectangle";
+  }
+
   const { shoulderHipRatio, waistDefinition, weightGain } = answers;
   if (weightGain === "middle") return "apple";
   if (shoulderHipRatio === "shoulders") return "inverted-triangle";
@@ -96,36 +540,60 @@ export function deriveStyleVector(picks: StyleSwipePick[]): StyleVector {
   };
 }
 
+export function deriveStyleVectorFromAnswers(answers: QuizAnswers): StyleVector {
+  return {
+    aesthetics: answers.styleDirections ?? [],
+    fit: [],
+    occasions: answers.occasions ?? [],
+  };
+}
+
 export function buildQuizProfile(
   answers: QuizAnswers,
   scores: QuizScores,
   overrides?: Partial<Pick<QuizProfile, "seasonId" | "seasonName" | "undertoneHint" | "bodyType" | "styleVector" | "subSeason">>
 ): QuizProfile {
+  const enriched = enrichColorAnswers(answers);
   const winner = getWinningSeason(scores);
+  const quizColorEvidence = scoreQuizColorEvidence(enriched);
+  const useQuizPrior = quizColorEvidence.evidenceCount >= 4 && quizColorEvidence.confidence >= 65;
+  const seasonId = overrides?.seasonId ?? (useQuizPrior ? quizColorEvidence.seasonId : (winner.id as SeasonId));
+  const season = SEASONS.find((item) => item.id === seasonId) ?? winner;
   return {
-    answers,
+    answers: enriched,
     scores,
-    seasonId: overrides?.seasonId ?? (winner.id as SeasonId),
-    seasonName: overrides?.seasonName ?? winner.name,
-    undertoneHint: overrides?.undertoneHint ?? getUndertoneHint(answers),
+    seasonId,
+    seasonName: overrides?.seasonName ?? season.name,
+    undertoneHint: overrides?.undertoneHint ?? getUndertoneHint(enriched),
     completedAt: new Date().toISOString(),
+    quizColorEvidence,
+    quizConfidence: quizColorEvidence.confidence,
     bodyType: overrides?.bodyType,
     styleVector: overrides?.styleVector,
-    subSeason: overrides?.subSeason,
+    subSeason: overrides?.subSeason ?? (useQuizPrior ? quizColorEvidence.subSeason : undefined),
   };
 }
 
 export function formatProfileForAI(profile: QuizProfile): string {
   const { answers } = profile;
+  const evidence = profile.quizColorEvidence ?? scoreQuizColorEvidence(answers);
+  const quizConfidence = profile.quizConfidence ?? evidence.confidence;
   const lines = [
     `Preliminary season: ${profile.seasonName} (${profile.seasonId})`,
+    `Quiz sub-season prior: ${profile.subSeason ?? evidence.subSeason}`,
+    `Quiz confidence: ${quizConfidence}%`,
+    `Quiz color evidence: ${evidence.warmCool.winner}, ${evidence.depth.winner}, ${evidence.clarity.winner}`,
     `Undertone: ${profile.undertoneHint}`,
     `Styling goal: ${answers.goal ? GOAL_LABELS[answers.goal] : "not specified"}`,
+    `Wardrobe type: ${answers.wardrobeType ? WARDROBE_TYPE_LABELS[answers.wardrobeType] : "not specified"}`,
+    `Style challenge: ${answers.styleChallenge ? STYLE_CHALLENGE_LABELS[answers.styleChallenge] : "not specified"}`,
     `Sun reaction: ${answers.sunReaction ?? "not specified"}`,
     `Natural hair in photo: ${answers.naturalHair ?? "not specified"}`,
   ];
 
   if (answers.naturalHairColor) lines.push(`Natural hair color: ${answers.naturalHairColor}`);
+  if (answers.skinTone) lines.push(`Skin tone: ${answers.skinTone}`);
+  if (answers.eyeColor) lines.push(`Eye color: ${answers.eyeColor}`);
   if (profile.bodyType) {
     lines.push(`Body type: ${profile.bodyType}`);
   }
@@ -144,17 +612,27 @@ export function formatProfileForAI(profile: QuizProfile): string {
 
 export function saveQuizProfile(profile: QuizProfile): void {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(profile));
+  const serialized = JSON.stringify(profile);
+  sessionStorage.setItem(QUIZ_STORAGE_KEY, serialized);
+  localStorage.setItem(QUIZ_STORAGE_KEY, serialized);
 }
 
 export function loadQuizProfile(): QuizProfile | null {
   if (typeof window === "undefined") return null;
-  const raw = sessionStorage.getItem(QUIZ_STORAGE_KEY);
+  const raw =
+    sessionStorage.getItem(QUIZ_STORAGE_KEY) ??
+    localStorage.getItem(QUIZ_STORAGE_KEY);
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as QuizProfile;
     if (!parsed.answers || !parsed.scores) return null;
-    return parsed;
+    const quizColorEvidence = parsed.quizColorEvidence ?? scoreQuizColorEvidence(parsed.answers);
+    return {
+      ...parsed,
+      quizColorEvidence,
+      quizConfidence: parsed.quizConfidence ?? quizColorEvidence.confidence,
+      subSeason: parsed.subSeason ?? quizColorEvidence.subSeason,
+    };
   } catch {
     return null;
   }
@@ -163,6 +641,7 @@ export function loadQuizProfile(): QuizProfile | null {
 export function clearQuizProfile(): void {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(QUIZ_STORAGE_KEY);
+  localStorage.removeItem(QUIZ_STORAGE_KEY);
 }
 
 export function toggleTrend(

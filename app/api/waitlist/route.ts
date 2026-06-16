@@ -7,6 +7,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const feature = typeof body.feature === "string" ? body.feature.trim() : "";
 
     if (!email || !EMAIL_RE.test(email)) {
       return NextResponse.json({ error: "Invalid email address." }, { status: 400 });
@@ -16,8 +17,9 @@ export async function POST(request: Request) {
       "🎨 <b>PaletteMe — new waitlist signup</b>",
       "",
       `📧 <code>${email}</code>`,
+      feature ? `✨ <code>${feature}</code>` : null,
       `🕐 ${new Date().toLocaleString("en-GB", { timeZone: "UTC" })} UTC`,
-    ].join("\n");
+    ].filter(Boolean).join("\n");
 
     const sent = await sendTelegramMessage(message);
     console.log("[waitlist] Telegram sent:", sent, "for", email);

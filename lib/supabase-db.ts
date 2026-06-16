@@ -1,4 +1,12 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  ScanHistoryRecordSchema,
+  WardrobeItemSchema,
+  type ScanHistoryRecord,
+  type ScanResult,
+  type ScanType,
+  type WardrobeItem,
+} from "./server/ai/schemas.ts";
 
 // ─── Singleton ────────────────────────────────────────────────────────────────
 // One client per warm function instance. Vercel reuses warm instances across
@@ -22,6 +30,27 @@ export function isSupabaseConfigured(): boolean {
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
+}
+
+type SupabaseErrorLike = {
+  code?: string | null;
+  message?: string | null;
+} | null | undefined;
+
+export function isMissingPostgrestRowError(error: SupabaseErrorLike): boolean {
+  return error?.code === "PGRST116";
+}
+
+export function formatSupabaseProfileError(
+  action: string,
+  error: SupabaseErrorLike
+): string {
+  const message = error?.message?.trim() || "Unknown Supabase error";
+  return `Could not ${action}: ${message}`;
+}
+
+function throwSupabaseProfileError(action: string, error: SupabaseErrorLike): never {
+  throw new Error(formatSupabaseProfileError(action, error));
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -73,6 +102,49 @@ export type OutfitCheckResult = {
   dominant_colors: string[];
   reason: string;
   suggestion: string;
+};
+
+type WardrobeWrite = Omit<WardrobeItem, "id" | "correctedByUser"> & {
+  id?: string;
+  correctedByUser?: boolean;
+};
+
+type WardrobeCorrectionWrite = Partial<
+  Pick<
+    WardrobeItem,
+    "name" | "category" | "colors" | "colorTemperature" | "seasonFit" | "formality" | "notes" | "imageUrl"
+  >
+>;
+
+type DbWardrobeItem = {
+  id: string;
+  user_id: string | null;
+  source: WardrobeItem["source"];
+  name: string;
+  category: string;
+  colors: string[];
+  color_temperature: WardrobeItem["colorTemperature"];
+  season_fit: string[];
+  formality: string;
+  notes: string | null;
+  image_url: string | null;
+  corrected_by_user: boolean;
+};
+
+type SaveScanHistoryDbInput = {
+  id?: string;
+  userId?: string | null;
+  scanType: ScanType;
+  result: ScanResult;
+  createdAt?: string;
+};
+
+type DbScanHistory = {
+  id: string;
+  created_at: string;
+  user_id: string | null;
+  scan_type: ScanType;
+  result: ScanResult;
 };
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -187,6 +259,168 @@ export async function insertProduct(
 
 // ─── Outfit checks ────────────────────────────────────────────────────────────
 
+// Wardrobe items
+
+export async function saveWardrobeItemDb(input: WardrobeWrite): Promise<WardrobeItem | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  const item = WardrobeItemSchema.parse({
+    ...input,
+    id: input.id ?? crypto.randomUUID(),
+    correctedByUser: input.correctedByUser ?? false,
+  });
+
+  const { data, error } = await db
+    .from("wardrobe_items")
+    .upsert(toWardrobeRow(item))
+    .select("*")
+    .single();
+
+  if (error || !data) return null;
+  return fromWardrobeRow(data as DbWardrobeItem);
+}
+
+export async function listWardrobeItemsDb(userId?: string | null): Promise<WardrobeItem[] | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  const query = db
+    .from("wardrobe_items")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const { data, error } = userId
+    ? await query.eq("user_id", userId)
+    : await query.is("user_id", null);
+
+  if (error || !data) return null;
+  return (data as DbWardrobeItem[]).map(fromWardrobeRow).filter((item) => item !== null);
+}
+
+export async function applyWardrobeCorrectionDb(
+  id: string,
+  correction: WardrobeCorrectionWrite
+): Promise<WardrobeItem | null> {
+  const existing = await getWardrobeItemDb(id);
+  if (!existing) return null;
+  return saveWardrobeItemDb({
+    ...existing,
+    ...correction,
+    correctedByUser: true,
+  });
+}
+
+async function getWardrobeItemDb(id: string): Promise<WardrobeItem | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  const { data, error } = await db
+    .from("wardrobe_items")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) return null;
+  return fromWardrobeRow(data as DbWardrobeItem);
+}
+
+function toWardrobeRow(item: WardrobeItem): DbWardrobeItem {
+  return {
+    id: item.id,
+    user_id: item.userId ?? null,
+    source: item.source,
+    name: item.name,
+    category: item.category,
+    colors: item.colors,
+    color_temperature: item.colorTemperature,
+    season_fit: item.seasonFit,
+    formality: item.formality,
+    notes: item.notes ?? null,
+    image_url: item.imageUrl ?? null,
+    corrected_by_user: item.correctedByUser,
+  };
+}
+
+function fromWardrobeRow(row: DbWardrobeItem): WardrobeItem | null {
+  const parsed = WardrobeItemSchema.safeParse({
+    id: row.id,
+    userId: row.user_id,
+    source: row.source,
+    name: row.name,
+    category: row.category,
+    colors: row.colors ?? [],
+    colorTemperature: row.color_temperature,
+    seasonFit: row.season_fit ?? [],
+    formality: row.formality ?? "unknown",
+    notes: row.notes ?? undefined,
+    imageUrl: row.image_url,
+    correctedByUser: row.corrected_by_user ?? false,
+  });
+  return parsed.success ? parsed.data : null;
+}
+
+// Scan history
+
+export async function insertScanHistoryDb(
+  input: SaveScanHistoryDbInput
+): Promise<ScanHistoryRecord | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  const record = ScanHistoryRecordSchema.parse({
+    ...input,
+    id: input.id ?? crypto.randomUUID(),
+    userId: input.userId ?? null,
+    createdAt: input.createdAt ?? new Date().toISOString(),
+  });
+
+  const { data, error } = await db
+    .from("scan_history")
+    .insert({
+      id: record.id,
+      created_at: record.createdAt,
+      user_id: record.userId,
+      scan_type: record.scanType,
+      result: record.result,
+    })
+    .select("*")
+    .single();
+
+  if (error || !data) return null;
+  return fromScanHistoryRow(data as DbScanHistory);
+}
+
+export async function listScanHistoryDb(
+  userId?: string | null
+): Promise<ScanHistoryRecord[] | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  const query = db
+    .from("scan_history")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const { data, error } = userId
+    ? await query.eq("user_id", userId)
+    : await query.is("user_id", null);
+
+  if (error || !data) return null;
+  return (data as DbScanHistory[]).map(fromScanHistoryRow).filter((record) => record !== null);
+}
+
+function fromScanHistoryRow(row: DbScanHistory): ScanHistoryRecord | null {
+  const parsed = ScanHistoryRecordSchema.safeParse({
+    id: row.id,
+    userId: row.user_id,
+    scanType: row.scan_type,
+    result: row.result,
+    createdAt: row.created_at,
+  });
+  return parsed.success ? parsed.data : null;
+}
+
 export async function insertOutfitCheck(data: {
   user_id?: string | null;
   result: OutfitCheckResult;
@@ -240,11 +474,15 @@ export async function addToWaitlistDb(
 export async function getUserByAuthId(authId: string): Promise<DbUser | null> {
   const db = getClient();
   if (!db) return null;
-  const { data } = await db
+  const { data, error } = await db
     .from("users")
     .select("*")
     .eq("auth_id", authId)
     .single();
+
+  if (isMissingPostgrestRowError(error)) return null;
+  if (error) throwSupabaseProfileError("restore profile", error);
+
   return (data as DbUser) ?? null;
 }
 
@@ -255,8 +493,10 @@ export async function linkAnonymousUser(
 ): Promise<void> {
   const db = getClient();
   if (!db) return;
-  await db
+  const { error } = await db
     .from("users")
     .update({ auth_id: authId, email: email.toLowerCase() })
     .eq("id", anonymousId);
+
+  if (error) throwSupabaseProfileError("save profile link", error);
 }

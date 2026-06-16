@@ -9,10 +9,18 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".worktrees/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Existing client pages hydrate from localStorage/sessionStorage in effects.
+      // Keep this non-blocking until those flows are refactored around an external store.
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

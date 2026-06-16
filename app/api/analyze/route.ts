@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   AnalysisQuotaError,
+  AnalysisRetakeError,
   analyzeFaceImage,
   type QuizHint,
   type SeasonId,
@@ -57,16 +58,31 @@ export async function POST(request: Request) {
     const quizHint = parseQuizHint(formData.get("quizHint"));
     const result = await analyzeFaceImage(base64, file.type, quizHint);
 
-    return NextResponse.json({ ok: true, result });
+    return NextResponse.json({
+      ok: true,
+      result,
+      warning: result.qualityWarning ?? null,
+    });
   } catch (error) {
-    console.error("[analyze] POST error:", error);
-
     if (error instanceof AnalysisQuotaError) {
       return NextResponse.json(
         { error: "Analysis is at capacity right now. Try again in a minute." },
         { status: 429 }
       );
     }
+
+    if (error instanceof AnalysisRetakeError) {
+      return NextResponse.json(
+        {
+          error: error.code,
+          message: error.userMessage,
+          issues: error.issues,
+        },
+        { status: 422 }
+      );
+    }
+
+    console.error("[analyze] POST error:", error);
 
     const raw = error instanceof Error ? error.message : "";
     const isBadPhoto = raw.includes("unclear") || raw.includes("valid season") || raw.includes("invalid response");

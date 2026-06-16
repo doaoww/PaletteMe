@@ -1,69 +1,164 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { loadQuizProfile, LS_USER_ID, type QuizProfile } from "@/lib/quiz";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { AnalysisResult } from "@/lib/analysis";
+import { loadQuizProfile, type QuizProfile } from "@/lib/quiz";
+import { saveCompleteQuizResultToSupabase } from "@/lib/post-quiz-supabase";
+import {
+  loadLocalAnalysisResultForProfile,
+  loadSupabaseQuizProfile,
+  saveRestoredQuizProfileToBrowserStorage,
+} from "@/lib/profile-restore";
+import { getPaymentUrls, isFreeTestingMode, resolvePremiumLevel, type PremiumLevel } from "@/lib/premium";
 import { ProfileView } from "@/components/profile/profile-view";
+import { PostQuizAuthScreen } from "@/components/auth/post-quiz-auth-screen";
+import { canAccessColorResults, isSupabaseAuthConfigured } from "@/lib/auth-flow";
+import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe-store";
+import "./profile.css";
+import "../app-shell.css";
+
+const PROFILE_PREMIUM_ENV = {
+  NEXT_PUBLIC_FREE_TESTING_MODE: process.env.NEXT_PUBLIC_FREE_TESTING_MODE,
+  NEXT_PUBLIC_PAID_REPORT_URL: process.env.NEXT_PUBLIC_PAID_REPORT_URL,
+  NEXT_PUBLIC_SUBSCRIPTION_URL: process.env.NEXT_PUBLIC_SUBSCRIPTION_URL,
+};
+
+const AUTH_ENV = {
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+};
 
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={<ProfileLoading />}>
+      <ProfileContent />
+    </Suspense>
+  );
+}
+
+function ProfileContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const authConfigured = isSupabaseAuthConfigured(AUTH_ENV);
+  const freeTestingMode = isFreeTestingMode(PROFILE_PREMIUM_ENV);
   const [profile, setProfile] = useState<QuizProfile | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [premiumLevel, setPremiumLevel] = useState<PremiumLevel>(freeTestingMode ? "pro" : "free");
   const [ready, setReady] = useState(false);
+  const [needsAuth, setNeedsAuth] = useState(false);
+  const [authRevision, setAuthRevision] = useState(0);
+  const paymentUrls = getPaymentUrls(PROFILE_PREMIUM_ENV);
+
+  const handleAuthComplete = useCallback(() => {
+    setNeedsAuth(false);
+    setReady(false);
+    setAuthRevision((value) => value + 1);
+  }, []);
 
   useEffect(() => {
-    const p = loadQuizProfile();
-    if (!p) {
-      router.replace("/quiz");
-      return;
+    let cancelled = false;
+    setPremiumLevel(resolvePremiumLevel(searchParams, undefined, PROFILE_PREMIUM_ENV));
+
+    async function restoreProfile() {
+      let signedInUser: { id: string; email?: string | null } | null = null;
+      let supabaseClient: Awaited<ReturnType<typeof import("@/lib/supabase")["createClient"]>> | null = null;
+
+      if (authConfigured) {
+        try {
+          const { createClient } = await import("@/lib/supabase");
+          supabaseClient = createClient();
+          const {
+            data: { user },
+          } = await supabaseClient.auth.getUser();
+          signedInUser = user;
+
+          if (user) {
+            void syncLocalWardrobeAfterAuth(user.id).catch(() => {});
+            const restored = await loadSupabaseQuizProfile(supabaseClient, user.id);
+            if (restored) {
+              saveRestoredQuizProfileToBrowserStorage(restored);
+              if (cancelled) return;
+              setProfile(restored.profile);
+              setAnalysisResult(restored.analysisResult as AnalysisResult | null);
+              setNeedsAuth(false);
+              setReady(true);
+              return;
+            }
+          }
+        } catch {
+          signedInUser = null;
+          supabaseClient = null;
+        }
+      }
+
+      const localProfile = loadQuizProfile();
+      const localAnalysisResult = loadLocalAnalysisResultForProfile<AnalysisResult>();
+
+      if (localProfile) {
+        if (cancelled) return;
+        setProfile(localProfile);
+        setAnalysisResult(localAnalysisResult);
+        setNeedsAuth(!canAccessColorResults(signedInUser, authConfigured));
+        setReady(true);
+
+        if (signedInUser && supabaseClient) {
+          saveCompleteQuizResultToSupabase({
+            supabase: supabaseClient,
+            user: signedInUser,
+            profile: localProfile,
+            analysisResult: localAnalysisResult,
+          }).catch(() => {});
+        }
+        return;
+      }
+
+      if (!cancelled) router.replace("/quiz");
     }
-    setProfile(p);
-    setReady(true);
 
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return;
-    import("@/lib/supabase").then(({ createClient }) => {
-      const supabase = createClient();
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (!user) return;
-
-        // Link the anonymous quiz row to the auth user (handles Google OAuth redirect)
-        const anonymousId = localStorage.getItem(LS_USER_ID);
-        fetch("/api/auth/link", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ anonymous_id: anonymousId }),
-        }).catch(() => {});
-
-        // Also upsert into profiles table (existing behaviour)
-        supabase.from("profiles").upsert({
-          id: user.id,
-          color_season: p.seasonId,
-          undertone: p.undertoneHint,
-          body_type: p.bodyType ?? null,
-          style_vector: p.styleVector ?? null,
-          sub_season: p.subSeason ?? null,
-          onboarding_completed: true,
-          updated_at: new Date().toISOString(),
-        });
-      });
-    });
-  }, [router]);
+    restoreProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, searchParams, authRevision, authConfigured]);
 
   if (!ready || !profile) {
+    return <ProfileLoading />;
+  }
+
+  if (needsAuth) {
     return (
-      <div
-        style={{
-          minHeight: "100svh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "var(--sans)",
-          color: "var(--ink-soft)",
-        }}
-      >
-        Loading your profile…
-      </div>
+      <PostQuizAuthScreen
+        profile={profile}
+        onComplete={handleAuthComplete}
+      />
     );
   }
 
-  return <ProfileView profile={profile} />;
+  return (
+    <ProfileView
+      profile={profile}
+      analysisResult={analysisResult}
+      premiumLevel={premiumLevel}
+      paymentUrls={paymentUrls}
+      freeTestingMode={freeTestingMode}
+    />
+  );
+}
+
+function ProfileLoading() {
+  return (
+    <div
+      style={{
+        minHeight: "100svh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "var(--sans)",
+        color: "var(--ink-soft)",
+      }}
+    >
+      Loading your profile…
+    </div>
+  );
 }

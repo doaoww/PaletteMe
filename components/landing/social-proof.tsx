@@ -58,7 +58,7 @@ export function SocialProof() {
             discover your season
           </Link>
           <p className="sproof__privacy">
-            Your photo is analyzed and deleted immediately — never stored or shared.
+            Photos are processed securely for analysis. PaletteMe does not sell or share your images.
           </p>
         </div>
       </div>

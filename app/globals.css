@@ -1,255 +1,297 @@
 @import "tailwindcss";
 
-:root {
-  /* surfaces */
-  --cream: #fbf1e4; /* oklch(0.96 0.020 82) */
-  --cream-2: #f4e5d2; /* oklch(0.92 0.028 78) */
-  --cream-3: #ecdac2;
-  --ink: #17121a; /* oklch(0.20 0.018 330) */
-  --ink-soft: #6a5560; /* oklch(0.46 0.022 350) */
-
-  /* brand — everything keys off --accent */
-  --accent: #ff2e7e; /* oklch(0.64 0.234 5) */
-  --pink: var(--accent);
-  --pink-deep: color-mix(in srgb, var(--accent) 86%, #4a0a28);
-  --berry: color-mix(in srgb, var(--accent) 46%, #220612);
-  --blush: color-mix(in srgb, var(--accent) 22%, #fff);
-  --lilac: #c9b6e4; /* oklch(0.80 0.060 300) */
-  --accent-ink: #fff;
-
-  /* layout */
-  --line: rgba(23, 18, 26, 0.16);
-  --hair: rgba(23, 18, 26, 0.08);
-  --maxw: 1320px;
-  --pad: clamp(20px, 5vw, 76px);
-  --ease: cubic-bezier(0.7, 0, 0.2, 1);
-  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
-
-  /* type */
-  --serif: "DM Serif Display", Georgia, serif;
-  --script: "Allura", cursive;
-  --sans: "DM Sans", system-ui, sans-serif;
-
-  /* shadcn-style semantic aliases */
-  --background: var(--cream);
-  --foreground: var(--ink);
-  --primary: var(--accent);
-  --primary-foreground: var(--accent-ink);
-  --muted: var(--cream-2);
-  --muted-foreground: var(--ink-soft);
+/* Stitch Editorial Pink — design tokens (Tailwind v4 + legacy var names) */
+@theme {
+  --color-surface: #fff8f8;
+  --color-surface-container: #f6ece0;
+  --color-surface-container-high: #f1e7da;
+  --color-surface-container-highest: #ebe1d4;
+  --color-surface-container-low: #fcf2e5;
+  --color-surface-dim: #e2d9cc;
+  --color-cream: #fff8f2;
+  --color-cream-2: #fff5f8;
+  --color-cream-3: #fff0f5;
+  --color-cream-alt: #fff8f2;
+  --color-ink: #1f1b13;
+  --color-ink-soft: #6a5560;
+  --color-on-surface: #1f1b13;
+  --color-on-surface-variant: #5b3f45;
+  --color-outline: #8f6f75;
+  --color-outline-variant: #e3bdc4;
+  --color-accent: #ff2e7e;
+  --color-primary: #b70054;
+  --color-pink: #ff2e7e;
+  --color-pink-deep: #db276c;
+  --color-berry: #75153a;
+  --color-blush: #fff5f8;
+  --color-lilac: #c9b6e4;
+  --color-background: #fff5f8;
+  --color-foreground: #1f1b13;
+  --color-muted: #f4e5d2;
+  --color-muted-foreground: #6a5560;
+  --font-serif: "DM Serif Display", Georgia, serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-script: "Allura", cursive;
 }
 
-@theme inline {
-  --color-cream: var(--cream);
-  --color-cream-2: var(--cream-2);
-  --color-cream-3: var(--cream-3);
-  --color-ink: var(--ink);
-  --color-ink-soft: var(--ink-soft);
-  --color-accent: var(--accent);
-  --color-pink: var(--pink);
-  --color-pink-deep: var(--pink-deep);
-  --color-berry: var(--berry);
-  --color-blush: var(--blush);
-  --color-lilac: var(--lilac);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --font-serif: var(--serif);
-  --font-sans: var(--sans);
-  --font-script: var(--script);
+@layer base {
+  :root {
+    --surface: #fff8f8;
+    --surface-wash: #fff5f8;
+    --surface-peach: #fdf0e8;
+    --surface-container: #f6ece0;
+    --surface-container-high: #f1e7da;
+    --surface-container-highest: #ebe1d4;
+    --surface-container-low: #fcf2e5;
+    --surface-dim: #e2d9cc;
+    --cream: #fff8f2;
+    --cream-2: #fff5f8;
+    --cream-alt: #fff8f2;
+    --cream-3: #fff0f5;
+    --ink: #1f1b13;
+    --ink-soft: #6a5560;
+    --on-surface: #1f1b13;
+    --on-surface-variant: #5b3f45;
+    --outline: #8f6f75;
+    --outline-variant: #e3bdc4;
+    --accent: #ff2e7e;
+    --primary: #b70054;
+    --pink: #ff2e7e;
+    --pink-deep: #db276c;
+    --berry: #75153a;
+    --blush: #fff5f8;
+    --lilac: #c9b6e4;
+    --accent-ink: #fff;
+    --line: rgba(23, 18, 26, 0.16);
+    --hair: rgba(23, 18, 26, 0.08);
+    --maxw: 1320px;
+    --pad: clamp(20px, 5vw, 76px);
+    --ease: cubic-bezier(0.7, 0, 0.2, 1);
+    --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+    --serif: "DM Serif Display", Georgia, serif;
+    --script: "Allura", cursive;
+    --sans: "DM Sans", system-ui, sans-serif;
+    --background: #fff5f8;
+    --foreground: #1f1b13;
+    --muted: #f4e5d2;
+    --muted-foreground: #6a5560;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    background-color: #fff5f8;
+    background:
+      radial-gradient(ellipse 110% 72% at 50% -10%, #ffd6e8 0%, transparent 56%),
+      radial-gradient(ellipse 90% 58% at 100% 18%, color-mix(in srgb, var(--lilac) 48%, #fff5f8) 0%, transparent 50%),
+      radial-gradient(ellipse 80% 52% at 0% 82%, #fce8ef 0%, transparent 46%),
+      linear-gradient(180deg, #fff5f8 0%, #fff8f8 48%, #fff5f8 100%);
+    overflow-x: hidden;
+    color: var(--on-surface);
+    font-size: 17px;
+    line-height: 1.62;
+    font-weight: 400;
+    min-height: 100dvh;
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--serif);
+    font-weight: 400;
+    margin: 0;
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 0 0 1em;
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--pink);
+    color: #fff;
+  }
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@layer components {
+  .stitch-dreamy-bg {
+    background-color: #fff5f8;
+    background:
+      radial-gradient(ellipse 110% 72% at 50% -10%, #ffd6e8 0%, transparent 56%),
+      radial-gradient(ellipse 90% 58% at 100% 18%, color-mix(in srgb, var(--lilac) 48%, #fff5f8) 0%, transparent 50%),
+      radial-gradient(ellipse 80% 52% at 0% 82%, #fce8ef 0%, transparent 46%),
+      linear-gradient(180deg, #fff5f8 0%, #fff8f8 48%, #fff5f8 100%);
+  }
 
-html {
-  scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-}
+  .stitch-dreamy-bg::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.45;
+    mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.86' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    z-index: 0;
+  }
 
-body {
-  margin: 0;
-  font-family: var(--sans);
-  background: var(--cream);
-  overflow-x: clip;
-  -webkit-overflow-scrolling: touch;
-  color: var(--ink);
-  overflow-x: hidden;
-  font-size: 17px;
-  line-height: 1.62;
-  font-weight: 400;
-}
+  .glass-nav {
+    background: rgba(255, 245, 248, 0.88);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border-bottom: 1px solid var(--outline-variant);
+  }
 
-img {
-  max-width: 100%;
-  display: block;
-}
+  .serif {
+    font-family: var(--serif);
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  .script {
+    font-family: var(--script);
+  }
 
-::selection {
-  background: var(--pink);
-  color: #fff;
-}
+  .kicker {
+    font: 700 0.66rem var(--sans);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--pink);
+  }
 
-/* ---- type primitives ---- */
-h1,
-h2,
-h3 {
-  font-family: var(--serif);
-  font-weight: 400;
-  margin: 0;
-  line-height: 1.04;
-  letter-spacing: -0.01em;
-}
+  .kicker::before {
+    content: "[ ";
+  }
 
-p {
-  margin: 0 0 1em;
-  text-wrap: pretty;
-}
+  .kicker::after {
+    content: " ]";
+  }
 
-.serif {
-  font-family: var(--serif);
-}
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+  }
 
-.script {
-  font-family: var(--script);
-}
+  .eyebrow .kicker {
+    color: var(--pink);
+  }
 
-/* editorial bracketed label */
-.kicker {
-  font: 700 0.66rem var(--sans);
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--pink);
-}
+  .scr {
+    font-family: var(--script);
+    color: var(--pink);
+    font-size: 1.5em;
+    line-height: 0.8;
+    display: inline-block;
+    transform: translateY(0.08em);
+  }
 
-.kicker::before {
-  content: "[ ";
-}
+  h1 .scr,
+  h2 .scr,
+  h3 .scr {
+    font-weight: 400;
+    font-style: normal;
+    padding: 0 0.06em;
+  }
 
-.kicker::after {
-  content: " ]";
-}
+  .wordmark {
+    font-family: var(--sans);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    text-transform: lowercase;
+    white-space: nowrap;
+  }
 
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--ink-soft);
-  margin-bottom: 20px;
-}
+  .wordmark .me {
+    color: var(--pink);
+    font-family: inherit;
+    font-weight: 800;
+    margin-left: 0.04em;
+  }
 
-.eyebrow .kicker {
-  color: var(--pink);
-}
+  .btn {
+    font: 600 0.95rem var(--sans);
+    letter-spacing: 0;
+    text-transform: lowercase;
+    border-radius: 100px;
+    padding: 11px 26px;
+    background: var(--pink-deep);
+    color: #fff;
+    border: 1.5px solid var(--pink-deep);
+    cursor: pointer;
+    transition:
+      transform 0.3s var(--ease),
+      box-shadow 0.3s var(--ease),
+      background 0.3s ease;
+    box-shadow: 0 8px 22px -12px var(--pink);
+  }
 
-/* script flourish inside a serif heading */
-.scr {
-  font-family: var(--script);
-  color: var(--pink);
-  font-size: 1.5em;
-  line-height: 0.8;
-  display: inline-block;
-  transform: translateY(0.08em);
-}
+  .btn:hover {
+    transform: translateY(-2px);
+    background: var(--pink);
+    box-shadow: 0 14px 30px -12px var(--pink);
+  }
 
-h1 .scr,
-h2 .scr,
-h3 .scr {
-  font-weight: 400;
-  font-style: normal;
-  padding: 0 0.06em;
-}
+  .btn--ghost {
+    background: transparent;
+    color: inherit;
+    border-color: currentColor;
+    box-shadow: none;
+  }
 
-/* wordmark */
-.wordmark {
-  font-family: var(--sans);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  text-transform: lowercase;
-  white-space: nowrap;
-}
+  .btn--ghost:hover {
+    background: var(--ink);
+    color: var(--cream);
+    border-color: var(--ink);
+  }
 
-.wordmark .me {
-  color: var(--pink);
-  font-family: inherit;
-  font-weight: 800;
-  margin-left: 0.04em;
-}
+  .polaroid {
+    background: #fff;
+    padding: 10px 10px 14px;
+    border-radius: 2px;
+    box-shadow: 0 18px 40px -22px rgba(23, 18, 26, 0.55);
+    transform: rotate(-1.5deg);
+  }
 
-/* buttons — lowercase, untracked */
-.btn {
-  font: 600 0.95rem var(--sans);
-  letter-spacing: 0;
-  text-transform: lowercase;
-  border-radius: 100px;
-  padding: 11px 26px;
-  background: var(--pink-deep);
-  color: #fff;
-  border: 1.5px solid var(--pink-deep);
-  cursor: pointer;
-  transition:
-    transform 0.3s var(--ease),
-    box-shadow 0.3s var(--ease),
-    background 0.3s ease;
-  box-shadow: 0 8px 22px -12px var(--pink);
-}
+  .hero-gradient {
+    background:
+      radial-gradient(
+        80% 75% at 18% 22%,
+        color-mix(in srgb, var(--lilac) 90%, #fff) 0%,
+        transparent 58%
+      ),
+      radial-gradient(85% 80% at 84% 14%, #ffc7dd 0%, transparent 60%),
+      radial-gradient(95% 90% at 70% 100%, #ff7fb0 0%, transparent 62%),
+      linear-gradient(155deg, #e7c3e4 0%, #f6b6ce 42%, #fbd7c5 100%);
+  }
 
-.btn:hover {
-  transform: translateY(-2px);
-  background: var(--pink);
-  box-shadow: 0 14px 30px -12px var(--pink);
-}
-
-.btn--ghost {
-  background: transparent;
-  color: inherit;
-  border-color: currentColor;
-  box-shadow: none;
-}
-
-.btn--ghost:hover {
-  background: var(--ink);
-  color: var(--cream);
-  border-color: var(--ink);
-}
-
-/* polaroid frame */
-.polaroid {
-  background: #fff;
-  padding: 10px 10px 14px;
-  border-radius: 2px;
-  box-shadow: 0 18px 40px -22px rgba(23, 18, 26, 0.55);
-  transform: rotate(-1.5deg);
-}
-
-/* dreamy hero gradient utility */
-.hero-gradient {
-  background:
-    radial-gradient(
-      80% 75% at 18% 22%,
-      color-mix(in srgb, var(--lilac) 90%, #fff) 0%,
-      transparent 58%
-    ),
-    radial-gradient(85% 80% at 84% 14%, #ffc7dd 0%, transparent 60%),
-    radial-gradient(95% 90% at 70% 100%, #ff7fb0 0%, transparent 62%),
-    linear-gradient(155deg, #e7c3e4 0%, #f6b6ce 42%, #fbd7c5 100%);
-}
-
-.wrap {
-  max-width: var(--maxw);
-  margin: 0 auto;
-  padding-inline: var(--pad);
+  .wrap {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding-inline: var(--pad);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

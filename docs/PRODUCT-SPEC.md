@@ -1,259 +1,248 @@
-# PaletteMe — Full Product Spec
+# PaletteMe Product Spec
 
-> Source of truth for the full product vision, architecture, and build order.
-> Landing page (`/`) is frozen — do not modify it. It exists only for waitlist collection.
+Date: 2026-06-13
+Status: current product direction
 
----
+## Product
 
-## Tech Stack (Target)
+PaletteMe helps style-conscious people understand which colors, makeup shades, outfits, wardrobe items, and products suit them.
 
-| Layer | Choice | Notes |
-|---|---|---|
-| Framework | Next.js (App Router) + Tailwind | Already in place |
-| AI — Vision | OpenAI API (`gpt-4o-mini`) | Primary. Gemini as fallback (already wired in `lib/analysis.ts`) |
-| Products | ShopStyle Collective API | Placeholder products until API key obtained |
-| Database | Supabase (PostgreSQL) | For user profiles, saved items, product cache |
-| Cache | Upstash Redis | Rate limiting + product cache TTL |
-| Auth | Supabase Auth (email + Google OAuth) | Post-waitlist launch |
-| Deployment | Vercel | |
+The core promise:
 
----
+> Before you buy or wear it, PaletteMe tells you whether it works for your colors, body/fit goals, wardrobe, and style.
 
-## Color Analysis — Vision Prompt
+For the latest product principles, read `docs/PRODUCT-NORTH-STAR.md` before planning new features.
 
-Send selfie to OpenAI Vision (`gpt-4o-mini`). Return only JSON:
+## Business Goal
 
-```json
-{
-  "undertone": "warm|cool|neutral",
-  "contrast": "high|medium|low",
-  "intensity": "bright|muted",
-  "season": "True Winter",
-  "confidence": 0.85,
-  "best_colors": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5", "#hex6"],
-  "avoid_colors": ["#hex1", "#hex2", "#hex3"],
-  "neutrals": ["#hex1", "#hex2", "#hex3"],
-  "explanation": "2-3 sentence explanation for the user"
-}
-```
+Reach direct payment validation with a path toward `1000+ MRR`, but only after the core AI experience is accurate enough to trust.
 
-Seasons (12 total):
-True Spring · Warm Spring · Light Spring
-True Summer · Cool Summer · Soft Summer
-True Autumn · Warm Autumn · Deep Autumn
-True Winter · Cool Winter · Deep Winter
+Current mode is free testing. The first product test is whether users trust the quiz, selfie analysis, scan verdicts, wardrobe matching, and makeup guidance. As of 2026-06-15, scanner entry points are temporarily paused behind `NEXT_PUBLIC_SCAN_FEATURE_ENABLED` until item/outfit scan accuracy is good enough to deploy.
 
----
+Affiliate revenue is useful but secondary. The later business test is whether users will pay for recurring "should I wear or buy this?" checks.
 
-## Onboarding Flow (3 steps)
+## Target User
 
-### Step 1 — Color Season
+- Style-conscious people, not only women.
+- Users who shop womenswear, menswear, both, or unisex.
+- Users interested in seasonal color analysis.
+- Users who shop online and want fewer color mistakes.
+- Users who want practical wardrobe, makeup, outfit, and shopping decisions, not just a season label.
 
-**Path A (primary):** Camera / selfie upload → OpenAI Vision analysis
-**Path B (fallback):** 8-question quiz for users who won't upload photo
+## Pricing
 
-Quiz questions (visual swatches, not just text):
-1. Vein color on wrist (blue-purple = cool / green = warm / both = neutral)
-2. Which metals suit you (gold / silver / both)
-3. Skin reaction to sun (burn / tan / both)
-4. Natural hair color (ashy/cool / warm/golden)
-5. Eye color family (blue/grey/green = cool / brown/hazel/amber = warm)
-6. Which background makes skin glow (pure white / cream)
-7. Natural coloring contrast (high / medium / low)
-8. Do colors look vivid or muted on you
+Pricing is paused while the app runs in free testing mode. Keep all major features unlocked until accuracy and usefulness are validated.
 
-### Step 2 — Body Type (3 questions, no camera)
+### Free
 
-1. Shoulders vs hips width
-2. Waist definition (defined / not defined)
-3. Where you gain weight first
+- Quiz-first result.
+- Optional selfie accuracy boost by upload or live camera capture.
+- Full color report while testing.
+- Outfit/product/makeup scan access while testing, currently paused behind `NEXT_PUBLIC_SCAN_FEATURE_ENABLED` for deployment safety.
+- Early wardrobe matching while testing.
 
-Maps to: Hourglass · Pear · Apple · Rectangle · Inverted Triangle
+### Paid Report
 
-Each body type → flattering silhouette tags used for product filtering.
+Launch price: `2.99` to `4.99`.
 
-### Step 3 — Style Swipe
+Includes:
 
-Show 16 outfit image pairs, user picks preferred.
-Derive style vector:
+- Exact sub-season.
+- Full palette.
+- Avoid colors.
+- Makeup shade guide.
+- Jewelry metals.
+- Hair color guidance.
+- Shopping guidance.
 
-```typescript
-interface StyleProfile {
-  aesthetics: ('minimalist' | 'classic' | 'bohemian' | 'edgy' | 'romantic' | 'sporty' | 'preppy')[]
-  fit: ('oversized' | 'tailored' | 'relaxed' | 'bodycon')[]
-  occasions: ('casual' | 'office' | 'evening' | 'weekend' | 'activewear')[]
-  priceRange: { min: number; max: number } // USD
-}
-```
+### Pro
 
----
+Launch price: `9.99/mo`.
+
+Includes:
+
+- Outfit scanner.
+- Before-you-buy product scanner.
+- Saved profile.
+- Saved products.
+- Unlimited or high-limit checks.
+
+Likely future paid value is not the static report. It is recurring wardrobe, outfit, product, and makeup checks.
 
 ## Pages
 
 | Page | Path | Purpose |
-|---|---|---|
-| Landing | `/` | FROZEN. Waitlist only. Do not modify. |
-| Onboarding | `/quiz` | 3-step flow: color → body → style |
-| Profile | `/profile` | Season result, palette, body type, style tags |
-| Feed | `/feed` | Ranked product recommendations |
-| Saved | `/saved` | Wishlist / saved items |
+| --- | --- | --- |
+| Landing | `/` | Explain value, start quiz, collect interest |
+| Quiz | `/quiz` | Onboarding and selfie/color result |
+| Profile | `/profile` | Free result, paid report, Pro upsell |
+| Feed | `/feed` | Personalized product recommendations |
+| Saved | `/saved` | Saved products |
+| Login/Auth | `/login`, `/auth` | Account recovery and saved profile |
+| Dashboard | `/dashboard` | Legacy URL that redirects to `/quiz` |
 
----
+Future surfaces:
 
-## Database Schema (Supabase)
+| Page | Path | Purpose |
+| --- | --- | --- |
+| Wardrobe | `/wardrobe` | User-owned clothing catalog |
+| Scans | `/scans` | Clothing, outfit, makeup, and product verdict history |
+| Outfit Builder | `/outfits` | Build outfits from saved wardrobe items |
 
-```sql
--- profiles table
-CREATE TABLE profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id),
-  color_season TEXT,
-  undertone TEXT,
-  contrast TEXT,
-  intensity TEXT,
-  best_colors TEXT[],      -- hex array
-  avoid_colors TEXT[],
-  neutrals TEXT[],
-  body_type TEXT,
-  style_vector JSONB,
-  onboarding_completed BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+## Payment Flow
 
--- product_cache table
-CREATE TABLE product_cache (
-  id TEXT PRIMARY KEY,           -- key: "{season}:{category}:{page}"
-  data JSONB,
-  cached_at TIMESTAMPTZ DEFAULT NOW(),
-  expires_at TIMESTAMPTZ
-);
+Use Stripe Payment Links for the first launch.
 
--- user_interactions table
-CREATE TABLE user_interactions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id),
-  product_id TEXT,
-  action TEXT,                   -- 'click' | 'save' | 'dismiss'
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-Enable Row Level Security. Users can only read/write their own profile.
-
----
-
-## ShopStyle API
-
-```typescript
-// Base: https://api.shopstyle.com/api/v2/products
-// Required: pid=YOUR_UID
-
-interface ShopStyleProduct {
-  id: string
-  name: string
-  description: string
-  price: number
-  salePrice?: number
-  image: { sizes: { Best: { url: string } } }
-  clickUrl: string        // affiliate link — use AS-IS, do not modify
-  brandedName: string
-  categories: { id: string; name: string }[]
-  colors?: { name: string; canonicalColors: string[] }[]
-}
-```
-
-**CRITICAL:** `clickUrl` must never be modified — commission tracking breaks if you change it.
-
-Cache by `{season}:{category}:{page}` with 4-hour TTL. Fetch 100, score all, return top 20.
-
----
-
-## Product Scoring Algorithm
-
-Uses LAB color space for perceptual matching (install `d3-color`):
-
-```typescript
-import { lab } from 'd3-color'
-
-function colorDistance(hex1: string, hex2: string): number {
-  const c1 = lab(hex1)
-  const c2 = lab(hex2)
-  return Math.sqrt(
-    (c1.l - c2.l) ** 2 + (c1.a - c2.a) ** 2 + (c1.b - c2.b) ** 2
-  )
-}
-
-function colorScore(productColors: string[], palette: UserColorPalette): number {
-  let score = 0
-  for (const c of productColors) {
-    const bestMatch = Math.min(...palette.best_colors.map(p => colorDistance(c, p)))
-    const avoidMatch = Math.min(...palette.avoid_colors.map(p => colorDistance(c, p)))
-    if (bestMatch < 20)      score += 1.0
-    else if (bestMatch < 35) score += 0.6
-    else if (avoidMatch < 20) score -= 0.5
-    else                     score += 0.2
-  }
-  return Math.max(0, score / productColors.length)
-}
-
-// Final rank: color 50% · style 30% · body type 20%
-function rankProduct(product: ShopStyleProduct, profile: UserProfile): number {
-  return colorScore(product, profile.palette) * 0.50
-       + styleScore(product, profile.style)   * 0.30
-       + bodyTypeScore(product, profile.body) * 0.20
-}
-```
-
----
-
-## Product Placeholders (until ShopStyle API)
-
-Until ShopStyle UID is obtained, show curated static products per season from `lib/landing-data.ts`.
-Cards link to generic retailer search (ASOS / Zara) — no commission, but flow looks real.
-
-Do NOT show match score numbers to users — use visual dot indicators only (green / yellow / red).
-
----
-
-## Environment Variables
+Environment variables:
 
 ```env
-OPENAI_API_KEY=                    # Primary vision analysis
-GEMINI_API_KEY=                    # Fallback vision analysis
-SHOPSTYLE_UID=                     # ShopStyle affiliate UID (pending)
-NEXT_PUBLIC_SUPABASE_URL=          # Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=     # Public key
-SUPABASE_SERVICE_ROLE_KEY=         # Server-side only
-UPSTASH_REDIS_REST_URL=            # Rate limiting + cache
-UPSTASH_REDIS_REST_TOKEN=
-TELEGRAM_BOT_TOKEN=                # Waitlist notifications (existing)
-TELEGRAM_CHAT_ID=                  # Waitlist notifications (existing)
+NEXT_PUBLIC_PAID_REPORT_URL=
+NEXT_PUBLIC_SUBSCRIPTION_URL=
 ```
 
----
+Flow:
+
+1. User sees locked report section.
+2. User clicks "unlock full report".
+3. App opens Stripe Payment Link.
+4. Stripe redirects back to `/profile?paid=report`.
+5. MVP unlock flag reveals report content.
+
+For Pro:
+
+1. User sees scanner locked.
+2. User clicks "upgrade to Pro".
+3. App opens subscription Payment Link.
+4. Stripe redirects back to `/profile?paid=pro`.
+5. MVP unlock flag reveals Pro features.
+
+MVP limitation:
+
+- Redirect/local unlock is not a secure entitlement system.
+- After payment demand is proven, add Stripe webhooks and Supabase entitlements.
+
+## Affiliate Flow
+
+Add one affiliate link wrapper.
+
+Rules:
+
+- Missing affiliate env vars must never break links.
+- Unsupported merchants must return the original URL.
+- Affiliate disclosure must be visible near product links.
+- Affiliate approvals are not a launch blocker.
+
+Planned env vars:
+
+```env
+AFFILIATE_ENABLED=false
+AFFILIATE_NETWORK=
+RAKUTEN_SITE_ID=
+RAKUTEN_ASOS_MID=
+AWIN_PUBLISHER_ID=
+AWIN_ASOS_MID=
+AMAZON_ASSOCIATE_TAG=
+```
+
+## AI Analysis
+
+Use GPT-4o for serious selfie and outfit analysis. Keep Gemini fallback where already wired.
+
+Rules:
+
+- AI calls stay server-side.
+- API keys stay server-side.
+- Non-human uploads must ask for a clear selfie and must not return a color season.
+- Client components must not import server-only AI files.
+- Low-confidence photos should ask users to retry in better lighting.
+- AI outputs must include confidence, reason, and editable structured labels where possible.
+- User corrections must override AI guesses.
+- Do not simply reject uploaded clothes. Explain how to use, balance, or replace them.
+
+## Product Principles
+
+- Ask observable facts, not self-diagnosis.
+- Show quiz result fast, ideally around 60 seconds.
+- Make selfie upload/live camera capture optional and position it as an accuracy boost.
+- Build a deterministic quiz color prior before selfie confirmation. Warm/deep/muted evidence should not be mislabeled Winter just because the user has dark hair or high depth.
+- Support men, women, nonbinary users, and unisex styling.
+- Make makeup optional.
+- Avoid borrowed reviews. Use real beta feedback or product demos.
+- Give users item-level control over wardrobe and outfit generation.
+- Build feedback capture into AI results.
+
+## Killer Features
+
+### Scan Anything
+
+One upload entry point for clothing, outfits, makeup, and product screenshots.
+
+The result should show:
+
+- works / maybe / skip
+- score
+- reason
+- what to change
+- better alternatives
+- save result
+
+### Wardrobe Matchmaker
+
+Users add 5-10 owned items first. PaletteMe labels each item, lets the user correct it, then builds outfits from those owned clothes.
+
+Required controls:
+
+- lock item
+- swap item
+- remove item
+- edit labels
+- add manual item
+
+### Buy-With-My-Closet
+
+User uploads a product screenshot or link. PaletteMe tells them whether to buy it and shows outfits using items they already own.
+
+### Makeup Scanner
+
+User uploads lipstick, blush, foundation, eyeshadow, or a product screenshot. PaletteMe judges undertone fit and suggests better shade families.
+
+## Privacy Copy
+
+Do not say photos never leave the device.
+
+Approved copy:
+
+> Photos are processed securely for analysis. PaletteMe does not sell or share your images.
+
+If the app stores photos later, this copy must change before launch.
 
 ## Build Order
 
-1. **Deploy landing** (`/`) as-is for waitlist — needs `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`
-2. **Refactor `/quiz`** — 3-step onboarding (color → body → style), results saved to sessionStorage
-3. **Add `/profile`** — shows season, palette, body type, style tags + placeholder products
-4. **Wire OpenAI Vision** into Step 1 (camera path) — `lib/analysis.ts` already handles this
-5. **Add Supabase** — user profiles persist after sign-in
-6. **Add Supabase Auth** — email + Google OAuth
-7. **Connect ShopStyle** — replace placeholder products with real scored feed
-8. **Add `/feed`** — infinite scroll ranked recommendations
-9. **Add `/saved`** — wishlist
-10. **Add Upstash Redis** — rate limiting + 4h product cache
-11. **Polish + animations**
+1. Mobile-first quiz with fast result and optional selfie.
+2. Accuracy feedback on quiz and photo results.
+3. Scan Anything for clothes, outfits, makeup, and product screenshots.
+4. Save scan history.
+5. Mini wardrobe: add 5-10 owned items with editable AI labels.
+6. Outfit builder from saved wardrobe.
+7. Buy-with-my-closet scanner.
+8. Product recommendations and affiliate links.
+9. Payment re-test after usefulness is proven.
 
----
+## Current Quiz Foundation
 
-## UX Rules
+Phase 1 of the product2 direction shipped on 2026-06-14:
 
-- Onboarding completable in under 3 minutes
-- Camera analysis result in under 5 seconds
-- Never show numeric scores — only visual dot indicators
-- Every empty state has a clear CTA
-- Mobile-first (majority of users on phone)
-- Landing page photos: processed by OpenAI, immediately discarded, never stored
-- All API keys server-side only, never exposed to client
+- `/quiz` starts with wardrobe type and main style challenge.
+- Color questions collect skin tone, undertone, sun reaction, natural hair, eye color, white/cream, contrast, and intensity.
+- `lib/quiz.ts` produces a quiz prior with axes, confidence, macro season, and sub-season hint.
+- Users can upload a selfie after the quiz or continue with the quiz-only result.
+- Saved profiles and AI prompt context include wardrobe type, style challenge, quiz evidence, and quiz confidence.
+
+## Not In Scope For First Monetization Launch
+
+- Full Stripe webhook integration.
+- PDF report generation.
+- Email lifecycle automation.
+- Affiliate feed ingestion.
+- Native mobile app.
+- Large whole-closet batch upload before the mini wardrobe flow works.

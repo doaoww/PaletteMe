@@ -4,6 +4,33 @@ How to monetize marketplace product picks with affiliate commissions.
 
 ---
 
+## Current implementation contract
+
+Affiliate approvals are pending, so affiliate support must be built as a wrapper that never blocks launch.
+
+Rules:
+
+- If affiliate env vars are missing, return the original product URL.
+- If affiliate env vars exist, wrap supported merchant URLs.
+- Unsupported merchants pass through unchanged.
+- Always show a disclosure near product links: "Some product links may earn us a commission at no extra cost to you."
+
+Planned env vars:
+
+```env
+AFFILIATE_ENABLED=false
+AFFILIATE_NETWORK=
+RAKUTEN_SITE_ID=
+RAKUTEN_ASOS_MID=
+AWIN_PUBLISHER_ID=
+AWIN_ASOS_MID=
+AMAZON_ASSOCIATE_TAG=
+```
+
+Affiliate revenue is a bonus channel. Direct paid report and Pro subscription are the primary path to the first `1000+ MRR`.
+
+---
+
 ## How it works
 
 ```
@@ -139,10 +166,11 @@ Earnings are per **sale**, not per click (except some creator platforms).
 
 | File | Role |
 |------|------|
-| `app/api/products/route.ts` | Scrapes ASOS, returns product URLs |
+| `app/api/products/route.ts` | Returns scored product URLs and wraps affiliate links |
 | `lib/product-matching.ts` | Search queries + color match scoring |
 | `lib/landing-data.ts` | `SEASON_PRODUCTS` demo fallback |
-| `components/dashboard/color-analyzer.tsx` | `MarketplacePicks` UI ("shop now" links) |
+| `components/feed/product-feed.tsx` | Product feed UI with affiliate disclosure and shop links |
+| `components/profile/profile-view.tsx` | Profile/report CTAs that send users toward product and scanner flows |
 
 ---
 

@@ -109,8 +109,8 @@ export function WhatWeDo() {
         </ul>
 
         <div className="what__cta">
-          <Link href="/dashboard" className="cta-mini">
-            try it free — upload your selfie
+          <Link href="/quiz" className="cta-mini">
+            try it free - take or upload your selfie
           </Link>
         </div>
       </div>

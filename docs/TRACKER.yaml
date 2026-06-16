@@ -1,0 +1,163 @@
+plans:
+  - name: product2-phase-1-quiz-result-foundation
+    path: plans/2026-06-14-product2-phase-1-quiz-result-foundation/
+    status: shipped
+    created: 2026-06-14
+    started: 2026-06-14
+    shipped: 2026-06-14
+    tasks:
+      - name: docs-and-tracker
+        file: 01-docs-and-tracker.md
+        status: done
+      - name: quiz-prior-contract
+        file: 02-quiz-prior-contract.md
+        status: done
+      - name: quiz-flow-and-result-ux
+        file: 03-quiz-flow-and-result-ux.md
+        status: done
+      - name: validation-and-docs
+        file: 04-validation-and-docs.md
+        status: done
+  - name: single-selfie-capture-flow
+    path: systems/single-selfie-capture-flow/
+    status: shipped
+    created: 2026-06-13
+    started: 2026-06-13
+    shipped: 2026-06-13
+    tasks:
+      - name: capture-helper
+        file: 01-capture-helper.md
+        status: done
+      - name: ui-consolidation
+        file: 02-ui-consolidation.md
+        status: done
+      - name: docs-validation
+        file: 03-docs-validation.md
+        status: done
+  - name: hybrid-color-algorithm-v1
+    path: systems/hybrid-color-algorithm-v1/
+    status: shipped
+    created: 2026-06-13
+    started: 2026-06-13
+    shipped: 2026-06-13
+    tasks:
+      - name: scoring-layer
+        file: 01-scoring-layer.md
+        status: done
+      - name: openai-responses
+        file: 02-openai-responses.md
+        status: done
+      - name: docs-validation
+        file: 03-docs-validation.md
+        status: done
+  - name: accuracy-gate-v1
+    path: systems/accuracy-gate-v1/
+    status: shipped
+    created: 2026-06-13
+    started: 2026-06-13
+    shipped: 2026-06-13
+    tasks:
+      - name: analysis-contract-and-tests
+        file: 01-analysis-contract-and-tests.md
+        status: done
+      - name: api-route-and-ui-handling
+        file: 02-api-route-and-ui-handling.md
+        status: done
+      - name: docs-and-validation
+        file: 03-docs-and-validation.md
+        status: done
+  - name: supabase-auth-cleanup
+    path: systems/supabase-auth-cleanup/
+    status: shipped
+    created: 2026-06-13
+    started: 2026-06-13
+    shipped: 2026-06-13
+    tasks:
+      - name: auth-redirect-contracts
+        file: 01-auth-redirect-contracts.md
+        status: done
+      - name: proxy-and-callback
+        file: 02-proxy-and-callback.md
+        status: done
+      - name: login-and-session-ui
+        file: 03-login-and-session-ui.md
+        status: done
+      - name: docs-and-validation
+        file: 04-docs-and-validation.md
+        status: done
+  - name: ai-backend-foundation
+    path: systems/ai-backend-foundation/
+    status: shipped
+    created: 2026-06-13
+    started: 2026-06-13
+    shipped: 2026-06-13
+    tasks:
+      - name: contracts-and-prompts
+        file: 01-contracts-and-prompts.md
+        status: done
+      - name: openai-adapter-and-jobs
+        file: 02-openai-adapter-and-jobs.md
+        status: done
+      - name: api-routes
+        file: 03-api-routes.md
+        status: done
+      - name: docs-and-validation
+        file: 04-docs-and-validation.md
+        status: done
+  - name: free-testing-mode
+    path: systems/free-testing-mode/
+    status: shipped
+    created: 2026-06-13
+    started: 2026-06-13
+    shipped: 2026-06-13
+    tasks:
+      - name: free-testing-unlock
+        file: 01-free-testing-unlock.md
+        status: done
+  - name: color-intelligence-v1
+    path: systems/color-intelligence-v1/
+    status: shipped
+    created: 2026-06-13
+    started: 2026-06-13
+    shipped: 2026-06-13
+    tasks:
+      - name: color-report-helper
+        file: 01-color-report-helper.md
+        status: done
+      - name: analysis-result-storage
+        file: 02-analysis-result-storage.md
+        status: done
+      - name: ai-analysis-schema
+        file: 03-ai-analysis-schema.md
+        status: done
+      - name: ui-integration
+        file: 04-ui-integration.md
+        status: done
+      - name: qa-and-docs
+        file: 05-qa-and-docs.md
+        status: done
+  - name: monetization-affiliate-launch
+    path: systems/monetization-affiliate-launch/
+    status: shipped
+    created: 2026-06-13
+    started: 2026-06-13
+    shipped: 2026-06-13
+    tasks:
+      - name: stabilize-build-and-docs
+        file: 01-stabilize-build-and-docs.md
+        status: done
+      - name: payment-links-and-premium-gates
+        file: 02-payment-links-and-premium-gates.md
+        status: done
+      - name: paid-report-profile
+        file: 03-paid-report-profile.md
+        status: done
+      - name: pro-outfit-scanner
+        file: 04-pro-outfit-scanner.md
+        status: done
+      - name: affiliate-link-wrapper
+        file: 05-affiliate-link-wrapper.md
+        status: done
+      - name: final-qa-and-launch-copy
+        file: 06-final-qa-and-launch-copy.md
+        status: done

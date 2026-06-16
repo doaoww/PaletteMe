@@ -2,68 +2,170 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AnalysisResult } from "@/lib/analysis";
+import { saveAnalysisResult } from "@/lib/analysis-storage";
+import { PostQuizAuthScreen } from "@/components/auth/post-quiz-auth-screen";
+import { SelfieCapture } from "@/components/selfie/selfie-capture";
+import { getBodyShapeScreenOptions } from "@/components/quiz/body-shape-silhouettes";
 import {
   applyAnswer,
   buildQuizProfile,
-  clearQuizProfile,
   deriveBodyType,
-  deriveStyleVector,
+  deriveStyleVectorFromAnswers,
   emptyScores,
+  enrichColorAnswers,
   saveQuizProfile,
-  toggleTrend,
+  saveQuizToLocalStorage,
+  saveQuizToSupabase,
   type QuizProfile,
   type QuizScores,
 } from "@/lib/quiz";
 import {
+  detectCityAndWeather,
+  fetchWeatherForCity,
+  type LocationWeather,
+} from "@/lib/quiz-location";
+import {
+  BUDGET_PREF_OPTIONS,
   CONTRAST_OPTIONS,
-  EYE_OPTIONS,
-  HAIR_COLOR_OPTIONS,
-  HAIR_NATURAL_OPTIONS,
-  INTENSITY_OPTIONS,
-  METAL_OPTIONS,
-  SHOULDER_HIP_OPTIONS,
-  STYLE_PAIRS,
+  EYE_COLOR_OPTIONS,
+  HAIR_COLOR_OPTIONS_UI,
+  HEIGHT_OPTIONS,
+  MAKEUP_PREF_OPTIONS,
+  OCCASION_OPTIONS,
+  SKIN_TONE_OPTIONS,
+  STYLE_CHALLENGE_OPTIONS,
+  STYLE_DIRECTION_OPTIONS,
   SUN_OPTIONS,
-  TREND_OPTIONS,
   VEIN_OPTIONS,
-  WAIST_OPTIONS,
-  WEIGHT_GAIN_OPTIONS,
-  WHITE_TEST_OPTIONS,
+  WARDROBE_TYPE_OPTIONS,
+  WEIGHT_OPTIONS,
   type QuizAnswers,
-  type StyleSwipePick,
+  type StyleDirection,
+  type WardrobeType,
 } from "@/lib/quiz-data";
+import { isSupabaseAuthConfigured, resolvePostQuizAuthAction } from "@/lib/auth-flow";
 import { resizeImageForAnalysis } from "@/lib/resize-image";
 import { SEASONS } from "@/lib/landing-data";
-
-// ─── Step type ────────────────────────────────────────────────────────────
+import { validateSelfieFile } from "@/lib/selfie-capture";
+import {
+  BodyShapeCard,
+  QuizCardButton,
+  QuizCardList,
+  QuizChip,
+  QuizDecision,
+  QuizFooter,
+  QuizRadioCard,
+  QuizRadioList,
+  QuizStepHead,
+  SwatchGrid,
+  SwatchOption,
+  WardrobeCard,
+  WeatherStatCards,
+} from "@/components/quiz/quiz-picker";
 
 type Step =
   | "intro"
+  | "wardrobe-type"
+  | "style-challenge"
+  | "skin-tone"
+  | "vein"
+  | "hair-color"
+  | "eye-color"
+  | "contrast"
+  | "sun-reaction"
+  | "height"
+  | "weight"
+  | "body-shape"
+  | "style-direction"
+  | "occasions"
+  | "makeup"
+  | "budget"
+  | "location"
+  | "photo-decision"
   | "color-entry"
   | "color-selfie"
   | "color-analyzing"
-  | "color-q-vein"
-  | "color-q-metals"
-  | "color-q-sun"
-  | "color-q-hair-natural"
-  | "color-q-hair-color"
-  | "color-q-eyes"
-  | "color-q-white"
-  | "color-q-contrast"
-  | "color-q-vivid"
-  | "color-result"
-  | "body-shoulders"
-  | "body-waist"
-  | "body-weight"
-  | "style-0"
-  | "style-1"
-  | "style-2"
-  | "style-3"
-  | "style-4"
-  | "style-5";
+  | "color-result";
+
+const FOOTER_STEPS: Step[] = [
+  "wardrobe-type",
+  "style-challenge",
+  "skin-tone",
+  "vein",
+  "hair-color",
+  "eye-color",
+  "contrast",
+  "sun-reaction",
+  "height",
+  "weight",
+  "body-shape",
+  "style-direction",
+  "occasions",
+  "makeup",
+  "budget",
+  "location",
+];
+
+const STEP_ORDER: Step[] = [
+  "intro",
+  ...FOOTER_STEPS,
+  "photo-decision",
+  "color-entry",
+  "color-selfie",
+  "color-analyzing",
+  "color-result",
+];
+
+const STEP_BACK: Partial<Record<Step, Step>> = (() => {
+  const map: Partial<Record<Step, Step>> = {};
+  for (let i = 1; i < STEP_ORDER.length; i += 1) {
+    const step = STEP_ORDER[i];
+    const prev = STEP_ORDER[i - 1];
+    if (step !== "intro") map[step] = prev;
+  }
+  map["color-result"] = "photo-decision";
+  return map;
+})();
+
+const SUPABASE_AUTH_ENV = {
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+};
+
+function stepProgress(step: Step): number {
+  const idx = STEP_ORDER.indexOf(step);
+  if (idx <= 0) return 0;
+  return Math.round((idx / (STEP_ORDER.length - 1)) * 100);
+}
+
+function stepBarTitle(step: Step): string {
+  if (step === "intro") return "palette me";
+  if (step === "wardrobe-type" || step === "style-challenge") return "your profile";
+  if (
+    [
+      "skin-tone",
+      "vein",
+      "hair-color",
+      "eye-color",
+      "contrast",
+      "sun-reaction",
+      "photo-decision",
+      "color-entry",
+      "color-selfie",
+      "color-analyzing",
+      "color-result",
+    ].includes(step)
+  ) {
+    return "your colors";
+  }
+  if (["height", "weight", "body-shape"].includes(step)) return "your shape";
+  if (["style-direction", "occasions", "makeup", "budget"].includes(step)) return "your style";
+  if (step === "location") return "your location";
+  return "quiz";
+}
 
 type ColorResult = {
   seasonId: "spring" | "summer" | "autumn" | "winter";
@@ -72,91 +174,113 @@ type ColorResult = {
   subSeason?: string;
   palette: string[];
   fromSelfie: boolean;
+  confidence?: number;
 };
 
-const STEP_PCT: Record<Step, number> = {
-  intro: 0,
-  "color-entry": 5,
-  "color-selfie": 10,
-  "color-analyzing": 18,
-  "color-q-vein": 8,
-  "color-q-metals": 12,
-  "color-q-sun": 16,
-  "color-q-hair-natural": 20,
-  "color-q-hair-color": 23,
-  "color-q-eyes": 26,
-  "color-q-white": 28,
-  "color-q-contrast": 30,
-  "color-q-vivid": 32,
-  "color-result": 33,
-  "body-shoulders": 45,
-  "body-waist": 55,
-  "body-weight": 64,
-  "style-0": 68,
-  "style-1": 74,
-  "style-2": 80,
-  "style-3": 85,
-  "style-4": 90,
-  "style-5": 96,
+type SelfieQualityWarning = {
+  message: string;
+  result: AnalysisResult;
 };
 
-function stepPhaseLabel(step: Step): string {
-  if (step === "intro") return "";
-  if (step.startsWith("color")) return "1 of 3 · color";
-  if (step.startsWith("body")) return "2 of 3 · body";
-  if (step.startsWith("style")) return "3 of 3 · style";
-  return "";
+type AnalyzeResponse = {
+  ok?: boolean;
+  result?: AnalysisResult;
+  warning?: {
+    message?: string;
+  } | null;
+  error?: string;
+  message?: string;
+};
+
+function toggleStyleDirection(current: StyleDirection[], id: StyleDirection): StyleDirection[] {
+  if (current.includes(id)) return current.filter((item) => item !== id);
+  if (current.length >= 2) return [current[1], id];
+  return [...current, id];
 }
-
-const ACCEPT = "image/jpeg,image/png,image/webp";
-const MAX_BYTES = 10 * 1024 * 1024;
-
-// ─── Component ────────────────────────────────────────────────────────────
 
 export function QuizFlow() {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>("intro");
-  const [answers, setAnswers] = useState<QuizAnswers>({});
+  const [answers, setAnswers] = useState<QuizAnswers>({ styleDirections: [], occasions: [] });
   const [scores, setScores] = useState<QuizScores>(emptyScores());
   const [colorResult, setColorResult] = useState<ColorResult | null>(null);
-  const [stylePicks, setStylePicks] = useState<StyleSwipePick[]>([]);
 
-  // Selfie state
+  const [pendingWardrobe, setPendingWardrobe] = useState<WardrobeType | undefined>();
+  const [pendingChallenge, setPendingChallenge] = useState<QuizAnswers["styleChallenge"]>();
+
+  const [cityInput, setCityInput] = useState("");
+  const [weather, setWeather] = useState<LocationWeather | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const geoAttempted = useRef(false);
+  const cityDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [selfieFile, setSelfieFile] = useState<File | null>(null);
   const [selfiePreviewUrl, setSelfiePreviewUrl] = useState<string | null>(null);
   const [selfieError, setSelfieError] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState(false);
+  const [selfieHardReject, setSelfieHardReject] = useState(false);
+  const [selfieQualityWarning, setSelfieQualityWarning] = useState<SelfieQualityWarning | null>(null);
+  const [postQuizAuthProfile, setPostQuizAuthProfile] = useState<QuizProfile | null>(null);
 
-  const progress = STEP_PCT[step] ?? 0;
+  const progress = stepProgress(step);
+  const backStep = STEP_BACK[step];
+  const enrichedAnswers = useMemo(() => enrichColorAnswers(answers), [answers]);
 
-  // ── Helpers ──────────────────────────────────────────────────────────
+  const showFooter = FOOTER_STEPS.includes(step);
+  const hideHeader = step === "intro";
 
-  const resetAll = () => {
-    clearQuizProfile();
-    setAnswers({});
-    setScores(emptyScores());
-    setColorResult(null);
-    setStylePicks([]);
-    setSelfieFile(null);
-    if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
-    setSelfiePreviewUrl(null);
-    setSelfieError(null);
-    setStep("intro");
+  const advance = useCallback((next: Step) => setStep(next), []);
+
+  const applyWeather = useCallback((data: LocationWeather) => {
+    setWeather(data);
+    setCityInput(data.city);
+  }, []);
+
+  useEffect(() => {
+    if (step !== "location" || geoAttempted.current) return;
+    geoAttempted.current = true;
+    setWeatherLoading(true);
+    detectCityAndWeather()
+      .then((data) => {
+        if (data) applyWeather(data);
+      })
+      .finally(() => setWeatherLoading(false));
+  }, [step, applyWeather]);
+
+  const handleCityChange = (value: string) => {
+    setCityInput(value);
+    if (cityDebounce.current) clearTimeout(cityDebounce.current);
+    if (!value.trim()) {
+      setWeather(null);
+      return;
+    }
+    cityDebounce.current = setTimeout(async () => {
+      setWeatherLoading(true);
+      const data = await fetchWeatherForCity(value);
+      if (data) applyWeather(data);
+      setWeatherLoading(false);
+    }, 600);
   };
+
+  useEffect(
+    () => () => {
+      if (cityDebounce.current) clearTimeout(cityDebounce.current);
+    },
+    []
+  );
 
   const handleFile = useCallback(
     async (next: File) => {
-      if (!ACCEPT.split(",").includes(next.type)) {
-        setSelfieError("Only JPG, PNG, or WebP images are supported.");
-        return;
-      }
-      if (next.size > MAX_BYTES) {
-        setSelfieError("Image must be 10 MB or smaller.");
+      const validation = validateSelfieFile(next);
+      if (!validation.ok) {
+        setSelfieError(validation.error);
+        setSelfieHardReject(false);
+        setSelfieQualityWarning(null);
         return;
       }
       setSelfieError(null);
+      setSelfieHardReject(false);
+      setSelfieQualityWarning(null);
       const prepared = await resizeImageForAnalysis(next);
       if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
       setSelfieFile(prepared);
@@ -166,623 +290,759 @@ export function QuizFlow() {
     [selfiePreviewUrl]
   );
 
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const f = e.dataTransfer.files[0];
-    if (f) handleFile(f);
+  const finishColorQuiz = (nextAnswers: QuizAnswers, nextScores: QuizScores) => {
+    const enriched = enrichColorAnswers(nextAnswers);
+    const quizProfile = buildQuizProfile(enriched, nextScores);
+    const winner = SEASONS.find((s) => s.id === quizProfile.seasonId) ?? SEASONS[0];
+    setColorResult({
+      seasonId: quizProfile.seasonId,
+      seasonName: quizProfile.seasonName,
+      undertoneHint: quizProfile.undertoneHint,
+      subSeason: quizProfile.subSeason,
+      palette: winner.palette,
+      fromSelfie: false,
+      confidence: quizProfile.quizConfidence,
+    });
   };
 
   const analyzeSelfie = async () => {
     if (!selfieFile) return;
     setStep("color-analyzing");
     setSelfieError(null);
+    setSelfieHardReject(false);
+    setSelfieQualityWarning(null);
     const formData = new FormData();
     formData.append("image", selfieFile);
     try {
       const res = await fetch("/api/analyze", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Analysis failed.");
-      const result = data.result as AnalysisResult;
-      setColorResult({
-        seasonId: result.seasonId,
-        seasonName: result.season.name,
-        undertoneHint: result.traits.undertone,
-        subSeason: result.subSeason,
-        palette: result.season.palette,
-        fromSelfie: true,
-      });
-      setStep("color-result");
+      const data = (await res.json().catch(() => ({}))) as AnalyzeResponse;
+      if (!res.ok) {
+        setSelfieError(data.message || data.error || "Analysis failed.");
+        setSelfieHardReject(res.status === 422 && data.error === "no_face");
+        setStep("color-selfie");
+        return;
+      }
+      if (!data.result) throw new Error("Analysis failed.");
+      const warningMessage = data.warning?.message ?? data.result.qualityWarning?.message;
+      if (warningMessage) {
+        setSelfieQualityWarning({ message: warningMessage, result: data.result });
+        setStep("color-selfie");
+        return;
+      }
+      completeWithSelfieAnalysis(data.result);
     } catch (err) {
       setSelfieError(err instanceof Error ? err.message : "Something went wrong. Try again.");
+      setSelfieHardReject(false);
       setStep("color-selfie");
     }
   };
 
-  const finishColorQuiz = (nextAnswers: QuizAnswers, nextScores: QuizScores) => {
-    const sorted = Object.entries(nextScores).sort(([, a], [, b]) => b - a);
-    const winner = SEASONS.find((s) => s.id === sorted[0][0]) ?? SEASONS[0];
-    const seasonId = winner.id as "spring" | "summer" | "autumn" | "winter";
-    const vein = VEIN_OPTIONS.find((o) => o.id === nextAnswers.veinColor);
-    const sun = SUN_OPTIONS.find((o) => o.id === nextAnswers.sunReaction);
-    const undertone = vein?.undertone ?? sun?.undertone ?? "neutral";
-    setColorResult({
-      seasonId,
-      seasonName: winner.name,
-      undertoneHint: undertone,
-      palette: winner.palette,
-      fromSelfie: false,
-    });
-    setStep("color-result");
-  };
-
-  const finishStyle = (finalPicks: StyleSwipePick[]) => {
-    if (!colorResult) return;
-    const finalAnswers = { ...answers };
-    const profile: QuizProfile = buildQuizProfile(
-      finalAnswers,
-      scores,
-      {
-        seasonId: colorResult.seasonId,
-        seasonName: colorResult.seasonName,
-        undertoneHint: colorResult.undertoneHint,
-        bodyType: deriveBodyType(finalAnswers),
-        styleVector: deriveStyleVector(finalPicks),
-        subSeason: colorResult.subSeason,
-      }
-    );
-    saveQuizProfile(profile);
+  const continueToProfile = useCallback(() => {
+    setPostQuizAuthProfile(null);
     router.push("/profile");
+  }, [router]);
+
+  const finishAndSaveProfile = useCallback(
+    async (result: ColorResult) => {
+      const profile: QuizProfile = buildQuizProfile(enrichedAnswers, scores, {
+        seasonId: result.seasonId,
+        seasonName: result.seasonName,
+        undertoneHint: result.undertoneHint,
+        bodyType: deriveBodyType(enrichedAnswers),
+        styleVector: deriveStyleVectorFromAnswers(enrichedAnswers),
+        subSeason: result.subSeason,
+      });
+      saveQuizProfile(profile);
+      saveQuizToLocalStorage(profile);
+      saveQuizToSupabase(profile).catch(() => {});
+
+      if (!isSupabaseAuthConfigured(SUPABASE_AUTH_ENV)) {
+        setPostQuizAuthProfile(profile);
+        return;
+      }
+
+      try {
+        const { createClient } = await import("@/lib/supabase");
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (resolvePostQuizAuthAction(user) === "continue-to-profile") {
+          router.push("/profile");
+          return;
+        }
+      } catch {
+        // Session check failed — require registration before results.
+      }
+
+      setPostQuizAuthProfile(profile);
+    },
+    [enrichedAnswers, scores, router]
+  );
+
+  const completeWithSelfieAnalysis = (result: AnalysisResult) => {
+    saveAnalysisResult(result);
+    setColorResult({
+      seasonId: result.seasonId,
+      seasonName: result.season.name,
+      undertoneHint: result.traits.undertone,
+      subSeason: result.subSeason,
+      palette: result.season.palette,
+      fromSelfie: true,
+      confidence: result.confidence,
+    });
+    finishAndSaveProfile({
+      seasonId: result.seasonId,
+      seasonName: result.season.name,
+      undertoneHint: result.traits.undertone,
+      subSeason: result.subSeason,
+      palette: result.season.palette,
+      fromSelfie: true,
+      confidence: result.confidence,
+    });
   };
 
-  const pickStyle = (pick: StyleSwipePick, index: number) => {
-    const next = [...stylePicks];
-    next[index] = pick;
-    setStylePicks(next);
+  const retakeSelfie = () => {
+    setSelfieError(null);
+    setSelfieHardReject(false);
+    setSelfieQualityWarning(null);
+    setSelfieFile(null);
+    if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
+    setSelfiePreviewUrl(null);
+    setStep("color-entry");
+  };
 
-    if (index < 5) {
-      setStep(`style-${index + 1}` as Step);
-    } else {
-      finishStyle(next);
+  const continueWithSoftWarning = () => {
+    if (!selfieQualityWarning) return;
+    const result = selfieQualityWarning.result;
+    setSelfieQualityWarning(null);
+    setSelfieError(null);
+    setSelfieHardReject(false);
+    completeWithSelfieAnalysis(result);
+  };
+
+  const continueFooter = () => {
+    const idx = STEP_ORDER.indexOf(step);
+    const next = STEP_ORDER[idx + 1];
+    if (!next) return;
+
+    if (step === "wardrobe-type" && pendingWardrobe) {
+      setAnswers((a) => ({ ...a, wardrobeType: pendingWardrobe }));
+      advance(next);
+      return;
     }
+    if (step === "style-challenge" && pendingChallenge) {
+      setAnswers((a) => ({ ...a, styleChallenge: pendingChallenge }));
+      advance(next);
+      return;
+    }
+    if (step === "sun-reaction" && answers.sunReaction) {
+      let nextScores = scores;
+      const contrast = CONTRAST_OPTIONS.find((o) => o.id === answers.contrastPref);
+      const sun = SUN_OPTIONS.find((o) => o.id === answers.sunReaction);
+      if (contrast) nextScores = applyAnswer(nextScores, contrast.scores);
+      if (sun) nextScores = applyAnswer(nextScores, sun.scores);
+      setScores(nextScores);
+      finishColorQuiz(answers, nextScores);
+      advance(next);
+      return;
+    }
+    if (step === "location") {
+      const trimmed = cityInput.trim();
+      setAnswers((a) => ({
+        ...a,
+        city: trimmed || weather?.city || undefined,
+        locationSkipped: !trimmed && !weather?.city,
+        weatherTemp: weather?.temperature,
+        weatherHumidity: weather?.humidity,
+        weatherUv: weather?.uvIndex,
+      }));
+      advance(next);
+      return;
+    }
+    advance(next);
   };
 
-  // ── Render ───────────────────────────────────────────────────────────
+  const footerDisabled =
+    (step === "wardrobe-type" && !pendingWardrobe) ||
+    (step === "style-challenge" && !pendingChallenge) ||
+    (step === "skin-tone" && !answers.skinTone) ||
+    (step === "vein" && !answers.veinColor) ||
+    (step === "hair-color" && !answers.naturalHairColor) ||
+    (step === "eye-color" && !answers.eyeColor) ||
+    (step === "contrast" && !answers.contrastPref) ||
+    (step === "sun-reaction" && !answers.sunReaction) ||
+    (step === "height" && !answers.height) ||
+    (step === "weight" && !answers.weightRange && !answers.weightSkipped) ||
+    (step === "body-shape" && !answers.bodyShape) ||
+    (step === "style-direction" && (answers.styleDirections?.length ?? 0) < 1) ||
+    (step === "occasions" && (answers.occasions?.length ?? 0) < 1) ||
+    (step === "makeup" && !answers.makeupPref) ||
+    (step === "budget" && !answers.budgetPref);
+
+  const footerHint =
+    step === "wardrobe-type"
+      ? "You can change this later in settings"
+      : step === "style-challenge"
+        ? "This shapes the tone of your result"
+        : step === "body-shape"
+          ? "We focus only on what works beautifully for your shape"
+          : step === "style-direction"
+            ? "Pick up to 2 style directions"
+            : step === "location"
+              ? "Used only for outfit and weather suggestions"
+              : undefined;
+
+  const screenPanel = "quiz-page__panel quiz-page__panel--screen on";
+
+  if (postQuizAuthProfile) {
+    return (
+      <PostQuizAuthScreen
+        profile={postQuizAuthProfile}
+        onComplete={continueToProfile}
+      />
+    );
+  }
 
   return (
-    <div className="quiz-page">
-      <header className="quiz-page__bar">
-        <Link href="/" className="wordmark quiz-page__logo">
-          palette<span className="me">me</span>
-        </Link>
-        <div className="quiz-page__track" aria-hidden="true">
-          <span style={{ width: `${progress}%` }} />
-        </div>
-        <span className="quiz-page__step">{stepPhaseLabel(step)}</span>
-      </header>
+    <div
+      className={`quiz-page${showFooter ? " quiz-page--with-footer" : ""}${hideHeader ? " quiz-page--intro-step" : ""}`}
+    >
+      {!hideHeader ? (
+        <header className="quiz-page__bar glass-nav">
+          <div className="quiz-page__track" aria-hidden="true">
+            <span style={{ width: `${progress}%` }} />
+          </div>
+          <div className="quiz-page__bar-inner">
+            {backStep ? (
+              <button
+                type="button"
+                className="quiz-page__back"
+                aria-label="Go back"
+                onClick={() => setStep(backStep)}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M14.5 5.5L8 12l6.5 6.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            ) : (
+              <Link href="/" className="quiz-page__back" aria-label="Home">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M14.5 5.5L8 12l6.5 6.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </Link>
+            )}
+            <span className="quiz-page__bar-title">{stepBarTitle(step)}</span>
+            <span className="quiz-page__bar-spacer" aria-hidden />
+          </div>
+        </header>
+      ) : null}
 
-      <main className="quiz-page__main">
-
-        {/* ── INTRO ── */}
+      <main className={`quiz-page__main${showFooter ? " quiz-page__main--screen" : ""}`}>
         {step === "intro" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">personal color onboarding</p>
-            <h1 className="quiz-page__title">
-              Find the colors that make <span className="scr">you</span> glow
-            </h1>
-            <p className="quiz-page__lead">
-              Three quick steps — color season, body type, and style. Upload a
-              selfie or answer a few questions. Done in under 3 minutes.
+          <div className="quiz-page__panel quiz-page__panel--intro on">
+            <p className="wordmark quiz-page__intro-logo">
+              palette<span className="me">me</span>
             </p>
-            <div className="quiz__steps-preview">
-              {["1 · color season", "2 · body type", "3 · style swipe"].map((s) => (
-                <span key={s} className="quiz__step-chip">{s}</span>
+            <p className="quiz-page__tagline">Your AI stylist. Know what works for you.</p>
+            <button type="button" className="btn quiz-page__start" onClick={() => setStep("wardrobe-type")}>
+              let&apos;s start
+            </button>
+            <p className="quiz-page__fine">No account needed to begin</p>
+          </div>
+        )}
+
+        {step === "wardrobe-type" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 01"
+              title="What kind of clothes do you wear?"
+              helper="This helps us show you the right outfits and products"
+            />
+            <div className="quiz-page__cards quiz-page__cards--wardrobe">
+              {WARDROBE_TYPE_OPTIONS.map((opt) => (
+                <WardrobeCard
+                  key={opt.id}
+                  id={opt.id}
+                  title={opt.label.toLowerCase()}
+                  sub={opt.sub}
+                  image={opt.image}
+                  frameTilt={opt.frameTilt}
+                  selected={pendingWardrobe === opt.id}
+                  onClick={() => setPendingWardrobe(opt.id)}
+                />
               ))}
             </div>
-            <button type="button" className="btn quiz-page__start" onClick={() => setStep("color-entry")}>
-              start
+          </div>
+        )}
+
+        {step === "style-challenge" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 02"
+              title="What's your biggest style challenge right now?"
+              helper="Be honest — this shapes everything we tell you"
+            />
+            <QuizRadioList>
+              {STYLE_CHALLENGE_OPTIONS.map((opt) => (
+                <QuizRadioCard
+                  key={opt.id}
+                  title={opt.label}
+                  sub={opt.sub}
+                  selected={pendingChallenge === opt.id}
+                  onClick={() => setPendingChallenge(opt.id)}
+                />
+              ))}
+            </QuizRadioList>
+          </div>
+        )}
+
+        {step === "skin-tone" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 03"
+              title="Your skin tone"
+              helper="Choose the closest match to your natural coloring — not dyed or altered"
+            />
+            <SwatchGrid cols={2}>
+              {SKIN_TONE_OPTIONS.map((opt) => (
+                <SwatchOption
+                  key={opt.id}
+                  swatch={opt.swatch}
+                  label={opt.label}
+                  sub={opt.sub}
+                  size="lg"
+                  selected={answers.skinTone === opt.id}
+                  onClick={() => setAnswers((a) => ({ ...a, skinTone: opt.id }))}
+                />
+              ))}
+            </SwatchGrid>
+          </div>
+        )}
+
+        {step === "vein" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 04"
+              title="Undertone"
+              helper="Look at the veins on the inside of your wrist in natural light"
+            />
+            <QuizRadioList>
+              {VEIN_OPTIONS.map((opt) => (
+                <QuizRadioCard
+                  key={opt.id}
+                  title={opt.label}
+                  sub={opt.sub}
+                  selected={answers.veinColor === opt.id}
+                  onClick={() => {
+                    setAnswers((a) => ({ ...a, veinColor: opt.id }));
+                    setScores((s) => applyAnswer(s, opt.scores));
+                  }}
+                />
+              ))}
+            </QuizRadioList>
+            <button
+              type="button"
+              className="quiz-page__link-btn"
+              onClick={() => {
+                const neutral = VEIN_OPTIONS.find((o) => o.id === "mix");
+                if (!neutral) return;
+                setAnswers((a) => ({ ...a, veinColor: "mix" }));
+                setScores((s) => applyAnswer(s, neutral.scores));
+              }}
+            >
+              hard to tell
             </button>
           </div>
         )}
 
-        {/* ── PHASE 1: COLOR ENTRY ── */}
-        {step === "color-entry" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 1 of 3 · color season</p>
-            <h2 className="quiz__qt">Upload a selfie to reveal your season</h2>
-            <p className="quiz-page__selfie-lead">
-              Natural light, no filters. We analyze your skin, hair and eye
-              contrast — then match you to one of 12 seasonal types.
-            </p>
+        {step === "hair-color" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 05"
+              title="Your natural hair color"
+              helper="If you've always dyed your hair, choose the color closest to your natural brows"
+            />
+            <SwatchGrid cols={2}>
+              {HAIR_COLOR_OPTIONS_UI.map((opt) => (
+                <SwatchOption
+                  key={opt.id}
+                  swatch={opt.swatch}
+                  label={opt.label}
+                  size="lg"
+                  selected={answers.naturalHairColor === opt.id}
+                  onClick={() => {
+                    setAnswers((a) => ({ ...a, naturalHairColor: opt.id }));
+                    setScores((s) => applyAnswer(s, opt.scores));
+                  }}
+                />
+              ))}
+            </SwatchGrid>
+          </div>
+        )}
 
+        {step === "eye-color" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 06"
+              title="Your eye color"
+              helper="Choose the closest match to your natural eye color"
+            />
+            <SwatchGrid cols={2}>
+              {EYE_COLOR_OPTIONS.map((opt) => (
+                <SwatchOption
+                  key={opt.id}
+                  swatch={opt.swatch}
+                  label={opt.label}
+                  size="lg"
+                  selected={answers.eyeColor === opt.id}
+                  onClick={() => setAnswers((a) => ({ ...a, eyeColor: opt.id }))}
+                />
+              ))}
+            </SwatchGrid>
+          </div>
+        )}
+
+        {step === "contrast" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 07"
+              title="How different are your hair and skin in tone?"
+            />
+            <QuizRadioList>
+              {CONTRAST_OPTIONS.map((opt) => (
+                <QuizRadioCard
+                  key={opt.id}
+                  title={opt.label}
+                  sub={opt.sub}
+                  selected={answers.contrastPref === opt.id}
+                  onClick={() => setAnswers((a) => ({ ...a, contrastPref: opt.id }))}
+                />
+              ))}
+            </QuizRadioList>
+          </div>
+        )}
+
+        {step === "sun-reaction" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 08"
+              title="How does your skin react to sun exposure?"
+            />
+            <QuizRadioList>
+              {SUN_OPTIONS.map((opt) => (
+                <QuizRadioCard
+                  key={opt.id}
+                  title={opt.label}
+                  sub={opt.hint}
+                  selected={answers.sunReaction === opt.id}
+                  onClick={() => setAnswers((a) => ({ ...a, sunReaction: opt.id }))}
+                />
+              ))}
+            </QuizRadioList>
+          </div>
+        )}
+
+        {step === "height" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 09"
+              title="Your height"
+              helper="This stays private and only affects outfit suggestions"
+            />
+            <QuizRadioList>
+              {HEIGHT_OPTIONS.map((opt) => (
+                <QuizRadioCard
+                  key={opt.id}
+                  title={opt.label}
+                  sub={opt.sub}
+                  selected={answers.height === opt.id}
+                  onClick={() => setAnswers((a) => ({ ...a, height: opt.id }))}
+                />
+              ))}
+            </QuizRadioList>
+          </div>
+        )}
+
+        {step === "weight" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 10"
+              title="Your weight"
+              helper="This is optional — body shape works just as well"
+            />
+            <QuizRadioList>
+              {WEIGHT_OPTIONS.map((opt) => (
+                <QuizRadioCard
+                  key={opt.id}
+                  title={opt.label}
+                  sub={opt.sub}
+                  selected={answers.weightRange === opt.id}
+                  onClick={() =>
+                    setAnswers((a) => ({ ...a, weightRange: opt.id, weightSkipped: false }))
+                  }
+                />
+              ))}
+            </QuizRadioList>
+            <button
+              type="button"
+              className="quiz-page__link-btn"
+              onClick={() =>
+                setAnswers((a) => ({
+                  ...a,
+                  weightRange: undefined,
+                  weightSkipped: true,
+                }))
+              }
+            >
+              skip weight
+            </button>
+          </div>
+        )}
+
+        {step === "body-shape" && (
+          <div className={`${screenPanel} quiz-page__panel--body-scroll`}>
+            <QuizStepHead
+              kicker="step 11"
+              title="Which silhouette is closest to yours?"
+              helper="This stays completely private and only affects outfit suggestions"
+            />
+            <div className="quiz-body-grid">
+              {getBodyShapeScreenOptions(answers.wardrobeType).map((opt, index, list) => (
+                <BodyShapeCard
+                  key={opt.id}
+                  label={opt.label}
+                  shape={opt.id}
+                  selected={answers.bodyShape === opt.id}
+                  solo={list.length % 2 === 1 && index === list.length - 1}
+                  onClick={() => setAnswers((a) => ({ ...a, bodyShape: opt.id }))}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === "style-direction" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 12"
+              title="Pick up to 2 styles that feel like you"
+            />
+            <QuizCardList stack>
+              {STYLE_DIRECTION_OPTIONS.map((opt) => (
+                <QuizCardButton
+                  key={opt.id}
+                  title={opt.label}
+                  sub={opt.sub}
+                  selected={answers.styleDirections?.includes(opt.id)}
+                  onClick={() =>
+                    setAnswers((a) => ({
+                      ...a,
+                      styleDirections: toggleStyleDirection(a.styleDirections ?? [], opt.id),
+                    }))
+                  }
+                />
+              ))}
+            </QuizCardList>
+          </div>
+        )}
+
+        {step === "occasions" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 13"
+              title="What do you dress for most?"
+              helper="Select all that apply"
+            />
+            <div className="quiz-page__tags">
+              {OCCASION_OPTIONS.map((opt) => (
+                <QuizChip
+                  key={opt.id}
+                  label={opt.label}
+                  selected={answers.occasions?.includes(opt.id) ?? false}
+                  onClick={() =>
+                    setAnswers((a) => {
+                      const current = a.occasions ?? [];
+                      const next = current.includes(opt.id)
+                        ? current.filter((id) => id !== opt.id)
+                        : [...current, opt.id];
+                      return { ...a, occasions: next };
+                    })
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === "makeup" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 14"
+              title="Do you want makeup included in your recommendations?"
+            />
+            <QuizRadioList>
+              {MAKEUP_PREF_OPTIONS.map((opt) => (
+                <QuizRadioCard
+                  key={opt.id}
+                  title={opt.label}
+                  sub={opt.sub}
+                  selected={answers.makeupPref === opt.id}
+                  onClick={() => setAnswers((a) => ({ ...a, makeupPref: opt.id }))}
+                />
+              ))}
+            </QuizRadioList>
+          </div>
+        )}
+
+        {step === "budget" && (
+          <div className={screenPanel}>
+            <QuizStepHead kicker="step 15" title="Your general shopping budget" />
+            <QuizRadioList>
+              {BUDGET_PREF_OPTIONS.map((opt) => (
+                <QuizRadioCard
+                  key={opt.id}
+                  title={opt.label}
+                  sub={opt.sub}
+                  selected={answers.budgetPref === opt.id}
+                  onClick={() => setAnswers((a) => ({ ...a, budgetPref: opt.id }))}
+                />
+              ))}
+            </QuizRadioList>
+          </div>
+        )}
+
+        {step === "location" && (
+          <div className={screenPanel}>
+            <QuizStepHead
+              kicker="step 16"
+              title="One last thing — where are you?"
+              helper="We use this to match outfits to your local weather and season"
+            />
             <input
-              ref={inputRef}
-              type="file"
-              accept={ACCEPT}
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleFile(f);
+              type="text"
+              className="quiz-page__field"
+              placeholder="Detecting your city…"
+              value={cityInput}
+              onChange={(e) => handleCityChange(e.target.value)}
+              autoComplete="address-level2"
+            />
+            <WeatherStatCards
+              temperature={weather?.temperature}
+              humidity={weather?.humidity}
+              uvIndex={weather?.uvIndex}
+              tempUnit={weather?.tempUnit}
+              loading={weatherLoading}
+            />
+          </div>
+        )}
+
+        {step === "photo-decision" && colorResult && (
+          <div className="quiz-page__panel on">
+            <QuizStepHead
+              kicker="optional selfie"
+              title="I already know your color type."
+              helper="Your answers gave me a strong picture. Want me to confirm it visually?"
+            />
+            <QuizDecision
+              primary={{
+                title: "upload a selfie",
+                sub: "I'll compare your photo to your answers for a more accurate result",
+                onClick: () => setStep("color-entry"),
+              }}
+              secondary={{
+                title: "get my result now",
+                sub: "Continue without a photo — you can always add one later",
+                onClick: () => {
+                  if (colorResult) finishAndSaveProfile(colorResult);
+                },
               }}
             />
+          </div>
+        )}
 
-            <div
-              role="button"
-              tabIndex={0}
-              className={`quiz-page__drop${dragOver ? " quiz-page__drop--over" : ""}`}
-              style={{ maxWidth: 360 }}
-              onClick={() => inputRef.current?.click()}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") inputRef.current?.click(); }}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={onDrop}
-            >
-              <div className="quiz-page__drop-empty">
-                <span className="quiz-page__drop-icon">📸</span>
-                <p>Drop your selfie here, or <span style={{ color: "var(--pink)" }}>click to browse</span></p>
-                <small>JPG, PNG · max 10 MB · natural light, no filters</small>
-              </div>
-            </div>
-
-            {selfieError && (
-              <p style={{ marginTop: 12, fontFamily: "var(--sans)", fontSize: "0.85rem", color: "var(--pink)" }}>
-                {selfieError}
-              </p>
-            )}
-
+        {step === "color-entry" && (
+          <div className="quiz-page__panel on">
+            <QuizStepHead
+              kicker="selfie"
+              title="Upload a selfie"
+              helper="Natural light, no filters. Processed instantly — never stored without your permission."
+            />
+            <SelfieCapture
+              onFile={handleFile}
+              maxWidth={360}
+              title="Drop your selfie here"
+              detail="JPG, PNG, or WebP · max 10 MB · natural light, no filters"
+            />
+            {selfieError && <p className="quiz-page__inline-error">{selfieError}</p>}
             <button
               type="button"
               className="quiz__redo"
-              style={{ marginTop: 24 }}
-              onClick={() => setStep("color-q-vein")}
+              onClick={() => {
+                if (colorResult) finishAndSaveProfile(colorResult);
+              }}
             >
-              answer questions instead →
+              skip selfie →
             </button>
           </div>
         )}
 
-        {/* ── SELFIE PREVIEW ── */}
         {step === "color-selfie" && selfiePreviewUrl && (
-          <div className="quiz-page__panel on" style={{ textAlign: "center" }}>
-            <p className="quiz__qn">step 1 of 3 · color season</p>
-            <h2 className="quiz__qt">Looking good — ready to analyze?</h2>
-
-            <div className="quiz-page__drop" style={{ maxWidth: 300, margin: "0 auto 24px" }}>
+          <div className="quiz-page__panel quiz-page__panel--center on">
+            <QuizStepHead kicker="selfie" title="Looking good — ready to analyze?" />
+            <div className="quiz-page__drop quiz-page__drop--preview">
               <div className="quiz-page__drop-preview">
                 <Image src={selfiePreviewUrl} alt="Your selfie" fill className="object-cover" unoptimized />
               </div>
             </div>
-
-            {selfieError && (
-              <p style={{ marginBottom: 16, fontFamily: "var(--sans)", fontSize: "0.85rem", color: "var(--pink)" }}>
-                {selfieError}
-              </p>
+            {selfieError && <p className="quiz-page__inline-error">{selfieError}</p>}
+            {selfieQualityWarning ? (
+              <>
+                <p className="quiz-page__inline-error">{selfieQualityWarning.message}</p>
+                <button type="button" className="quiz__redo" onClick={retakeSelfie}>
+                  Retake photo
+                </button>
+                <button type="button" className="btn quiz-page__cta" onClick={continueWithSoftWarning}>
+                  Continue anyway {"\u2192"}
+                </button>
+              </>
+            ) : selfieHardReject ? (
+              <button type="button" className="quiz__redo" onClick={retakeSelfie}>
+                Retake photo
+              </button>
+            ) : (
+              <button type="button" className="btn quiz-page__cta" onClick={analyzeSelfie}>
+                analyze my colors
+              </button>
             )}
-
-            <button type="button" className="btn quiz-page__cta" onClick={analyzeSelfie}>
-              analyze my colors
-            </button>
-            <button
-              type="button"
-              className="quiz__redo"
-              onClick={() => { setSelfieFile(null); setSelfiePreviewUrl(null); setStep("color-entry"); }}
-            >
-              choose a different photo
-            </button>
           </div>
         )}
 
-        {/* ── ANALYZING ── */}
         {step === "color-analyzing" && (
           <div className="quiz-page__panel on quiz-page__calculating">
             <div className="quiz-page__spinner" />
-            <p className="quiz-page__wait">Analyzing your coloring…</p>
-            <p className="quiz-page__calc-msg">
-              Reading undertone, contrast, and depth. This takes about 10 seconds.
-            </p>
+            <p className="quiz-page__wait">Reading your coloring…</p>
+            <p className="quiz-page__calc-msg">This takes about 10 seconds.</p>
           </div>
         )}
-
-        {/* ── QUIZ: VEIN COLOR ── */}
-        {step === "color-q-vein" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 1 of 3 · color season · q1</p>
-            <h2 className="quiz__qt">Look at the veins on your wrist. What color are they?</h2>
-            <div className="quiz__opts quiz__opts--stack">
-              {VEIN_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt"
-                  onClick={() => {
-                    const next = { ...answers, veinColor: opt.id };
-                    setAnswers(next);
-                    setScores((s) => applyAnswer(s, opt.scores));
-                    setStep("color-q-metals");
-                  }}
-                >
-                  <span className="sw" style={{ background: opt.swatch }} />
-                  <span>
-                    {opt.label}
-                    <small>{opt.sub}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── QUIZ: METALS ── */}
-        {step === "color-q-metals" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 1 of 3 · color season · q2</p>
-            <h2 className="quiz__qt">Which metal looks better against your skin?</h2>
-            <div className="quiz__opts">
-              {METAL_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt"
-                  onClick={() => {
-                    setAnswers((a) => ({ ...a, metalPref: opt.id }));
-                    setScores((s) => applyAnswer(s, opt.scores));
-                    setStep("color-q-sun");
-                  }}
-                >
-                  <span className="sw" style={{ background: opt.swatch }} />
-                  <span>{opt.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── QUIZ: SUN ── */}
-        {step === "color-q-sun" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 1 of 3 · color season · q3</p>
-            <h2 className="quiz__qt">How does your skin react to the sun?</h2>
-            <div className="quiz__opts quiz__opts--stack">
-              {SUN_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt"
-                  onClick={() => {
-                    setAnswers((a) => ({ ...a, sunReaction: opt.id }));
-                    setScores((s) => applyAnswer(s, opt.scores));
-                    setStep("color-q-hair-natural");
-                  }}
-                >
-                  <span className="quiz-page__opt-emoji">{opt.emoji}</span>
-                  <span>
-                    {opt.label}
-                    <small>{opt.hint}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── QUIZ: HAIR NATURAL? ── */}
-        {step === "color-q-hair-natural" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 1 of 3 · color season · q4</p>
-            <h2 className="quiz__qt">Is your current hair color natural?</h2>
-            <div className="quiz__opts">
-              {HAIR_NATURAL_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt"
-                  onClick={() => {
-                    setAnswers((a) => ({ ...a, naturalHair: opt.id }));
-                    setStep(opt.id === "no" ? "color-q-hair-color" : "color-q-eyes");
-                  }}
-                >
-                  <span className="quiz-page__opt-emoji">{opt.emoji}</span>
-                  <span>{opt.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── QUIZ: HAIR COLOR ── */}
-        {step === "color-q-hair-color" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 1 of 3 · color season · q4b</p>
-            <h2 className="quiz__qt">My natural hair is closest to:</h2>
-            <div className="quiz__opts">
-              {HAIR_COLOR_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt"
-                  onClick={() => {
-                    setAnswers((a) => ({ ...a, naturalHairColor: opt.id }));
-                    setScores((s) => applyAnswer(s, opt.scores));
-                    setStep("color-q-eyes");
-                  }}
-                >
-                  <span className="sw" style={{ background: opt.swatch }} />
-                  <span>{opt.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── QUIZ: EYES ── */}
-        {step === "color-q-eyes" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 1 of 3 · color season · q5</p>
-            <h2 className="quiz__qt">What family does your eye color fall into?</h2>
-            <div className="quiz__opts quiz__opts--stack">
-              {EYE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt"
-                  onClick={() => {
-                    setAnswers((a) => ({ ...a, eyeFamily: opt.id }));
-                    setScores((s) => applyAnswer(s, opt.scores));
-                    setStep("color-q-white");
-                  }}
-                >
-                  <span>
-                    {opt.label}
-                    {opt.sub && <small>{opt.sub}</small>}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── QUIZ: WHITE TEST ── */}
-        {step === "color-q-white" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 1 of 3 · color season · q6</p>
-            <h2 className="quiz__qt">Hold these near your face. Which background makes your skin glow?</h2>
-            <div className="quiz__opts quiz__opts--stack">
-              {WHITE_TEST_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt"
-                  onClick={() => {
-                    setAnswers((a) => ({ ...a, whitePref: opt.id }));
-                    setScores((s) => applyAnswer(s, opt.scores));
-                    setStep("color-q-contrast");
-                  }}
-                >
-                  <span
-                    className="sw"
-                    style={{
-                      background: opt.id === "white" ? "#FFFFFF" : "#FBF1E4",
-                      border: "1px solid rgba(255,255,255,0.4)",
-                    }}
-                  />
-                  <span>
-                    {opt.label}
-                    <small>{opt.sub}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── QUIZ: CONTRAST ── */}
-        {step === "color-q-contrast" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 1 of 3 · color season · q7</p>
-            <h2 className="quiz__qt">How would you describe the contrast of your natural coloring?</h2>
-            <div className="quiz__opts quiz__opts--stack">
-              {CONTRAST_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt"
-                  onClick={() => {
-                    setAnswers((a) => ({ ...a, contrastPref: opt.id }));
-                    setScores((s) => applyAnswer(s, opt.scores));
-                    setStep("color-q-vivid");
-                  }}
-                >
-                  <span>
-                    {opt.label}
-                    <small>{opt.sub}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── QUIZ: VIVID VS MUTED ── */}
-        {step === "color-q-vivid" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 1 of 3 · color season · q8</p>
-            <h2 className="quiz__qt">Which feels more like you?</h2>
-            <div className="quiz__opts quiz__opts--stack">
-              {INTENSITY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt"
-                  onClick={() => {
-                    const nextAnswers = { ...answers, intensityPref: opt.id };
-                    const nextScores = applyAnswer(scores, opt.scores);
-                    setAnswers(nextAnswers);
-                    setScores(nextScores);
-                    finishColorQuiz(nextAnswers, nextScores);
-                  }}
-                >
-                  <span>
-                    {opt.label}
-                    <small>{opt.sub}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── COLOR RESULT ── */}
-        {step === "color-result" && colorResult && (
-          <div className="quiz-page__panel on quiz-page__result">
-            <p className="quiz__qn">
-              {colorResult.fromSelfie ? "your season · from selfie" : "your season · from quiz"}
-            </p>
-            <h2 className="quiz__result-name">
-              <span className="scr">{colorResult.seasonName}</span>
-            </h2>
-            {colorResult.subSeason && (
-              <p className="quiz-page__traits">{colorResult.subSeason}</p>
-            )}
-            <div className="quiz__result-pal">
-              {colorResult.palette.map((c) => (
-                <i key={c} style={{ background: c }} />
-              ))}
-            </div>
-            <p className="quiz-page__result-copy">
-              {colorResult.fromSelfie
-                ? "Your selfie confirmed your season. Now let's find your best silhouettes."
-                : "Your answers point to this season. Upload a selfie later to confirm."}
-            </p>
-            <button
-              type="button"
-              className="btn quiz-page__cta"
-              onClick={() => setStep("body-shoulders")}
-            >
-              continue — body type →
-            </button>
-          </div>
-        )}
-
-        {/* ── PHASE 2: BODY — SHOULDERS ── */}
-        {step === "body-shoulders" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 2 of 3 · body type · q1</p>
-            <h2 className="quiz__qt">Comparing your shoulders and hips — which is wider?</h2>
-            <div className="quiz__opts quiz__opts--stack">
-              {SHOULDER_HIP_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt quiz__opt--tall"
-                  onClick={() => {
-                    setAnswers((a) => ({ ...a, shoulderHipRatio: opt.id }));
-                    setStep("body-waist");
-                  }}
-                >
-                  <span>
-                    {opt.label}
-                    <small>{opt.sub}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── PHASE 2: BODY — WAIST ── */}
-        {step === "body-waist" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 2 of 3 · body type · q2</p>
-            <h2 className="quiz__qt">How would you describe your waist?</h2>
-            <div className="quiz__opts quiz__opts--stack">
-              {WAIST_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt quiz__opt--tall"
-                  onClick={() => {
-                    setAnswers((a) => ({ ...a, waistDefinition: opt.id }));
-                    setStep("body-weight");
-                  }}
-                >
-                  <span>
-                    {opt.label}
-                    <small>{opt.sub}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── PHASE 2: BODY — WEIGHT GAIN ── */}
-        {step === "body-weight" && (
-          <div className="quiz-page__panel on">
-            <p className="quiz__qn">step 2 of 3 · body type · q3</p>
-            <h2 className="quiz__qt">When you gain weight, where does it go first?</h2>
-            <div className="quiz__opts quiz__opts--stack">
-              {WEIGHT_GAIN_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className="quiz__opt quiz__opt--tall"
-                  onClick={() => {
-                    setAnswers((a) => ({ ...a, weightGain: opt.id }));
-                    setStep("style-0");
-                  }}
-                >
-                  <span>
-                    {opt.label}
-                    <small>{opt.sub}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── PHASE 3: STYLE SWIPE ── */}
-        {(["style-0", "style-1", "style-2", "style-3", "style-4", "style-5"] as Step[]).map((s) => {
-          const idx = parseInt(s.replace("style-", ""));
-          const pair = STYLE_PAIRS[idx];
-          if (!pair || step !== s) return null;
-          return (
-            <div key={s} className="quiz-page__panel on">
-              <p className="quiz__qn">step 3 of 3 · style · {idx + 1} of 6</p>
-              <h2 className="quiz__qt">Which outfit speaks to you more?</h2>
-              <div className="quiz-page__swipe-grid">
-                {(["a", "b"] as const).map((pick) => {
-                  const side = pair[pick];
-                  return (
-                    <button
-                      key={pick}
-                      type="button"
-                      className="quiz-page__swipe-card"
-                      onClick={() => pickStyle(pick, idx)}
-                    >
-                      <div className="quiz-page__swipe-img">
-                        <Image
-                          src={side.image}
-                          alt={side.label}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                          sizes="200px"
-                        />
-                      </div>
-                      <div className="quiz-page__swipe-label">
-                        <strong>{side.label}</strong>
-                        <span>{side.sub}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-
       </main>
+
+      {showFooter ? (
+        <QuizFooter onContinue={continueFooter} disabled={footerDisabled} hint={footerHint} />
+      ) : null}
     </div>
   );
 }

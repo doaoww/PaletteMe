@@ -49,11 +49,12 @@ export function FeatureDemos() {
               <span className="kicker">how it works</span>
             </div>
             <h2>
-              Selfie in. <span className="scr">Palette</span> out.
+              Quiz <span className="scr">first</span>, selfie if you want it.
             </h2>
             <p>
-              Upload a photo, AI finds your seasonal colors, and you get curated
-              marketplace picks matched to your type.
+              Tell us about your coloring and style goals. We build your season
+              from your answers — then you can confirm with a photo, scan
+              clothes, and shop smarter.
             </p>
           </div>
 
@@ -62,19 +63,19 @@ export function FeatureDemos() {
               <div className="free-flow__photo">
                 <Image
                   src={IMAGES.flow1}
-                  alt="Upload your selfie"
+                  alt="Style quiz on mobile"
                   fill
                   sizes="280px"
                   style={{ objectFit: "cover", objectPosition: "top center" }}
                 />
                 <span className="scard__chip">
                   <span className="dot" style={{ background: "#4ade80" }} />
-                  upload
+                  quiz
                 </span>
               </div>
               <figcaption className="free-flow__cap">
                 <span className="num">01</span>
-                <span>Upload a clear selfie</span>
+                <span>Answer the style quiz</span>
               </figcaption>
             </figure>
 
@@ -100,7 +101,7 @@ export function FeatureDemos() {
               </div>
               <figcaption className="free-flow__cap">
                 <span className="num">02</span>
-                <span>AI reads your coloring</span>
+                <span>Optional selfie confirmation</span>
               </figcaption>
             </figure>
 
@@ -116,14 +117,14 @@ export function FeatureDemos() {
               </div>
               <figcaption className="free-flow__cap">
                 <span className="num">03</span>
-                <span>Picks matched to you</span>
+                <span>Your palette and verdicts</span>
               </figcaption>
             </figure>
           </div>
 
           <div className="free-flow__cta">
             <Link href="/quiz" className="cta-mini">
-              start color quiz
+              let&apos;s start
             </Link>
           </div>
         </div>
@@ -149,8 +150,8 @@ export function FeatureDemos() {
           id="analyze"
           num="01"
           title={<>Analyze your <span className="scr">colors</span></>}
-          desc="AI reads undertone, contrast, and depth from your selfie — then assigns your exact seasonal type with 8 core swatches."
-          cta={<Link href="/quiz" className="cta-mini">start color quiz</Link>}
+          desc="Quiz answers build a color prior from undertone, depth, and contrast. Add a selfie later if you want the AI to double-check your season."
+          cta={<Link href="/quiz" className="cta-mini">let&apos;s start</Link>}
         >
           <div className="fdemo__phone polaroid">
             <div className="fdemo__phone-screen">
@@ -187,7 +188,7 @@ export function FeatureDemos() {
           <div>
             <div className="free-flow__picks free-flow__picks--large">
               {MATCHED_PICKS.map((p) => (
-                <a key={p.name} className="product" href={(p as any).url} target="_blank" rel="noopener noreferrer">
+                <a key={p.name} className="product" href={p.url} target="_blank" rel="noopener noreferrer">
                   <div className="product__img">
                     <div className="ba__img">
                       <Image src={p.image} alt={p.name} fill sizes="200px" style={{ objectFit: "cover" }} />
@@ -215,16 +216,19 @@ export function FeatureDemos() {
           <div className="wrap">
             <div className="fdemo__next-head">
               <div className="eyebrow">
-                <span className="kicker">coming soon</span>
+                <span className="kicker">style assistant</span>
               </div>
-              <h2>More <span className="scr">features</span> on the way</h2>
-              <p>Join early access — these unlock first for waitlist members.</p>
+              <h2>Beyond your <span className="scr">season</span></h2>
+              <p>
+                Finish the quiz once — then use PaletteMe before you wear, buy,
+                or add something to your wardrobe.
+              </p>
             </div>
             <div className="fdemo__next-grid">
               {([
-                { num: "03", title: "Style match", desc: "Score any outfit against your palette — know instantly if it works for your coloring." },
-                { num: "04", title: "Outfit scanner", desc: "Point your camera at any garment for a live verdict. Suits you or doesn't." },
-                { num: "05", title: "Marketplace", desc: "Browse products filtered and scored for your exact palette — shop only what truly suits you." },
+                { num: "03", title: "Scan anything", desc: "Photograph a garment, outfit, makeup shade, or shopping screenshot. Get a clear yes, maybe, or skip — with reasons." },
+                { num: "04", title: "Wardrobe matchmaker", desc: "Add pieces you own. See what already works together and what to pair with a new buy." },
+                { num: "05", title: "Shop your palette", desc: "Browse picks scored for your colors so you stop guessing in the dressing room." },
               ] as const).map((f) => (
                 <div key={f.num} className="fdemo__next-card">
                   <span className="fdemo__next-num">{f.num}</span>

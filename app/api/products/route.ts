@@ -1,47 +1,25 @@
 import { NextResponse } from "next/server";
-import { chromium } from "playwright";
-import LLMScraper from "llm-scraper";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { Output } from "ai";
-import { z } from "zod";
-import { SEASON_PRODUCTS } from "@/lib/landing-data";
 import {
-  buildMarketplaceSearchUrl,
-  cacheKeyForContext,
-  getSeasonPalette,
-  scoreProductMatch,
-  type ProductSearchContext,
-} from "@/lib/product-matching";
+  queryProducts,
+  isSupabaseConfigured,
+  type ScoredProduct,
+} from "@/lib/supabase-db";
+import { buildAffiliateUrl } from "@/lib/affiliate";
+import { SEASON_PRODUCTS } from "@/lib/landing-data";
 import type { StylingGoal, StyleVibe } from "@/lib/quiz-data";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 30;
 
-type ScoredProduct = ScrapedProduct & { match: number; hex?: string };
-
-type CacheEntry = { products: ScoredProduct[]; ts: number };
-const cache = new Map<string, CacheEntry>();
-const TTL = 2 * 60 * 60 * 1000;
-
-const productItemSchema = z.object({
-  name: z.string().describe("product name"),
-  brand: z.string().optional().describe("brand name"),
-  price: z.string().optional().describe("price with currency symbol, e.g. $49.99"),
-  url: z.string().describe("full absolute product URL starting with https://"),
-  imageUrl: z.string().optional().describe("full absolute image URL starting with https://"),
-  color: z.string().optional().describe("main color of the item as plain text, e.g. dusty rose"),
-});
-
-const productSchema = z.object({
-  products: z
-    .array(productItemSchema)
-    .max(8)
-    .describe("fashion products visible on the page"),
-});
-
-const ProductOutput = Output.object({ schema: productSchema });
-
-export type ScrapedProduct = z.infer<typeof productItemSchema>;
+// ─── Public type — imported by components ─────────────────────────────────────
+export type ScrapedProduct = {
+  name: string;
+  brand?: string;
+  price?: string;
+  url: string;
+  imageUrl?: string;
+  color?: string;
+};
 
 const VALID_SEASONS = new Set(["spring", "summer", "autumn", "winter"]);
 const VALID_STYLES = new Set<StyleVibe>([
@@ -58,13 +36,47 @@ const VALID_GOALS = new Set<StylingGoal>([
   "makeup-hair",
 ]);
 
-function demoFallback(season: string): ScoredProduct[] {
-  const picks = SEASON_PRODUCTS[season] ?? [];
+// Aesthetic labels from quiz → product style tags
+const AESTHETIC_TO_STYLE: Record<string, string> = {
+  minimalist: "minimalist",
+  classic: "classic",
+  feminine: "romantic",
+  romantic: "romantic",
+  edgy: "edgy",
+  bohemian: "bohemian",
+  casual: "casual",
+  preppy: "classic",
+  sporty: "casual",
+};
+
+function mapAesthetic(aesthetic?: string): string | undefined {
+  if (!aesthetic) return undefined;
+  return AESTHETIC_TO_STYLE[aesthetic.toLowerCase()];
+}
+
+// Convert a Supabase product row → the ScrapedProduct shape components expect
+function toResponse(p: ScoredProduct): ScrapedProduct & { match: number; hex?: string } {
+  const primaryHex = p.colors?.find((c) => c.startsWith("#"));
+  return {
+    name: p.name,
+    brand: "ASOS",
+    price: p.price != null ? `$${p.price.toFixed(2)}` : undefined,
+    url: buildAffiliateUrl(p.affiliate_url ?? `https://www.asos.com/search/?q=${encodeURIComponent(p.name)}`),
+    imageUrl: p.image_url ?? undefined,
+    color: p.colors?.filter((c) => !c.startsWith("#"))[0],
+    match: p.match,
+    hex: primaryHex,
+  };
+}
+
+// Demo fallback using SEASON_PRODUCTS from landing-data (unchanged)
+function demoFallback(season: string): Array<ScrapedProduct & { match: number; hex?: string }> {
+  const picks = SEASON_PRODUCTS[season] ?? SEASON_PRODUCTS.spring;
   return picks.map((p) => ({
     name: p.name,
     brand: p.brand,
     price: p.price,
-    url: `https://www.asos.com/search/?q=${encodeURIComponent(p.name)}`,
+    url: buildAffiliateUrl(`https://www.asos.com/search/?q=${encodeURIComponent(p.name)}`),
     imageUrl: p.image,
     color: undefined,
     match: p.match,
@@ -72,97 +84,58 @@ function demoFallback(season: string): ScoredProduct[] {
   }));
 }
 
-function enrichWithScores(
-  products: ScrapedProduct[],
-  palette: string[]
-): ScoredProduct[] {
-  return products
-    .map((p) => {
-      const { match, hex } = scoreProductMatch(p.color, p.name, palette);
-      return { ...p, match, hex };
-    })
-    .sort((a, b) => b.match - a.match)
-    .slice(0, 6);
-}
-
-function parseContext(searchParams: URLSearchParams): ProductSearchContext | null {
-  const seasonId = searchParams.get("season")?.toLowerCase();
-  if (!seasonId || !VALID_SEASONS.has(seasonId)) return null;
-
-  const styleRaw = searchParams.get("style")?.toLowerCase();
-  const goalRaw = searchParams.get("goal")?.toLowerCase();
-
-  return {
-    seasonId,
-    styleVibe: styleRaw && VALID_STYLES.has(styleRaw as StyleVibe)
-      ? (styleRaw as StyleVibe)
-      : undefined,
-    goal: goalRaw && VALID_GOALS.has(goalRaw as StylingGoal)
-      ? (goalRaw as StylingGoal)
-      : undefined,
-    subSeason: searchParams.get("subSeason") ?? undefined,
-  };
-}
-
 export async function GET(request: Request) {
-  const ctx = parseContext(new URL(request.url).searchParams);
+  const { searchParams } = new URL(request.url);
 
-  if (!ctx) {
+  const seasonId = searchParams.get("season")?.toLowerCase();
+  const styleRaw = searchParams.get("style")?.toLowerCase();
+  const aestheticRaw = searchParams.get("aesthetic")?.toLowerCase();
+  const goalRaw = searchParams.get("goal")?.toLowerCase();
+  const bodyType = searchParams.get("bodyType") ?? undefined;
+  const subSeason = searchParams.get("subSeason") ?? undefined;
+
+  if (!seasonId || !VALID_SEASONS.has(seasonId)) {
     return NextResponse.json({ error: "Invalid season" }, { status: 400 });
   }
 
-  const key = cacheKeyForContext(ctx);
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.ts < TTL) {
-    return NextResponse.json({ ok: true, products: hit.products, source: "cache" });
-  }
+  // Resolve style: explicit param > aesthetic mapping > quiz styleVibe
+  const styleVibe =
+    styleRaw && VALID_STYLES.has(styleRaw as StyleVibe)
+      ? (styleRaw as StyleVibe)
+      : undefined;
 
-  const palette = getSeasonPalette(ctx.seasonId);
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ ok: true, products: demoFallback(ctx.seasonId), source: "demo" });
-  }
+  const mappedStyle =
+    styleVibe ??
+    mapAesthetic(aestheticRaw) ??
+    (goalRaw && VALID_GOALS.has(goalRaw as StylingGoal) ? undefined : undefined);
 
-  let browser: import("playwright").Browser | null = null;
+  // ── Supabase query with smart scoring ─────────────────────────────────────
+  if (isSupabaseConfigured()) {
+    try {
+      const products = await queryProducts({
+        season: seasonId,
+        style: mappedStyle,
+        bodyType,
+        limit: 12,
+      });
 
-  try {
-    const googleAI = createGoogleGenerativeAI({ apiKey });
-    const scraper = new LLMScraper(googleAI("gemini-2.5-flash-lite"));
-    const searchUrl = buildMarketplaceSearchUrl(ctx);
-
-    browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      extraHTTPHeaders: { "Accept-Language": "en-US,en;q=0.9" },
-    });
-    const page = await context.newPage();
-
-    await page.goto(searchUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
-    await page
-      .waitForSelector("article, [data-auto-id='productTile'], .product-list-item", {
-        timeout: 10_000,
-      })
-      .catch(() => null);
-    await page.waitForTimeout(1500);
-
-    const { data } = await scraper.run(page, ProductOutput, { format: "html" });
-
-    const scraped = (data.products ?? []).filter(
-      (p) => p.name && p.url && p.url.startsWith("http")
-    );
-
-    if (scraped.length > 0) {
-      const scored = enrichWithScores(scraped, palette);
-      cache.set(key, { products: scored, ts: Date.now() });
-      return NextResponse.json({ ok: true, products: scored, source: "scraped" });
+      if (products.length > 0) {
+        return NextResponse.json({
+          ok: true,
+          products: products.map(toResponse),
+          source: "supabase",
+        });
+      }
+    } catch (err) {
+      console.warn("[products] Supabase query failed, falling back to demo:", (err as Error).message);
     }
-
-    return NextResponse.json({ ok: true, products: demoFallback(ctx.seasonId), source: "demo" });
-  } catch (error) {
-    console.error("[products]", (error as Error).message);
-    return NextResponse.json({ ok: true, products: demoFallback(ctx.seasonId), source: "demo" });
-  } finally {
-    if (browser) await browser.close();
   }
+
+  // ── Demo fallback ──────────────────────────────────────────────────────────
+  void subSeason; // reserved for future sub-season filtering
+  return NextResponse.json({
+    ok: true,
+    products: demoFallback(seasonId),
+    source: "demo",
+  });
 }

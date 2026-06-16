@@ -29,7 +29,7 @@
 
 .topbar.solid {
   padding: 11px var(--pad);
-  background: color-mix(in srgb, var(--cream) 88%, transparent);
+  background: color-mix(in srgb, var(--blush) 88%, transparent);
   backdrop-filter: blur(14px) saturate(150%);
   -webkit-backdrop-filter: blur(14px) saturate(150%);
   border-bottom: 1px solid var(--hair);
@@ -105,7 +105,7 @@
   position: fixed;
   inset: 0;
   z-index: 300;
-  background: var(--cream);
+  background: var(--blush);
   display: flex;
   flex-direction: column;
   padding: clamp(18px, 5vw, 36px) var(--pad);
@@ -256,10 +256,7 @@ section {
   position: relative;
   overflow: hidden;
   color: var(--ink);
-  background:
-    radial-gradient(ellipse 80% 70% at 92% 3%, rgba(255, 255, 255, 0.78) 0%, transparent 52%),
-    radial-gradient(ellipse 65% 60% at 6% 96%, color-mix(in srgb, var(--lilac) 62%, transparent) 0%, transparent 55%),
-    var(--blush);
+  background: radial-gradient(circle at top right, #ffe8f0 0%, #fff5f8 52%, #fff8f8 100%);
 }
 
 .hero::after {
@@ -472,6 +469,73 @@ section {
   color: var(--pink);
 }
 
+.hero__tagline {
+  font-family: var(--sans);
+  font-size: clamp(0.95rem, 1.4vw, 1.08rem);
+  color: var(--ink-soft);
+  margin: -28px 0 clamp(16px, 2.5vh, 24px);
+  max-width: 36ch;
+  line-height: 1.5;
+}
+
+.hero__values {
+  list-style: none;
+  padding: 0;
+  margin: clamp(22px, 3vw, 32px) 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 100%;
+}
+
+.hero__value-card {
+  background: color-mix(in srgb, #fff 72%, var(--blush));
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 14px 32px -24px rgba(23, 18, 26, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero__value-card-title {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  text-transform: lowercase;
+  color: var(--ink);
+}
+
+.hero__value-card-desc {
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 900px) {
+  .hero__tagline {
+    text-align: center;
+    margin-inline: auto;
+  }
+  .hero__values {
+    grid-template-columns: 1fr;
+    max-width: 360px;
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero__values {
+    display: none;
+  }
+  .hero__tagline {
+    margin-top: -8px;
+  }
+}
+
 .hero__logo {
   font-family: var(--sans);
   font-weight: 800;
@@ -588,7 +652,7 @@ section {
 /* WHAT IT DOES */
 .does {
   padding: clamp(48px, 8vh, 92px) 0;
-  background: var(--cream);
+  background: var(--blush);
 }
 
 .does__grid {
@@ -852,7 +916,7 @@ section {
 /* WHAT WE DO — product explainer */
 .what {
   padding: clamp(56px, 9vh, 100px) 0;
-  background: var(--cream);
+  background: var(--blush);
 }
 
 .what__head {
@@ -1613,7 +1677,7 @@ section {
 /* SCAN */
 .scan {
   padding: clamp(48px, 8vh, 92px) 0;
-  background: var(--cream);
+  background: var(--blush);
 }
 
 .scan__head {
@@ -2044,7 +2108,7 @@ section {
 /* MARKET */
 .market {
   padding: clamp(48px, 8vh, 92px) 0;
-  background: var(--cream);
+  background: var(--blush);
 }
 
 .market__head {
@@ -2277,7 +2341,7 @@ section {
 }
 
 .fdemo__next-card::after {
-  content: "early access";
+  content: "included now";
   position: absolute;
   top: 14px;
   right: 14px;
@@ -2451,7 +2515,7 @@ section {
 /* FAQ */
 .faq {
   padding: clamp(48px, 8vh, 92px) 0 clamp(54px, 8vh, 90px);
-  background: var(--cream);
+  background: var(--blush);
 }
 
 .faq__head {
@@ -2836,7 +2900,7 @@ section {
   position: relative;
   aspect-ratio: 3/4;
   overflow: hidden;
-  background: var(--cream);
+  background: var(--blush);
 }
 
 .sproof__overlay {
@@ -2981,7 +3045,7 @@ section {
   position: relative;
   aspect-ratio: 4/5;
   overflow: hidden;
-  background: var(--cream);
+  background: var(--blush);
 }
 
 .free-flow__photo--analyze .free-flow__result {
@@ -3024,7 +3088,7 @@ section {
   gap: 8px;
   padding: 8px;
   min-height: 100%;
-  background: var(--cream);
+  background: var(--blush);
 }
 
 .free-flow__picks--large {

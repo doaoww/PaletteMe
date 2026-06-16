@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { SEASON_PRODUCTS } from "@/lib/landing-data";
 import { searchProducts, rankProduct } from "@/lib/shopstyle";
+import { buildAffiliateUrl } from "@/lib/affiliate";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -35,7 +36,8 @@ export async function GET(request: Request) {
     const ranked = products
       .map((p) => ({ ...p, score: rankProduct(p, palette, aesthetics, bodyType) }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 20);
+      .slice(0, 20)
+      .map((p) => ({ ...p, clickUrl: buildAffiliateUrl(p.clickUrl) }));
 
     return NextResponse.json({ ok: true, products: ranked, source: "shopstyle" });
   }
@@ -48,7 +50,7 @@ export async function GET(request: Request) {
     brandedName: p.brand,
     price: parseFloat(p.price.replace(/[^0-9.]/g, "")),
     image: { sizes: { Best: { url: p.image } } },
-    clickUrl: `https://www.asos.com/search/?q=${encodeURIComponent(p.name)}`,
+    clickUrl: buildAffiliateUrl(`https://www.asos.com/search/?q=${encodeURIComponent(p.name)}`),
     hex: p.hex,
     match: p.match,
     score: p.match / 100,

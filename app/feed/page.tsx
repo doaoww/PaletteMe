@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { loadQuizProfile, type QuizProfile } from "@/lib/quiz";
 import { SEASONS } from "@/lib/landing-data";
 import { ProductFeed } from "@/components/feed/product-feed";
+import { BottomNav } from "@/components/nav/bottom-nav";
+import "../app-shell.css";
 
 export default function FeedPage() {
   const router = useRouter();
@@ -33,20 +35,16 @@ export default function FeedPage() {
   const season = SEASONS.find((s) => s.id === profile.seasonId) ?? SEASONS[0];
 
   return (
-    <div style={{ background: "var(--cream)", minHeight: "100svh" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px var(--pad)", borderBottom: "1px solid var(--hair)" }}>
-        <Link href="/" className="wordmark" style={{ color: "var(--ink)", fontSize: "1.2rem" }}>
-          palette<span style={{ color: "var(--pink)" }}>me</span>
+    <div className="app-shell">
+      <header className="app-topbar glass-nav">
+        <Link href="/home" className="wordmark app-topbar__wordmark">
+          palette<span className="me">me</span>
         </Link>
-        <nav style={{ display: "flex", gap: 24, fontFamily: "var(--sans)", fontSize: "0.85rem" }}>
-          <Link href="/profile" style={{ color: "var(--ink-soft)" }}>profile</Link>
-          <Link href="/feed" style={{ color: "var(--pink)", fontWeight: 700 }}>feed</Link>
-          <Link href="/saved" style={{ color: "var(--ink-soft)" }}>saved</Link>
-        </nav>
+        <span className="app-chip app-chip--pink">{season.name}</span>
       </header>
 
-      <div className="wrap" style={{ paddingTop: "clamp(32px,5vh,56px)", paddingBottom: "clamp(48px,8vh,96px)" }}>
-        <div style={{ marginBottom: 32 }}>
+      <div className="app-shell__main">
+        <div style={{ marginBottom: 24 }}>
           <p className="kicker" style={{ fontSize: "0.58rem", marginBottom: 10 }}>your feed</p>
           <p className="font-serif" style={{ fontSize: "clamp(1.8rem,4vw,2.8rem)", lineHeight: 1.08 }}>
             Picks for <span className="scr" style={{ color: "var(--pink)" }}>{season.name}</span>
@@ -60,6 +58,7 @@ export default function FeedPage() {
 
         <ProductFeed profile={profile} />
       </div>
+      <BottomNav />
     </div>
   );
 }

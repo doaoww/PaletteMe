@@ -18,8 +18,8 @@ export function QuizCta() {
             </p>
           </div>
           <Link href="/quiz" className="cta-mini">
-            start the quiz
-          </Link>
+        let&apos;s start
+      </Link>
         </div>
       </div>
     </section>

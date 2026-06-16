@@ -6,6 +6,7 @@ export type Season = {
   cbg: string;
   cac: string;
   palette: string[];
+  paletteNames: string[];
   temps: string[];
   lead: string;
   why: string;
@@ -20,7 +21,8 @@ export const SEASONS: Season[] = [
     color: "#3D2A1E",
     cbg: "#FDF4E8",
     cac: "#E8A87C",
-    palette: ["#F9E4C8", "#FFDAB9", "#98D8C8", "#F7DC6F", "#F8B4C4", "#C5E99B", "#FFE4B5", "#87CEEB"],
+    palette: ["#FFDAB9", "#F4936A", "#98D8C8", "#F7DC6F", "#F8B4C4", "#C5E99B", "#FFE4B5", "#87CEEB"],
+    paletteNames: ["Peach Blossom", "Warm Coral", "Mint Aqua", "Buttercup", "Blossom Pink", "Apple Green", "Honey Cream", "Cerulean Sky"],
     temps: ["warm", "light", "clear"],
     lead: "Golden warmth with peachy glow — fresh, lively, never muted.",
     why: "Springs have warm undertones with clear, bright coloring. Coral and mint feel native to your skin.",
@@ -33,11 +35,12 @@ export const SEASONS: Season[] = [
     color: "#2A2533",
     cbg: "#F0EEF5",
     cac: "#9B8EC4",
-    palette: ["#D4C5E2", "#B8A9C9", "#A8D8EA", "#C9B6E4", "#E8B4B8", "#9DB4C0", "#D5C6E0", "#B5C7D3"],
+    palette: ["#D4A5A5", "#B8A9C9", "#89A7C3", "#9E8080", "#AECBCB", "#C9B6D3", "#9DB4C0", "#D5C6E0"],
+    paletteNames: ["Dusty Rose", "Soft Lavender", "Muted Blue", "Rose Taupe", "Powder Blue", "Cool Mauve", "Steel Blue", "Pale Lilac"],
     temps: ["cool", "light", "soft"],
     lead: "Soft rose and lavender — elegant, understated, effortlessly refined.",
     why: "Summers have cool undertones with low contrast. Dusty pinks and soft blues harmonize beautifully.",
-    photoBg: "linear-gradient(160deg,#d4c5e2,#b8a9c9)",
+    photoBg: "linear-gradient(160deg,#d4a5a5,#b8a9c9)",
   },
   {
     id: "autumn",
@@ -46,11 +49,12 @@ export const SEASONS: Season[] = [
     color: "#2E1F14",
     cbg: "#F5EDE0",
     cac: "#C4783A",
-    palette: ["#D4A574", "#8B6914", "#CD853F", "#B8860B", "#A0522D", "#6B8E23", "#D2691E", "#BC8F8F"],
+    palette: ["#C4622D", "#8B7355", "#6B7C4B", "#9B4E2E", "#B8860B", "#7A4A30", "#7D8C4A", "#A05C3C"],
+    paletteNames: ["Terracotta", "Camel", "Warm Olive", "Rust", "Dark Gold", "Chocolate", "Moss Green", "Burnt Sienna"],
     temps: ["warm", "deep", "rich"],
     lead: "Terracotta and olive — earthy depth, grounded, richly saturated.",
     why: "Autumns have warm undertones with rich, deep coloring. Rust, camel, and forest green are your power colors.",
-    photoBg: "linear-gradient(160deg,#d4a574,#a0522d)",
+    photoBg: "linear-gradient(160deg,#c4622d,#8b7355)",
   },
   {
     id: "winter",
@@ -59,11 +63,146 @@ export const SEASONS: Season[] = [
     color: "#1A1520",
     cbg: "#E8E4ED",
     cac: "#6B5B95",
-    palette: ["#2C2C54", "#6B5B95", "#C9184A", "#FFFFFF", "#1B1B2F", "#E8E4ED", "#0F3460", "#FF6B9D"],
+    palette: ["#2C2C54", "#6B5B95", "#C9184A", "#FFFFFF", "#A8C4D8", "#1B1B2F", "#0F3460", "#FF6B9D"],
+    paletteNames: ["Midnight Navy", "Royal Purple", "True Red", "Pure White", "Icy Blue", "True Black", "Deep Cobalt", "Hot Pink"],
     temps: ["cool", "deep", "clear"],
     lead: "Icy contrast with bold jewel tones — striking, crisp, unapologetic.",
     why: "Winters have cool undertones with high contrast. True black, white, and vivid jewel tones make you glow.",
     photoBg: "linear-gradient(160deg,#2c2c54,#6b5b95)",
+  },
+];
+
+export type SubSeason = {
+  id: string;
+  seasonId: "spring" | "summer" | "autumn" | "winter";
+  name: string;
+  aliases: string[];
+  undertones: Array<"warm" | "cool" | "neutral">;
+  depths: Array<"light" | "medium" | "deep">;
+  contrasts: Array<"low" | "medium" | "high">;
+  chromas: Array<"muted" | "balanced" | "clear">;
+};
+
+export const SUB_SEASONS: SubSeason[] = [
+  {
+    id: "light-spring",
+    seasonId: "spring",
+    name: "Light Spring",
+    aliases: [],
+    undertones: ["warm", "neutral"],
+    depths: ["light", "medium"],
+    contrasts: ["low", "medium"],
+    chromas: ["clear", "balanced"],
+  },
+  {
+    id: "true-spring",
+    seasonId: "spring",
+    name: "True Spring",
+    aliases: ["Warm Spring"],
+    undertones: ["warm"],
+    depths: ["medium", "light"],
+    contrasts: ["medium", "low"],
+    chromas: ["clear", "balanced"],
+  },
+  {
+    id: "bright-spring",
+    seasonId: "spring",
+    name: "Bright Spring",
+    aliases: ["Clear Spring"],
+    undertones: ["warm", "neutral"],
+    depths: ["medium", "deep"],
+    contrasts: ["high", "medium"],
+    chromas: ["clear"],
+  },
+  {
+    id: "light-summer",
+    seasonId: "summer",
+    name: "Light Summer",
+    aliases: [],
+    undertones: ["cool", "neutral"],
+    depths: ["light", "medium"],
+    contrasts: ["low"],
+    chromas: ["muted", "balanced"],
+  },
+  {
+    id: "true-summer",
+    seasonId: "summer",
+    name: "True Summer",
+    aliases: ["Cool Summer"],
+    undertones: ["cool"],
+    depths: ["medium", "light"],
+    contrasts: ["low", "medium"],
+    chromas: ["muted", "balanced"],
+  },
+  {
+    id: "soft-summer",
+    seasonId: "summer",
+    name: "Soft Summer",
+    aliases: [],
+    undertones: ["cool", "neutral"],
+    depths: ["medium", "light"],
+    contrasts: ["low", "medium"],
+    chromas: ["muted"],
+  },
+  {
+    id: "soft-autumn",
+    seasonId: "autumn",
+    name: "Soft Autumn",
+    aliases: [],
+    undertones: ["warm", "neutral"],
+    depths: ["medium", "light"],
+    contrasts: ["low", "medium"],
+    chromas: ["muted"],
+  },
+  {
+    id: "true-autumn",
+    seasonId: "autumn",
+    name: "True Autumn",
+    aliases: ["Warm Autumn"],
+    undertones: ["warm"],
+    depths: ["medium", "deep"],
+    contrasts: ["medium"],
+    chromas: ["muted", "balanced"],
+  },
+  {
+    id: "dark-autumn",
+    seasonId: "autumn",
+    name: "Dark Autumn",
+    aliases: ["Deep Autumn"],
+    undertones: ["warm", "neutral"],
+    depths: ["deep"],
+    contrasts: ["high", "medium"],
+    chromas: ["muted", "balanced"],
+  },
+  {
+    id: "dark-winter",
+    seasonId: "winter",
+    name: "Dark Winter",
+    aliases: ["Deep Winter"],
+    undertones: ["cool", "neutral"],
+    depths: ["deep"],
+    contrasts: ["high"],
+    chromas: ["balanced", "clear"],
+  },
+  {
+    id: "true-winter",
+    seasonId: "winter",
+    name: "True Winter",
+    aliases: ["Cool Winter"],
+    undertones: ["cool"],
+    depths: ["deep", "medium"],
+    contrasts: ["high"],
+    chromas: ["clear", "balanced"],
+  },
+  {
+    id: "bright-winter",
+    seasonId: "winter",
+    name: "Bright Winter",
+    aliases: ["Clear Winter"],
+    undertones: ["cool", "neutral"],
+    depths: ["deep", "medium"],
+    contrasts: ["high"],
+    chromas: ["clear"],
   },
 ];
 
@@ -154,7 +293,7 @@ export const SOCIAL_PROOF = [
 export const FAQS = [
   { q: "How does the AI color analysis work?", a: "Our AI reads your skin undertone, hair depth, and eye contrast from a clear selfie — then maps you to a seasonal type with 8 core colors and curated shop picks." },
   { q: "What kind of photo should I upload?", a: "A clear, front-facing selfie in natural daylight with no filters. Plain backgrounds work best." },
-  { q: "Is my photo stored or shared?", a: "Your selfie is processed securely and deleted after analysis. We never sell or share your images." },
+  { q: "Is my photo stored or shared?", a: "Photos are processed securely for analysis. PaletteMe does not sell or share your images." },
   { q: "Can I shop colors that suit me?", a: "Yes — after analysis, PaletteMe surfaces marketplace items scored against your personal palette." },
   { q: "How is this different from the quiz?", a: "The quiz is a fun starting point. The selfie upload uses computer vision on your actual coloring for precise results." },
 ];

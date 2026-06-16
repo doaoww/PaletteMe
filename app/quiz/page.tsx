@@ -2,9 +2,9 @@ import { QuizFlow } from "@/components/quiz/quiz-flow";
 import "./quiz.css";
 
 export const metadata = {
-  title: "Color Quiz — PaletteMe",
+  title: "Style Quiz — PaletteMe",
   description:
-    "Answer three quick questions about your coloring before your AI seasonal analysis.",
+    "Find your color type, body silhouette, and style direction — then optionally confirm with a selfie.",
 };
 
 export default function QuizPage() {

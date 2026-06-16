@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#1b1c1c",
+                    "primary": "#b70050",
+                    "surface-tint": "#bc0052",
+                    "surface-dim": "#e5d6db",
+                    "primary-fixed": "#ffd9df",
+                    "surface": "#fff8f8",
+                    "on-primary": "#ffffff",
+                    "secondary": "#5f5e5e",
+                    "on-tertiary": "#ffffff",
+                    "surface-variant": "#eddfe4",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#c7c6c6",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "on-secondary-container": "#656464",
+                    "primary-container": "#e30f66",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-tertiary-fixed-variant": "#464747",
+                    "outline": "#8f6f74",
+                    "on-secondary-fixed-variant": "#474646",
+                    "inverse-on-surface": "#fcedf2",
+                    "error": "#ba1a1a",
+                    "background": "#fff8f8",
+                    "tertiary-fixed": "#e4e2e2",
+                    "on-primary-container": "#fffbff",
+                    "on-tertiary-container": "#fefcfc",
+                    "primary-fixed-dim": "#ffb1c1",
+                    "surface-container-high": "#f3e4e9",
+                    "on-primary-fixed-variant": "#90003d",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container": "#f9eaef",
+                    "outline-variant": "#e4bdc3",
+                    "error-container": "#ffdad6",
+                    "secondary-container": "#e5e2e1",
+                    "surface-bright": "#fff8f8",
+                    "inverse-surface": "#362e32",
+                    "tertiary": "#5c5c5c",
+                    "surface-container-highest": "#eddfe4",
+                    "on-surface-variant": "#5b3f45",
+                    "on-error": "#ffffff",
+                    "on-surface": "#211a1d",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "inverse-primary": "#ffb1c1",
+                    "tertiary-container": "#747474",
+                    "on-background": "#211a1d",
+                    "surface-container-low": "#fff0f5",
+                    "on-primary-fixed": "#3f0017"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "8px",
+                    "container-margin": "24px",
+                    "stack-md": "16px",
+                    "stack-lg": "32px",
+                    "unit": "4px",
+                    "gutter": "16px"
+            },
+            "fontFamily": {
+                    "display-md": ["Playfair Display"],
+                    "label-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Playfair Display"],
+                    "label-md": ["Inter"],
+                    "headline-lg-mobile": ["Playfair Display"],
+                    "display-lg": ["Playfair Display"],
+                    "headline-lg": ["Playfair Display"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "display-md": ["36px", {"lineHeight": "44px", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #FFF0F5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .signature-shadow {
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .progress-bar-glow {
+            box-shadow: 0 0 12px rgba(232, 23, 106, 0.3);
+        }
+        .skin-tone-ring {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col font-body-md text-on-surface">
+<header class="w-full top-0 sticky bg-surface flex items-center justify-between px-container-margin h-16 max-w-[1200px] mx-auto z-40">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity active:scale-95 duration-150" data-icon="arrow_back">arrow_back</button>
+<span class="font-display-md text-display-md tracking-tight text-on-surface">paletteMe</span>
+</div>
+<div class="hidden md:flex gap-6 items-center">
+<span class="font-label-md text-label-md text-primary font-bold">Quiz</span>
+<span class="font-label-md text-label-md text-secondary hover:opacity-80 cursor-pointer">Science</span>
+<span class="font-label-md text-label-md text-secondary hover:opacity-80 cursor-pointer">About</span>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center px-container-margin py-stack-lg max-w-[600px] mx-auto w-full">
+<div class="w-full mb-stack-lg space-y-2">
+<div class="flex justify-between items-end mb-2">
+<span class="font-label-sm text-label-sm text-primary-container font-bold uppercase tracking-widest">3 of 7</span>
+<span class="font-label-sm text-label-sm text-secondary">Analysis Phase</span>
+</div>
+<div class="h-[4px] w-full bg-black/10 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container progress-bar-glow transition-all duration-700 ease-out" style="width: 42.8%;"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest signature-shadow rounded-lg p-stack-lg w-full flex flex-col items-center text-center">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg mb-stack-sm text-on-surface">
+                What's your skin tone?
+            </h1>
+<p class="font-body-md text-body-md text-secondary mb-stack-lg">
+                Choose the closest in natural daylight — no filters
+            </p>
+<div class="grid grid-cols-3 gap-stack-lg mb-stack-lg">
+<button class="group flex flex-col items-center gap-2 focus:outline-none" onclick="selectTone(this)">
+<div class="w-16 h-16 rounded-full bg-[#F9E4D4] skin-tone-ring group-hover:scale-105 transition-transform"></div>
+<span class="font-label-sm text-label-sm opacity-0 group-hover:opacity-100 transition-opacity">Fair</span>
+</button>
+<button class="group flex flex-col items-center gap-2 focus:outline-none" onclick="selectTone(this)">
+<div class="w-16 h-16 rounded-full bg-[#F3D5B5] skin-tone-ring group-hover:scale-105 transition-transform"></div>
+<span class="font-label-sm text-label-sm opacity-0 group-hover:opacity-100 transition-opacity">Light</span>
+</button>
+<button class="group flex flex-col items-center gap-2 focus:outline-none ring-3 ring-primary-container scale-105 rounded-full p-1" id="selected-tone" onclick="selectTone(this)">
+<div class="w-16 h-16 rounded-full bg-[#EBC8A0] skin-tone-ring"></div>
+<span class="font-label-sm text-label-sm text-primary-container font-bold">Medium</span>
+</button>
+<button class="group flex flex-col items-center gap-2 focus:outline-none" onclick="selectTone(this)">
+<div class="w-16 h-16 rounded-full bg-[#D4A276] skin-tone-ring group-hover:scale-105 transition-transform"></div>
+<span class="font-label-sm text-label-sm opacity-0 group-hover:opacity-100 transition-opacity">Tan</span>
+</button>
+<button class="group flex flex-col items-center gap-2 focus:outline-none" onclick="selectTone(this)">
+<div class="w-16 h-16 rounded-full bg-[#996633] skin-tone-ring group-hover:scale-105 transition-transform"></div>
+<span class="font-label-sm text-label-sm opacity-0 group-hover:opacity-100 transition-opacity">Deep</span>
+</button>
+<button class="group flex flex-col items-center gap-2 focus:outline-none" onclick="selectTone(this)">
+<div class="w-16 h-16 rounded-full bg-[#5C3D2E] skin-tone-ring group-hover:scale-105 transition-transform"></div>
+<span class="font-label-sm text-label-sm opacity-0 group-hover:opacity-100 transition-opacity">Rich</span>
+</button>
+</div>
+<button class="w-full h-12 bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-lg hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                Continue 
+                <span class="material-symbols-outlined text-[20px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="mt-stack-lg flex items-center gap-stack-sm p-4 bg-primary-fixed/30 rounded-lg">
+<span class="material-symbols-outlined text-primary" data-icon="lightbulb" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+<p class="font-label-sm text-label-sm text-on-primary-fixed-variant text-left leading-relaxed">
+                Expert tip: Look at your inner wrist. If your veins look blue, you might be cool-toned. If green, you might be warm.
+            </p>
+</div>
+</main>
+<footer class="mt-auto pb-24 md:pb-8 flex flex-col items-center px-container-margin">
+<div class="w-full max-w-[1200px] border-t border-black/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="font-label-sm text-label-sm text-secondary">© 2024 paletteMe AI Color Lab</p>
+<div class="flex gap-6">
+<a class="font-label-sm text-label-sm text-secondary hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="font-label-sm text-label-sm text-secondary hover:text-primary transition-colors" href="#">Terms</a>
+</div>
+</div>
+</footer>
+<nav class="md:hidden fixed bottom-0 left-0 w-full h-16 flex justify-around items-center px-4 bg-surface shadow-[0_-2px_16px_rgba(0,0,0,0.06)] z-50 rounded-t-lg">
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="checkroom">checkroom</span>
+</div>
+<div class="relative flex flex-col items-center justify-center text-primary after:content-[''] after:absolute after:-bottom-1 after:w-1 after:h-1 after:bg-primary after:rounded-full">
+<span class="material-symbols-outlined" data-icon="shutter_speed" style="font-variation-settings: 'FILL' 1;">shutter_speed</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="styler">styler</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</div>
+</nav>
+<script>
+        function selectTone(element) {
+            // Remove selection from all buttons
+            document.querySelectorAll('button[onclick="selectTone(this)"]').forEach(btn => {
+                btn.classList.remove('ring-3', 'ring-primary-container', 'scale-105', 'rounded-full', 'p-1');
+                const label = btn.querySelector('span');
+                label.classList.remove('text-primary-container', 'font-bold', 'opacity-100');
+                label.classList.add('opacity-0');
+            });
+            
+            // Add selection to clicked button
+            element.classList.add('ring-3', 'ring-primary-container', 'scale-105', 'rounded-full', 'p-1');
+            const newLabel = element.querySelector('span');
+            newLabel.classList.add('text-primary-container', 'font-bold', 'opacity-100');
+            newLabel.classList.remove('opacity-0');
+
+            // Haptic-like interaction feedback
+            element.classList.add('scale-95');
+            setTimeout(() => {
+                element.classList.remove('scale-95');
+            }, 100);
+        }
+    </script>
+</body></html>

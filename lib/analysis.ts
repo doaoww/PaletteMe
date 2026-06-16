@@ -1,14 +1,28 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import OpenAI from "openai";
-import { SEASONS, type Season } from "@/lib/landing-data";
+import { z } from "zod";
+import {
+  normalizeRawAnalysisResult,
+  AnalysisRetakeError,
+  type AnalysisResult,
+  type RawAnalysis,
+  type SeasonId,
+} from "./analysis-normalizer.ts";
+import { runStructuredStyleResponse } from "./server/openai.ts";
 
-export type SeasonId = "spring" | "summer" | "autumn" | "winter";
+type Env = Record<string, string | undefined>;
 
-export type AnalysisTraits = {
-  undertone: "warm" | "cool" | "neutral";
-  contrast: "low" | "medium" | "high";
-  depth: "light" | "medium" | "deep";
-};
+export { AnalysisRetakeError, normalizeRawAnalysisResult };
+export type {
+  AnalysisEvidence,
+  AnalysisQuality,
+  AnalysisRetakeCode,
+  AnalysisTraits,
+  AnalysisResult,
+  RawAnalysis,
+  SeasonCandidate,
+  SeasonId,
+} from "./analysis-normalizer.ts";
 
 export type QuizHint = {
   seasonId: SeasonId;
@@ -17,29 +31,6 @@ export type QuizHint = {
   undertoneHint?: "warm" | "cool" | "neutral";
   profileSummary?: string;
 };
-
-export type AnalysisResult = {
-  seasonId: SeasonId;
-  subSeason: string;
-  traits: AnalysisTraits;
-  confidence: number;
-  summary: string;
-  tips: string[];
-  season: Season;
-};
-
-type RawAnalysis = {
-  season: string;
-  subSeason: string;
-  undertone: string;
-  contrast: string;
-  depth: string;
-  confidence: number;
-  summary: string;
-  tips: string[];
-};
-
-const SEASON_IDS = new Set<string>(["spring", "summer", "autumn", "winter"]);
 
 const GEMINI_MODELS = [
   "gemini-2.5-flash-lite",
@@ -94,6 +85,12 @@ Return ONLY this JSON — no markdown, no extra text:
   "undertone": "warm" | "cool" | "neutral",
   "contrast": "low" | "medium" | "high",
   "depth": "light" | "medium" | "deep",
+  "chroma": "muted" | "balanced" | "clear",
+  "features": {
+    "skin": "<short note about visible skin undertone/depth evidence>",
+    "hair": "<short note about visible natural hair depth/warmth evidence>",
+    "eyes": "<short note about visible eye color/clarity evidence>"
+  },
   "confidence": <number 0-100>,
   "summary": "<2-3 sentences: name the specific features you observed and WHY they point to this season>",
   "tips": [
@@ -109,6 +106,108 @@ export class AnalysisQuotaError extends Error {
     this.name = "AnalysisQuotaError";
   }
 }
+
+export function getConfiguredColorAnalysisModel(env: Env = process.env): string {
+  return env.OPENAI_COLOR_ANALYSIS_MODEL?.trim() || env.OPENAI_STYLE_MODEL?.trim() || "gpt-5.4";
+}
+
+const ACCURACY_GATE_PROMPT = `ACCURACY GATE V1 - REQUIRED:
+Before assigning any color season, inspect whether the upload is a usable selfie of a human face.
+
+If the image is not a human face, set:
+- hasHumanFace: false
+- faceCount: 0
+- photoQuality.imageUsability: "unusable"
+- photoQuality.issues includes "no_human_face"
+- photoQuality.qualityScore: 0
+- confidence: 0
+Do not pretend the object has personal coloring.
+
+If more than one face is visible, set faceCount to the number of visible faces and include "multiple_faces" in photoQuality.issues.
+
+If exactly one face is visible but lighting, blur, filters, color cast, face size, or conditions are suboptimal, still analyze the coloring. Set photoQuality.qualityScore from 40 to 79, include the relevant issues, and use imageUsability "borderline" or "unusable" as appropriate.
+
+If exactly one face is visible and photo quality is good, set photoQuality.qualityScore to 80 or above.
+
+The JSON must include these additional fields:
+{
+  "hasHumanFace": true,
+  "faceCount": 1,
+  "photoQuality": {
+    "lighting": "good" | "mixed" | "poor",
+    "faceVisible": true,
+    "naturalLight": true,
+    "heavyFilter": false,
+    "strongColorCast": false,
+    "blurry": false,
+    "qualityScore": 92,
+    "imageUsability": "usable" | "borderline" | "unusable",
+    "issues": [],
+    "recommendation": "<specific retake guidance if the photo is not usable>"
+  },
+  "evidence": {
+    "undertone": "<why undertone was chosen>",
+    "contrast": "<why contrast was chosen>",
+    "depth": "<why depth was chosen>",
+    "chroma": "<why chroma was chosen>"
+  },
+  "alternatives": [
+    { "season": "summer", "subSeason": "Soft Summer", "likelihood": 22, "reason": "<why considered but not chosen>" }
+  ]
+}`;
+
+const RESPONSES_INSTRUCTIONS = `You are a calibrated personal color analysis vision system.
+Extract factual visual evidence first: usable human face, photo quality, skin undertone/depth, hair depth/warmth, eye warmth/clarity, contrast, and chroma.
+The app scores the final 12-season result in code, so do not let dark hair alone force Winter.
+For deep coloring, separate Dark Autumn from Winter carefully:
+- Dark Autumn / Deep Autumn = warm or neutral-warm, golden/olive skin, warm brown or chocolate hair, warm brown/olive eyes, earthy, smoky, rich.
+- Winter = cool or neutral-cool, blue-black/ash hair, cool dark eyes, icy, sharp, crystalline, jewel-like.
+Return only schema-valid structured data.`;
+
+const RawAnalysisSchema = z.object({
+  hasHumanFace: z.boolean(),
+  faceCount: z.number().int().min(0),
+  photoQuality: z.object({
+    lighting: z.enum(["good", "mixed", "poor"]),
+    faceVisible: z.boolean(),
+    naturalLight: z.boolean(),
+    heavyFilter: z.boolean(),
+    strongColorCast: z.boolean(),
+    blurry: z.boolean(),
+    qualityScore: z.number().min(0).max(100),
+    imageUsability: z.enum(["usable", "borderline", "unusable"]),
+    issues: z.array(z.string()),
+    recommendation: z.string(),
+  }),
+  season: z.enum(["spring", "summer", "autumn", "winter"]),
+  subSeason: z.string(),
+  undertone: z.enum(["warm", "cool", "neutral"]),
+  contrast: z.enum(["low", "medium", "high"]),
+  depth: z.enum(["light", "medium", "deep"]),
+  chroma: z.enum(["muted", "balanced", "clear"]),
+  features: z.object({
+    skin: z.string(),
+    hair: z.string(),
+    eyes: z.string(),
+  }),
+  evidence: z.object({
+    undertone: z.string(),
+    contrast: z.string(),
+    depth: z.string(),
+    chroma: z.string(),
+  }),
+  alternatives: z.array(
+    z.object({
+      season: z.string(),
+      subSeason: z.string(),
+      likelihood: z.number().min(0).max(100),
+      reason: z.string(),
+    })
+  ),
+  confidence: z.number().min(0).max(100),
+  summary: z.string(),
+  tips: z.array(z.string()).max(3),
+});
 
 function isRetryableError(error: unknown): boolean {
   const msg = error instanceof Error ? error.message : String(error);
@@ -140,7 +239,24 @@ function parseRaw(text: string): RawAnalysis {
   }
 }
 
-async function analyzeWithOpenAI(
+async function analyzeWithOpenAIResponses(
+  imageBase64: string,
+  mimeType: string,
+  prompt: string
+): Promise<RawAnalysis> {
+  return runStructuredStyleResponse({
+    schema: RawAnalysisSchema,
+    schemaName: "color_analysis_evidence",
+    instructions: RESPONSES_INSTRUCTIONS,
+    prompt,
+    image: { mimeType, base64: imageBase64, detail: "high" },
+    model: getConfiguredColorAnalysisModel(),
+    maxOutputTokens: 1500,
+    promptCacheKey: "paletteme-color-analysis-v1",
+  });
+}
+
+async function analyzeWithOpenAIChat(
   imageBase64: string,
   mimeType: string,
   prompt: string
@@ -150,15 +266,21 @@ async function analyzeWithOpenAI(
 
   const client = new OpenAI({ apiKey });
   const response = await client.chat.completions.create({
-    model: "gpt-4o-mini",
-    max_tokens: 700,
+    model: process.env.OPENAI_COLOR_ANALYSIS_LEGACY_MODEL?.trim() || "gpt-4o",
+    max_tokens: 1000,
     temperature: 0,
     messages: [
       {
         role: "user",
         content: [
           { type: "text", text: prompt },
-          { type: "image_url", image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:${mimeType};base64,${imageBase64}`,
+              detail: "high",
+            },
+          },
         ],
       },
     ],
@@ -213,7 +335,11 @@ async function analyzeWithGemini(
 }
 
 function buildPrompt(quizHint?: QuizHint): string {
-  if (!quizHint) return ANALYSIS_PROMPT;
+  const basePrompt = `${ANALYSIS_PROMPT}
+
+${ACCURACY_GATE_PROMPT}`;
+
+  if (!quizHint) return basePrompt;
 
   const profileBlock = quizHint.profileSummary
     ? quizHint.profileSummary
@@ -222,7 +348,7 @@ function buildPrompt(quizHint?: QuizHint): string {
         `Scores: spring=${quizHint.scores.spring}, summer=${quizHint.scores.summer}, autumn=${quizHint.scores.autumn}, winter=${quizHint.scores.winter}`,
       ].join("\n");
 
-  return `${ANALYSIS_PROMPT}
+  return `${basePrompt}
 
 ━━ ONBOARDING QUIZ (soft prior — photo evidence wins) ━━
 ${profileBlock}
@@ -243,10 +369,17 @@ export async function analyzeFaceImage(
   // OpenAI first if key is available (more reliable), otherwise Gemini
   if (process.env.OPENAI_API_KEY) {
     try {
-      text = await analyzeWithOpenAI(imageBase64, mimeType, prompt);
+      const raw = await analyzeWithOpenAIResponses(imageBase64, mimeType, prompt);
+      return normalizeRawAnalysisResult(raw);
     } catch (error) {
-      console.warn("[analyze] OpenAI failed, trying Gemini…", (error as Error).message);
-      text = await analyzeWithGemini(imageBase64, mimeType, prompt);
+      if (error instanceof AnalysisRetakeError) throw error;
+      console.warn("[analyze] OpenAI Responses failed, trying legacy OpenAI...", (error as Error).message);
+      try {
+        text = await analyzeWithOpenAIChat(imageBase64, mimeType, prompt);
+      } catch (legacyError) {
+        console.warn("[analyze] legacy OpenAI failed, trying Gemini...", (legacyError as Error).message);
+        text = await analyzeWithGemini(imageBase64, mimeType, prompt);
+      }
     }
   } else {
     text = await analyzeWithGemini(imageBase64, mimeType, prompt);
@@ -255,38 +388,5 @@ export async function analyzeFaceImage(
   if (!text) throw new Error("Analysis failed.");
 
   const raw = parseRaw(text);
-
-  const seasonId = raw.season?.toLowerCase().trim();
-  if (!seasonId || !SEASON_IDS.has(seasonId)) {
-    throw new Error("unclear");
-  }
-
-  const season = SEASONS.find((s) => s.id === seasonId) ?? SEASONS[0];
-
-  return {
-    seasonId: seasonId as SeasonId,
-    subSeason: titleCase(raw.subSeason) || season.name,
-    traits: {
-      undertone: normalizeTrait(raw.undertone, ["warm", "cool", "neutral"], "neutral"),
-      contrast: normalizeTrait(raw.contrast, ["low", "medium", "high"], "medium"),
-      depth: normalizeTrait(raw.depth, ["light", "medium", "deep"], "medium"),
-    },
-    confidence: clamp(Math.round(raw.confidence ?? 70), 0, 100),
-    summary: raw.summary || season.why,
-    tips: Array.isArray(raw.tips) ? raw.tips.slice(0, 3) : [],
-    season,
-  };
-}
-
-function titleCase(s: string): string {
-  return s?.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()) ?? "";
-}
-
-function normalizeTrait<T extends string>(value: string, allowed: T[], fallback: T): T {
-  const v = value?.toLowerCase().trim();
-  return (allowed.find((a) => a === v) ?? fallback) as T;
-}
-
-function clamp(n: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, n));
+  return normalizeRawAnalysisResult(raw);
 }

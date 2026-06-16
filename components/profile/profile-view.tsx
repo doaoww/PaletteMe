@@ -1,16 +1,45 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { ResultCarousel } from "@/components/profile/result-carousel";
+import { BottomNav } from "@/components/nav/bottom-nav";
+import { useEffect, useRef, useState } from "react";
 import { SEASONS } from "@/lib/landing-data";
-import { BODY_TYPE_TIPS } from "@/lib/quiz-data";
 import { LS_USER_ID } from "@/lib/quiz";
 import type { QuizProfile } from "@/lib/quiz";
+import type { AnalysisResult } from "@/lib/analysis";
+import {
+  buildColorIntelligenceReport,
+  getFreeColorPreview,
+  type ColorTraits,
+} from "@/lib/color-intelligence";
+import { canAccessPremium, type PremiumLevel } from "@/lib/premium";
+import {
+  adaptAiScanResultToOutfitScanResult,
+  buildOutfitScanFormData,
+  requestAiScanResult,
+  validateOutfitImage,
+  type OutfitScanResult,
+} from "@/lib/outfit-scan";
 import { createClient } from "@/lib/supabase";
+import {
+  AUTH_UNAVAILABLE_MESSAGE,
+  buildAuthCallbackUrl,
+  friendlyAuthError,
+  friendlyProfileLinkError,
+  getSignUpCompletionMode,
+  isSupabaseAuthConfigured,
+} from "@/lib/auth-flow";
+import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan-feature";
 
 // ─── Save banner — shown at the bottom of results ─────────────────────────────
 
 type BannerMode = "checking" | "signed-in" | "choice" | "email" | "loading" | "check-email";
+
+const SUPABASE_AUTH_ENV = {
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+};
 
 function SaveBanner() {
   const [mode, setMode] = useState<BannerMode>("checking");
@@ -18,9 +47,10 @@ function SaveBanner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const authConfigured = isSupabaseAuthConfigured(SUPABASE_AUTH_ENV);
 
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    if (!authConfigured) {
       setMode("choice");
       return;
     }
@@ -28,45 +58,85 @@ function SaveBanner() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setMode(user ? "signed-in" : "choice");
     });
-  }, []);
+  }, [authConfigured]);
 
-  async function callLinkApi() {
+  async function callLinkApi(): Promise<boolean> {
     const userId = localStorage.getItem(LS_USER_ID);
-    await fetch("/api/auth/link", {
+    const res = await fetch("/api/auth/link", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ anonymous_id: userId }),
-    }).catch(() => {});
+    }).catch(() => null);
+
+    if (!res) {
+      setErrorMsg(friendlyProfileLinkError(null));
+      return false;
+    }
+
+    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) {
+      setErrorMsg(friendlyProfileLinkError(json.error));
+      return false;
+    }
+
+    return true;
   }
 
   async function handleGoogle() {
+    setErrorMsg("");
+    if (!authConfigured) {
+      setErrorMsg(AUTH_UNAVAILABLE_MESSAGE);
+      setMode("choice");
+      return;
+    }
+
     const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=/profile`,
+        redirectTo: buildAuthCallbackUrl(window.location.origin, "/profile"),
       },
     });
+    if (error) {
+      setErrorMsg(friendlyAuthError(error.message));
+      setMode("choice");
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg("");
+    if (!authConfigured) {
+      setErrorMsg(AUTH_UNAVAILABLE_MESSAGE);
+      setMode("email");
+      return;
+    }
+
     setMode("loading");
     const supabase = createClient();
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) { setErrorMsg(friendly(error.message)); setMode("email"); return; }
-      await callLinkApi();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: buildAuthCallbackUrl(window.location.origin, "/profile"),
+        },
+      });
+      if (error) { setErrorMsg(friendlyAuthError(error.message)); setMode("email"); return; }
+      if (getSignUpCompletionMode(data) === "signed-in") {
+        const linked = await callLinkApi();
+        setMode(linked ? "signed-in" : "email");
+        return;
+      }
       setMode("check-email");
       return;
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { setErrorMsg(friendly(error.message)); setMode("email"); return; }
-    await callLinkApi();
-    setMode("signed-in");
+    if (error) { setErrorMsg(friendlyAuthError(error.message)); setMode("email"); return; }
+    const linked = await callLinkApi();
+    setMode(linked ? "signed-in" : "email");
   }
 
   if (mode === "checking") return null;
@@ -81,7 +151,7 @@ function SaveBanner() {
         <p style={bannerSub}>
           Your color season and style are saved. Sign in on any device to skip the quiz.
         </p>
-        <Link href="/dashboard" className="btn" style={{ display: "inline-block", marginTop: 16 }}>
+        <Link href="/feed" className="btn" style={{ display: "inline-block", marginTop: 16 }}>
           explore my picks
         </Link>
       </section>
@@ -153,15 +223,13 @@ function SaveBanner() {
           already have an account
         </button>
       </div>
+      {errorMsg && (
+        <p style={{ fontSize: "0.82rem", color: "#e53e3e", margin: 0 }}>
+          {errorMsg}
+        </p>
+      )}
     </section>
   );
-}
-
-function friendly(msg: string) {
-  if (msg.includes("Invalid login")) return "Wrong email or password.";
-  if (msg.includes("already registered")) return "That email is taken. Try signing in.";
-  if (msg.includes("Password should")) return "Password must be at least 6 characters.";
-  return "Something went wrong. Please try again.";
 }
 
 function GoogleIcon() {
@@ -263,43 +331,399 @@ const switchSt: React.CSSProperties = {
   padding: "4px 0",
 };
 
-export function ProfileView({ profile }: { profile: QuizProfile }) {
-  const season = SEASONS.find((s) => s.id === profile.seasonId) ?? SEASONS[0];
-  const bodyTips = profile.bodyType ? BODY_TYPE_TIPS[profile.bodyType] : null;
+type PaymentUrls = {
+  report?: string;
+  pro?: string;
+};
+
+function CheckoutButton({
+  href,
+  children,
+  muted,
+}: {
+  href?: string;
+  children: React.ReactNode;
+  muted?: boolean;
+}) {
+  if (!href) {
+    return (
+      <button type="button" style={disabledCheckoutBtn} disabled>
+        payment link coming soon
+      </button>
+    );
+  }
 
   return (
-    <div style={{ background: "var(--cream)", minHeight: "100svh" }}>
+    <a
+      href={href}
+      className={muted ? "btn btn--ghost" : "btn"}
+      style={{ display: "inline-block", textAlign: "center" }}
+    >
+      {children}
+    </a>
+  );
+}
 
-      {/* ── Top bar ── */}
-      <header style={{
+function UpgradePanel({ paymentUrls, compact = false }: { paymentUrls: PaymentUrls; compact?: boolean }) {
+  return (
+    <div style={{ ...upgradePanel, marginTop: compact ? 18 : 0 }}>
+      <div>
+        <p className="kicker" style={{ fontSize: "0.54rem", marginBottom: 8 }}>unlock full report</p>
+        <p className="font-serif" style={{ fontSize: compact ? "1.25rem" : "clamp(1.45rem,3vw,2rem)", lineHeight: 1.15 }}>
+          Full palette, fit notes, and shopping rules.
+        </p>
+        <p style={{ ...bannerSub, marginTop: 8 }}>
+          Keep the core result free, then unlock the deeper color report for a small one-time payment.
+        </p>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+        <CheckoutButton href={paymentUrls.report}>unlock report - $2.99</CheckoutButton>
+        <CheckoutButton href={paymentUrls.pro} muted>upgrade to pro</CheckoutButton>
+      </div>
+    </div>
+  );
+}
+
+function LockedReportPreview({ paymentUrls }: { paymentUrls: PaymentUrls }) {
+  return (
+    <div style={{ ...lockedPanel, gridColumn: "1 / -1" }}>
+      <div>
+        <p className="kicker" style={{ fontSize: "0.56rem", marginBottom: 10 }}>paid report</p>
+        <p className="font-serif" style={{ fontSize: "clamp(1.55rem,3vw,2.2rem)", lineHeight: 1.1 }}>
+          Your deeper style map is ready.
+        </p>
+        <p style={{ ...bannerSub, marginTop: 10 }}>
+          Unlock your full 8-color palette, body-shape dressing notes, style direction, and clear shopping do/don&apos;ts.
+        </p>
+      </div>
+      <div style={lockedMiniGrid}>
+        {["8-color palette", "body + fit notes", "shopping rules", "outfit scanner upsell"].map((item) => (
+          <span key={item} style={lockedChip}>{item}</span>
+        ))}
+      </div>
+      <CheckoutButton href={paymentUrls.report}>get my full report - $2.99</CheckoutButton>
+    </div>
+  );
+}
+
+type ScannerPhase = "idle" | "ready" | "scanning" | "done" | "error";
+
+function ProScannerCard({
+  hasPro,
+  paymentUrls,
+  profile,
+  freeTestingMode,
+}: {
+  hasPro: boolean;
+  paymentUrls: PaymentUrls;
+  profile: QuizProfile;
+  freeTestingMode: boolean;
+}) {
+  const scanFeatureEnabled = isScanFeatureEnabled();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [phase, setPhase] = useState<ScannerPhase>("idle");
+  const [result, setResult] = useState<OutfitScanResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function pickFile(next: File) {
+    const validation = validateOutfitImage(next);
+    if (validation) {
+      setError(validation);
+      setPhase("error");
+      setFile(null);
+      setResult(null);
+      return;
+    }
+    setFile(next);
+    setResult(null);
+    setError(null);
+    setPhase("ready");
+  }
+
+  async function scanOutfit() {
+    if (!file) return;
+    setPhase("scanning");
+    setError(null);
+
+    try {
+      const formData = buildOutfitScanFormData({
+        file,
+        scanType: "outfit",
+        profile,
+      });
+      const data = await requestAiScanResult(formData);
+      setResult(adaptAiScanResultToOutfitScanResult(data));
+      setPhase("done");
+    } catch (err) {
+      console.error("[profile-scan] Outfit scan failed", err);
+      setError(err instanceof Error ? err.message : "Outfit check failed. Please try again.");
+      setPhase("error");
+    }
+  }
+
+  if (!scanFeatureEnabled) {
+    const copy = getScanComingSoonCopy();
+
+    return (
+      <section id="scanner" style={{ ...bannerCard, background: "var(--ink)", color: "var(--cream)" }}>
+        <p className="kicker" style={{ fontSize: "0.56rem", marginBottom: 8 }}>
+          {copy.kicker}
+        </p>
+        <p className="font-serif" style={{ fontSize: "clamp(1.45rem,3vw,2rem)", lineHeight: 1.15 }}>
+          {copy.title}
+        </p>
+        <p style={{ ...bannerSub, color: "color-mix(in srgb, var(--cream) 82%, transparent)" }}>
+          We are keeping your color report live, but pausing item and outfit scans until the results are reliable enough to ship.
+        </p>
+        <div style={scannerResultBox}>
+          <p style={{ ...bannerSub, color: "color-mix(in srgb, var(--cream) 86%, transparent)" }}>
+            {copy.note}
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section id="scanner" style={{ ...bannerCard, background: "var(--ink)", color: "var(--cream)" }}>
+      <p className="kicker" style={{ fontSize: "0.56rem", marginBottom: 8 }}>
+        {freeTestingMode ? "free scanner" : "pro scanner"}
+      </p>
+      <p className="font-serif" style={{ fontSize: "clamp(1.45rem,3vw,2rem)", lineHeight: 1.15 }}>
+        {hasPro
+          ? freeTestingMode
+            ? "Outfit scanner is open for testing."
+            : "Outfit scanner unlocked."
+          : "Want to check clothes before buying?"}
+      </p>
+      <p style={{ ...bannerSub, color: "color-mix(in srgb, var(--cream) 82%, transparent)" }}>
+        {hasPro
+          ? freeTestingMode
+            ? "All scanner checks are free while we test accuracy. Try outfit or product photos and compare the verdict."
+            : "Your Pro access is active. The scanner area is ready for outfit and product photo checks."
+          : "Pro adds outfit and product photo checks so you can ask whether a piece fits your palette before you spend."}
+      </p>
+      {!hasPro && (
+        <div style={{ marginTop: 8 }}>
+          <CheckoutButton href={paymentUrls.pro}>unlock pro scanner</CheckoutButton>
+        </div>
+      )}
+      {hasPro && (
+        <div style={{ display: "grid", gap: 14, marginTop: 8 }}>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            style={{ display: "none" }}
+            onChange={(event) => {
+              const next = event.target.files?.[0];
+              if (next) pickFile(next);
+            }}
+          />
+          <div style={scannerUploadBox} role="button" tabIndex={0} onClick={() => inputRef.current?.click()} onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") inputRef.current?.click();
+          }}>
+            <span style={{ fontFamily: "var(--sans)", fontSize: "0.86rem", fontWeight: 700 }}>
+              {file ? file.name : "upload outfit or product photo"}
+            </span>
+            <span style={{ fontFamily: "var(--sans)", fontSize: "0.75rem", opacity: 0.7 }}>
+              JPG, PNG, or WebP up to 10 MB
+            </span>
+          </div>
+
+          {file && phase !== "scanning" && (
+            <button type="button" className="btn" style={{ justifySelf: "start" }} onClick={scanOutfit}>
+              scan against my palette
+            </button>
+          )}
+
+          {phase === "scanning" && (
+            <p style={{ ...bannerSub, color: "color-mix(in srgb, var(--cream) 78%, transparent)" }}>
+              Checking color match, undertone fit, and styling suggestion...
+            </p>
+          )}
+
+          {error && (
+            <p style={{ ...bannerSub, color: "var(--blush)" }}>
+              {error}
+            </p>
+          )}
+
+          {result && (
+            <div style={scannerResultBox}>
+              <p style={{ fontFamily: "var(--sans)", fontSize: "0.78rem", fontWeight: 800, margin: 0 }}>
+                {result.match ? "good palette match" : "palette caution"} · {result.score}% score
+              </p>
+              {result.dominant_colors.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {result.dominant_colors.map((color) => (
+                    <span key={color} style={scannerChip}>{color}</span>
+                  ))}
+                </div>
+              )}
+              <p style={{ ...bannerSub, color: "color-mix(in srgb, var(--cream) 86%, transparent)" }}>
+                {result.reason}
+              </p>
+              <p style={{ ...bannerSub, color: "color-mix(in srgb, var(--cream) 86%, transparent)" }}>
+                {result.suggestion}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+const disabledCheckoutBtn: React.CSSProperties = {
+  padding: "11px 22px",
+  borderRadius: 100,
+  border: "1.5px solid var(--hair)",
+  background: "color-mix(in srgb, var(--cream-2) 70%, transparent)",
+  color: "var(--ink-soft)",
+  fontFamily: "var(--sans)",
+  fontSize: "0.9rem",
+  cursor: "not-allowed",
+  textTransform: "lowercase",
+};
+
+const scannerUploadBox: React.CSSProperties = {
+  borderRadius: 14,
+  border: "1px dashed color-mix(in srgb, var(--cream) 48%, transparent)",
+  background: "color-mix(in srgb, var(--cream) 8%, transparent)",
+  padding: "clamp(18px,3vw,24px)",
+  display: "flex",
+  flexDirection: "column",
+  gap: 6,
+  cursor: "pointer",
+};
+
+const scannerResultBox: React.CSSProperties = {
+  borderRadius: 14,
+  border: "1px solid color-mix(in srgb, var(--cream) 24%, transparent)",
+  background: "color-mix(in srgb, var(--cream) 8%, transparent)",
+  padding: "clamp(16px,3vw,22px)",
+  display: "grid",
+  gap: 12,
+};
+
+const scannerChip: React.CSSProperties = {
+  fontFamily: "var(--sans)",
+  fontSize: "0.72rem",
+  border: "1px solid color-mix(in srgb, var(--cream) 28%, transparent)",
+  borderRadius: 100,
+  padding: "4px 10px",
+  color: "var(--cream)",
+};
+
+const upgradePanel: React.CSSProperties = {
+  borderRadius: 16,
+  border: "1px solid var(--hair)",
+  background: "color-mix(in srgb, var(--blush) 34%, transparent)",
+  padding: "clamp(18px,3vw,26px)",
+  display: "grid",
+  gap: 18,
+};
+
+const lockedPanel: React.CSSProperties = {
+  ...upgradePanel,
+  background: "color-mix(in srgb, var(--cream-2) 72%, transparent)",
+};
+
+const lockedMiniGrid: React.CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 8,
+};
+
+const lockedChip: React.CSSProperties = {
+  fontFamily: "var(--sans)",
+  fontSize: "0.76rem",
+  fontWeight: 700,
+  border: "1px solid var(--hair)",
+  borderRadius: 100,
+  padding: "5px 12px",
+  color: "var(--ink-soft)",
+};
+
+export function ProfileView({
+  profile,
+  analysisResult,
+  premiumLevel,
+  paymentUrls,
+  freeTestingMode,
+}: {
+  profile: QuizProfile;
+  analysisResult?: AnalysisResult | null;
+  premiumLevel: PremiumLevel;
+  paymentUrls: PaymentUrls;
+  freeTestingMode: boolean;
+}) {
+  const season = SEASONS.find((s) => s.id === profile.seasonId) ?? SEASONS[0];
+  const hasReport = freeTestingMode || canAccessPremium(premiumLevel, "report");
+  const hasPro = freeTestingMode || canAccessPremium(premiumLevel, "pro");
+  const traits: ColorTraits = {
+    undertone: analysisResult?.traits?.undertone ?? profile.undertoneHint,
+    contrast: analysisResult?.traits?.contrast ?? "medium",
+    depth: analysisResult?.traits?.depth ?? "medium",
+    chroma: analysisResult?.traits?.chroma ?? "balanced",
+  };
+  const displaySubSeason = analysisResult?.subSeason ?? profile.subSeason ?? season.name;
+  const report = analysisResult?.report ?? buildColorIntelligenceReport({
+    season,
+    subSeason: displaySubSeason,
+    traits,
+    featureNotes: analysisResult?.features,
+    context: {
+      styleGoal: profile.answers.goal,
+      styleVibe: profile.answers.styleVibe ?? profile.styleVector?.aesthetics[0],
+      naturalHairColor: profile.answers.naturalHairColor,
+    },
+  });
+  const visiblePalette = hasReport ? report.bestColors : getFreeColorPreview(report, 4);
+
+  return (
+    <div className={`app-shell profile-shell${hasReport ? " profile-shell--result" : ""}`}>
+
+      {!hasReport && (
+      <header className="app-topbar glass-nav" style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         padding: "18px var(--pad)",
-        borderBottom: "1px solid var(--hair)",
       }}>
-        <Link href="/" className="wordmark" style={{ color: "var(--ink)", fontSize: "1.2rem" }}>
+        <Link href="/home" className="wordmark" style={{ color: "var(--ink)", fontSize: "1.2rem" }}>
           palette<span style={{ color: "var(--pink)" }}>me</span>
         </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <Link
-            href="/login"
-            style={{ fontFamily: "var(--sans)", fontSize: "0.82rem", color: "var(--ink-soft)", textDecoration: "none" }}
-          >
-            sign in
-          </Link>
-          <Link
-            href="/quiz"
-            style={{ fontFamily: "var(--sans)", fontSize: "0.82rem", color: "var(--ink-soft)", textDecoration: "underline", textUnderlineOffset: 3 }}
-          >
-            retake quiz
-          </Link>
-        </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            {freeTestingMode && (
+              <span style={{ fontFamily: "var(--sans)", fontSize: "0.72rem", color: "var(--pink)", fontWeight: 700 }}>
+                all features free
+              </span>
+            )}
+            {!freeTestingMode && premiumLevel !== "free" && (
+              <span style={{ fontFamily: "var(--sans)", fontSize: "0.72rem", color: "var(--pink)", fontWeight: 700 }}>
+                {premiumLevel} unlocked
+              </span>
+            )}
+          </div>
       </header>
+      )}
 
-      <div className="wrap" style={{ paddingTop: "clamp(40px,7vh,72px)", paddingBottom: "clamp(48px,8vh,96px)" }}>
+      <div className={hasReport ? "profile-result-wrap" : "wrap"} style={hasReport ? undefined : { paddingTop: "clamp(40px,7vh,72px)", paddingBottom: "clamp(48px,8vh,96px)" }}>
 
-        {/* ── Season hero ── */}
+        {hasReport ? (
+          <ResultCarousel
+            profile={profile}
+            season={season}
+            report={report}
+            subSeason={displaySubSeason}
+            confidence={analysisResult?.confidence ?? profile.quizConfidence}
+          />
+        ) : (
+          <>
+        {/* ── Season hero (free preview) ── */}
         <section style={{ marginBottom: "clamp(48px,8vh,80px)" }}>
           <div className="eyebrow">
             <span className="kicker" style={{ fontSize: "0.58rem" }}>your color season</span>
@@ -310,26 +734,31 @@ export function ProfileView({ profile }: { profile: QuizProfile }) {
           >
             <span className="scr" style={{ color: "var(--pink)" }}>{season.name}</span>
           </h1>
-          {profile.subSeason && (
+          {hasReport && displaySubSeason && (
             <p style={{ fontFamily: "var(--sans)", fontSize: "1.05rem", fontWeight: 600, color: "var(--ink-soft)", marginTop: 8 }}>
-              {profile.subSeason}
+              {displaySubSeason}
+            </p>
+          )}
+          {!hasReport && displaySubSeason && (
+            <p style={{ fontFamily: "var(--sans)", fontSize: "0.92rem", color: "var(--ink-soft)", marginTop: 8 }}>
+              exact sub-season available in the full report
             </p>
           )}
           <p style={{ fontFamily: "var(--sans)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-soft)", marginTop: 6, opacity: 0.7 }}>
-            {profile.undertoneHint} undertone
+            {traits.undertone} undertone · {traits.contrast} contrast · {traits.chroma} chroma
           </p>
 
           {/* Palette */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 24 }}>
-            {season.palette.map((color) => (
+            {visiblePalette.map((color) => (
               <span
-                key={color}
-                title={color}
+                key={color.hex}
+                title={color.name}
                 style={{
                   width: 48,
                   height: 48,
                   borderRadius: "50%",
-                  background: color,
+                  background: color.hex,
                   border: "1px solid var(--hair)",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                   display: "block",
@@ -339,73 +768,42 @@ export function ProfileView({ profile }: { profile: QuizProfile }) {
           </div>
 
           <p style={{ fontFamily: "var(--sans)", fontSize: "0.96rem", lineHeight: 1.65, color: "var(--ink-soft)", marginTop: 20, maxWidth: "52ch" }}>
-            {season.why}
+            {analysisResult?.summary ?? season.why}
           </p>
+          {!hasReport && (
+            <>
+              <p style={{ fontFamily: "var(--sans)", fontSize: "0.84rem", color: "var(--ink-soft)", marginTop: 12 }}>
+                Free preview: season result and first palette colors. The full report unlocks all colors and shopping guidance.
+              </p>
+              <UpgradePanel paymentUrls={paymentUrls} compact />
+            </>
+          )}
         </section>
 
-        {/* ── 2-col: body type + style ── */}
-        <style>{`
-          @media (min-width: 700px) { .profile-cols { grid-template-columns: 1fr 1fr !important; } }
-        `}</style>
         <section
           className="profile-cols"
           style={{ display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px,4vw,48px)", marginBottom: "clamp(48px,8vh,80px)" }}
         >
-          {/* Body type */}
-          {bodyTips && (
-            <div style={{ borderRadius: 16, border: "1px solid var(--hair)", padding: "clamp(20px,3vw,32px)" }}>
-              <p className="kicker" style={{ fontSize: "0.56rem", marginBottom: 12 }}>your body type</p>
-              <p className="font-serif" style={{ fontSize: "clamp(1.5rem,3vw,2rem)", lineHeight: 1.1 }}>
-                {bodyTips.label}
-              </p>
-              <p style={{ fontFamily: "var(--sans)", fontSize: "0.82rem", color: "var(--ink-soft)", marginTop: 6, marginBottom: 16 }}>
-                {bodyTips.desc}
-              </p>
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-                {bodyTips.tips.map((tip) => (
-                  <li key={tip} style={{ display: "flex", gap: 10, fontFamily: "var(--sans)", fontSize: "0.88rem", color: "var(--ink-soft)", lineHeight: 1.45 }}>
-                    <span style={{ color: "var(--pink)", flexShrink: 0 }}>·</span>
-                    <span>{tip}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Style vector */}
-          {profile.styleVector && (
-            <div style={{ borderRadius: 16, border: "1px solid var(--hair)", padding: "clamp(20px,3vw,32px)" }}>
-              <p className="kicker" style={{ fontSize: "0.56rem", marginBottom: 12 }}>your style</p>
-              <p className="font-serif" style={{ fontSize: "clamp(1.5rem,3vw,2rem)", lineHeight: 1.1, marginBottom: 16 }}>
-                {profile.styleVector.aesthetics.slice(0, 2).join(" + ") || "Eclectic"}
-              </p>
-              {profile.styleVector.aesthetics.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                  {profile.styleVector.aesthetics.map((a) => (
-                    <span key={a} style={{ fontFamily: "var(--sans)", fontSize: "0.76rem", fontWeight: 700, border: "1px solid var(--hair)", borderRadius: 100, padding: "5px 12px", textTransform: "lowercase" }}>
-                      {a}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {profile.styleVector.occasions.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {profile.styleVector.occasions.map((o) => (
-                    <span key={o} style={{ fontFamily: "var(--sans)", fontSize: "0.72rem", color: "var(--ink-soft)", border: "1px solid var(--hair)", borderRadius: 100, padding: "4px 10px", textTransform: "lowercase" }}>
-                      {o}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          <LockedReportPreview paymentUrls={paymentUrls} />
         </section>
+          </>
+        )}
 
-        {/* ── Save / auth CTA ── */}
+        {!hasReport && (
+        <>
+        <ProScannerCard
+          hasPro={hasPro}
+          paymentUrls={paymentUrls}
+          profile={profile}
+          freeTestingMode={freeTestingMode}
+        />
         <SaveBanner />
-
+        </>
+        )}
 
       </div>
+
+      {!hasReport && <BottomNav />}
     </div>
   );
 }

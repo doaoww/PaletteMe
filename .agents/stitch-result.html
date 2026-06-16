@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>paletteMe | Warm Autumn Results</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:ital,wght@0,600;0,700;1,600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        
+        .stagger-reveal {
+            opacity: 0;
+            transform: translateY(8px);
+            animation: revealUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes revealUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .reveal-delay-1 { animation-delay: 0.1s; }
+        .reveal-delay-2 { animation-delay: 0.2s; }
+        .reveal-delay-3 { animation-delay: 0.3s; }
+        .reveal-delay-4 { animation-delay: 0.4s; }
+        .reveal-delay-5 { animation-delay: 0.5s; }
+        .reveal-delay-6 { animation-delay: 0.6s; }
+
+        .palette-glow {
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.04));
+        }
+
+        body {
+            background-color: #FDF0E8; /* Peach wash specified in prompt */
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed": "#1b1c1c",
+                      "primary": "#b70050",
+                      "surface-tint": "#bc0052",
+                      "surface-dim": "#e5d6db",
+                      "primary-fixed": "#ffd9df",
+                      "surface": "#fff8f8",
+                      "on-primary": "#ffffff",
+                      "secondary": "#5f5e5e",
+                      "on-tertiary": "#ffffff",
+                      "surface-variant": "#eddfe4",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed-dim": "#c7c6c6",
+                      "on-secondary": "#ffffff",
+                      "secondary-fixed-dim": "#c8c6c5",
+                      "on-secondary-container": "#656464",
+                      "primary-container": "#e30f66",
+                      "secondary-fixed": "#e5e2e1",
+                      "on-tertiary-fixed-variant": "#464747",
+                      "outline": "#8f6f74",
+                      "on-secondary-fixed-variant": "#474646",
+                      "inverse-on-surface": "#fcedf2",
+                      "error": "#ba1a1a",
+                      "background": "#fff8f8",
+                      "tertiary-fixed": "#e4e2e2",
+                      "on-primary-container": "#fffbff",
+                      "on-tertiary-container": "#fefcfc",
+                      "primary-fixed-dim": "#ffb1c1",
+                      "surface-container-high": "#f3e4e9",
+                      "on-primary-fixed-variant": "#90003d",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container": "#f9eaef",
+                      "outline-variant": "#e4bdc3",
+                      "error-container": "#ffdad6",
+                      "secondary-container": "#e5e2e1",
+                      "surface-bright": "#fff8f8",
+                      "inverse-surface": "#362e32",
+                      "tertiary": "#5c5c5c",
+                      "surface-container-highest": "#eddfe4",
+                      "on-surface-variant": "#5b3f45",
+                      "on-error": "#ffffff",
+                      "on-surface": "#211a1d",
+                      "on-secondary-fixed": "#1c1b1b",
+                      "inverse-primary": "#ffb1c1",
+                      "tertiary-container": "#747474",
+                      "on-background": "#211a1d",
+                      "surface-container-low": "#fff0f5",
+                      "on-primary-fixed": "#3f0017"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-sm": "8px",
+                      "container-margin": "24px",
+                      "stack-md": "16px",
+                      "stack-lg": "32px",
+                      "unit": "4px",
+                      "gutter": "16px"
+              },
+              "fontFamily": {
+                      "display-md": ["Playfair Display"],
+                      "label-sm": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-md": ["Playfair Display"],
+                      "label-md": ["Inter"],
+                      "headline-lg-mobile": ["Playfair Display"],
+                      "display-lg": ["Playfair Display"],
+                      "headline-lg": ["Playfair Display"],
+                      "body-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "display-md": ["36px", {"lineHeight": "44px", "fontWeight": "700"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface antialiased overflow-x-hidden min-h-screen pb-32">
+<!-- Top AppBar (from Shared Components) -->
+<header class="w-full top-0 sticky bg-surface z-40">
+<div class="flex items-center justify-between px-container-margin h-16 w-full max-w-[1200px] mx-auto">
+<button class="active:scale-95 duration-150 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<h1 class="font-display-md text-display-md tracking-tight text-on-surface">paletteMe</h1>
+<div class="w-6"></div> <!-- Spacer for balance -->
+</div>
+</header>
+<main class="max-w-[1200px] mx-auto px-container-margin pt-stack-lg">
+<!-- Header Section -->
+<section class="text-center stagger-reveal reveal-delay-1 mb-stack-lg">
+<div class="inline-flex flex-col items-center">
+<div class="text-secondary font-body-lg mb-stack-sm">Deep Warm Autumn</div>
+<h2 class="text-[64px] font-display-lg leading-tight mb-stack-md text-on-surface">Warm Autumn</h2>
+<div class="bg-primary/5 rounded-full px-6 py-2 flex items-center gap-2">
+<span class="text-primary font-bold text-headline-md" id="match-counter">0</span>
+<span class="text-primary font-bold text-headline-md">% match</span>
+</div>
+</div>
+</section>
+<!-- Signature Sentence -->
+<section class="text-center stagger-reveal reveal-delay-2 mb-stack-lg">
+<p class="font-headline-md italic text-on-surface-variant max-w-2xl mx-auto">
+                "You carry depth and warmth. Rich earth tones were made for you."
+            </p>
+</section>
+<!-- Palette Grid Section -->
+<section class="stagger-reveal reveal-delay-3 mb-stack-lg">
+<div class="grid grid-cols-3 md:grid-cols-6 gap-stack-md justify-items-center">
+<!-- Color Swatches (12 total) -->
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #8B4513;"></div>
+<span class="text-label-sm text-secondary">Sienna</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #DAA520;"></div>
+<span class="text-label-sm text-secondary">Goldenrod</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #556B2F;"></div>
+<span class="text-label-sm text-secondary">Olive</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #CD5C5C;"></div>
+<span class="text-label-sm text-secondary">Indian Red</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #E97451;"></div>
+<span class="text-label-sm text-secondary">Burnt Sienna</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #704214;"></div>
+<span class="text-label-sm text-secondary">Sepia</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #B8860B;"></div>
+<span class="text-label-sm text-secondary">Dark Gold</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #2F4F4F;"></div>
+<span class="text-label-sm text-secondary">Slate</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #800000;"></div>
+<span class="text-label-sm text-secondary">Maroon</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #BC8F8F;"></div>
+<span class="text-label-sm text-secondary">Rosy Brown</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #DEB887;"></div>
+<span class="text-label-sm text-secondary">Burlywood</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full shadow-sm palette-glow" style="background-color: #A0522D;"></div>
+<span class="text-label-sm text-secondary">Sienna</span>
+</div>
+</div>
+</section>
+<!-- Action Cards Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-stack-md mb-stack-lg">
+<!-- Card 1: Wear Near Face -->
+<div class="bg-surface p-6 rounded-lg shadow-[0_2px_16px_rgba(0,0,0,0.06)] stagger-reveal reveal-delay-4 flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-primary mb-2">arrow_upward</span>
+<h3 class="font-label-md text-on-surface mb-stack-sm">Wear near your face ↑</h3>
+<div class="flex gap-2">
+<div class="w-8 h-8 rounded-full" style="background-color: #8B4513;"></div>
+<div class="w-8 h-8 rounded-full" style="background-color: #DAA520;"></div>
+<div class="w-8 h-8 rounded-full" style="background-color: #556B2F;"></div>
+</div>
+</div>
+<!-- Card 2: Use Carefully -->
+<div class="bg-surface p-6 rounded-lg shadow-[0_2px_16px_rgba(0,0,0,0.06)] stagger-reveal reveal-delay-5 flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-secondary mb-2">arrow_downward</span>
+<h3 class="font-label-md text-on-surface mb-stack-sm">Use carefully ↓</h3>
+<div class="flex gap-2">
+<div class="w-8 h-8 rounded-full" style="background-color: #F0F8FF;"></div>
+<div class="w-8 h-8 rounded-full" style="background-color: #FFB6C1;"></div>
+<div class="w-8 h-8 rounded-full" style="background-color: #E0FFFF;"></div>
+</div>
+</div>
+</section>
+<!-- Makeup Card -->
+<section class="stagger-reveal reveal-delay-6">
+<div class="bg-surface p-8 rounded-lg shadow-[0_2px_16px_rgba(0,0,0,0.06)] flex flex-col items-center text-center">
+<h3 class="font-headline-md text-on-surface mb-stack-md">Your makeup shades</h3>
+<div class="flex gap-6">
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full border-2 border-surface-container" style="background-color: #A64E3A;"></div>
+<span class="text-label-sm">Lip</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full border-2 border-surface-container" style="background-color: #C0705E;"></div>
+<span class="text-label-sm">Cheek</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full border-2 border-surface-container" style="background-color: #5D4037;"></div>
+<span class="text-label-sm">Eye</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full border-2 border-surface-container" style="background-color: #D2B48C;"></div>
+<span class="text-label-sm">Base</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Action Bar / Footer Buttons -->
+<div class="fixed bottom-0 left-0 w-full bg-surface/80 backdrop-blur-md p-container-margin z-50">
+<div class="max-w-[1200px] mx-auto flex flex-col md:flex-row gap-stack-md">
+<button class="flex-1 bg-primary text-on-primary h-12 px-8 rounded-full font-label-md flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                Share my palette
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<button class="flex-1 border-2 border-primary text-primary h-12 px-8 rounded-full font-label-md flex items-center justify-center active:scale-95 transition-transform bg-transparent">
+                Retake quiz
+            </button>
+</div>
+</div>
+<!-- Bottom Navigation (from Shared Components - Icons only) -->
+<nav class="fixed bottom-0 left-0 w-full h-16 bg-surface flex justify-around items-center px-4 shadow-[0_-2px_16px_rgba(0,0,0,0.06)] z-50 md:hidden hidden">
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined">home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined">checkroom</span>
+</div>
+<div class="relative flex flex-col items-center justify-center text-primary after:content-[''] after:absolute after:-bottom-1 after:w-1 after:h-1 after:bg-primary after:rounded-full">
+<span class="material-symbols-outlined">shutter_speed</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined">styler</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined">person</span>
+</div>
+</nav>
+<script>
+        // Number counting animation for "91% match"
+        function animateCounter(id, target) {
+            let current = 0;
+            const element = document.getElementById(id);
+            const duration = 1500;
+            const increment = target / (duration / 16);
+            
+            function update() {
+                current += increment;
+                if (current >= target) {
+                    element.innerText = target;
+                } else {
+                    element.innerText = Math.floor(current);
+                    requestAnimationFrame(update);
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // Start animation after a short delay
+        window.onload = () => {
+            setTimeout(() => {
+                animateCounter('match-counter', 91);
+            }, 600);
+        };
+    </script>
+</body></html>

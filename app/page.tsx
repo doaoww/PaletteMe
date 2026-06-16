@@ -31,16 +31,20 @@ export default function Home() {
             <p className="hero__logo wordmark">
               palette<span className="me">me</span>
             </p>
+            <p className="hero__tagline">
+              Your AI stylist. Know what works for you.
+            </p>
             <h1 className="hero__mast">
               Find the colors that make <span className="scr">you</span> glow
             </h1>
             <p className="hero__value">
-              Take a quick style quiz, upload a selfie — AI reveals your exact
-              seasonal palette with outfit picks matched to your coloring.
+              A short quiz about your natural coloring and style goals comes
+              first. Add a selfie only if you want extra accuracy — then get
+              your season, palette, and practical outfit guidance.
             </p>
             <div className="hero__cta">
               <Link href="/quiz" className="cta-mini">
-                start color quiz
+                let&apos;s start
               </Link>
               <a href="#free" className="cta-mini cta-ghost">
                 see how it works
@@ -51,15 +55,35 @@ export default function Home() {
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2">
                   <path d="M2 8.5l4 4 8-9" />
                 </svg>
-                photo never leaves your device
+                no account needed to begin
               </span>
               <span>
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2">
                   <path d="M2 8.5l4 4 8-9" />
                 </svg>
-                no account needed
+                photos processed securely for analysis
               </span>
             </div>
+            <ul className="hero__values" aria-label="What you get">
+              <li className="hero__value-card">
+                <span className="hero__value-card-title">color season</span>
+                <span className="hero__value-card-desc">
+                  warm, cool, light, deep — matched to you
+                </span>
+              </li>
+              <li className="hero__value-card">
+                <span className="hero__value-card-title">scan anything</span>
+                <span className="hero__value-card-desc">
+                  clothes, outfits, makeup, shopping finds
+                </span>
+              </li>
+              <li className="hero__value-card">
+                <span className="hero__value-card-title">wardrobe help</span>
+                <span className="hero__value-card-desc">
+                  what to wear, buy, or skip — with reasons
+                </span>
+              </li>
+            </ul>
           </div>
           <div className="hero__preview">
             <BeforeAfter />
@@ -71,24 +95,24 @@ export default function Home() {
             <Link href="/quiz" className="hstep">
               <span className="num">01</span>
               <span>
-                <b>take the color quiz</b>
-                <small>5 questions about your natural coloring and style goals</small>
+                <b>answer a quick style quiz</b>
+                <small>wardrobe type, coloring, body shape, and what you need help with</small>
               </span>
             </Link>
-            <Link href="/dashboard" className="hstep">
+            <Link href="/quiz" className="hstep">
               <span className="num">02</span>
               <span>
-                <b>upload your selfie</b>
-                <small>ai reads undertone, depth and contrast in seconds</small>
+                <b>selfie optional — your call</b>
+                <small>skip for a fast result, or upload one photo to boost accuracy</small>
               </span>
             </Link>
-            <a href="#waitlist" className="hstep">
+            <Link href="/quiz" className="hstep">
               <span className="num">03</span>
               <span>
-                <b>get your full palette</b>
-                <small>8 core colors + curated outfit picks matched to you</small>
+                <b>get your palette and next steps</b>
+                <small>season, best colors, what to wear near your face, and scan tools</small>
               </span>
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -157,7 +181,7 @@ export default function Home() {
           <div className="foot__grid">
             <div>
               <p className="blurb">
-                Upload a selfie. Get your colors. Look your best.
+                Quiz-first color analysis. Scan clothes. Shop what suits you.
               </p>
             </div>
             <div>
@@ -165,7 +189,7 @@ export default function Home() {
               <a href="#free">free flow</a>
               <a href="#features">all features</a>
               <Link href="/quiz">quiz</Link>
-              <Link href="/dashboard">analysis</Link>
+              <Link href="/quiz">analysis</Link>
             </div>
             <div>
               <h5>company</h5>

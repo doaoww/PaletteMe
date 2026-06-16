@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase";
 
 export function TopBar() {
   const [solid, setSolid] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -17,6 +19,17 @@ export function TopBar() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ) return;
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsSignedIn(!!user);
+    });
   }, []);
 
   return (
@@ -33,9 +46,36 @@ export function TopBar() {
           <a href="#waitlist">waitlist</a>
           <a href="#faq">faq</a>
         </nav>
-        <Link href="/quiz" className="cta-mini topbar__cta-desktop">
-          try it free
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {isSignedIn ? (
+            <Link
+              href="/profile"
+              style={{
+                fontFamily: "var(--sans)",
+                fontSize: "0.82rem",
+                color: "var(--ink-soft)",
+                textDecoration: "none",
+              }}
+            >
+              my palette
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              style={{
+                fontFamily: "var(--sans)",
+                fontSize: "0.82rem",
+                color: "var(--ink-soft)",
+                textDecoration: "none",
+              }}
+            >
+              sign in
+            </Link>
+          )}
+          <Link href="/quiz" className="cta-mini topbar__cta-desktop">
+            let&apos;s start
+          </Link>
+        </div>
       </header>
     </>
   );

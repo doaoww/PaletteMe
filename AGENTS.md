@@ -1,525 +1,438 @@
-# AGENTS.md — PaletteMe
+# AGENTS.md - PaletteMe
 
-This file is the single source of truth for any AI agent working on this codebase.
-Read it fully before writing a single line of code.
+This file is the source of truth for AI agents working on this codebase. Read it before code edits.
+
+## Current Docs Order
+
+Use these in order:
+
+1. `AGENTS.md` - agent rules, product direction, hard constraints.
+2. `LOGIC.md` - current implementation reference.
+3. `docs/TRACKER.yaml` - active plan progress.
+4. `docs/PRODUCT-NORTH-STAR.md` - current product goals, principles, and feature direction.
+5. `docs/PRODUCT-SPEC.md` - current product spec.
+6. `docs/systems/free-testing-mode/README.md` - current unlocked testing mode.
+7. `design/PaletteMe-style-guide.md` - UI style guide.
+
+If docs disagree, update the stale doc before implementing.
 
 ---
 
-## Table of Contents
+## BRD - Business Requirements
 
-1. [BRD — Business Requirements](#brd--business-requirements)
-2. [PRD — Product Requirements](#prd--product-requirements)
-3. [TRD — Technical Requirements](#trd--technical-requirements)
-4. [Agent Rules](#agent-rules)
-5. [Documentation Convention](#documentation-convention)
-6. [Decision Log — ADR](#decision-log--adr)
-7. [What Was Built — Feature Changelog](#what-was-built--feature-changelog)
-8. [Gotchas & Known Issues](#gotchas--known-issues)
+### What Is PaletteMe?
 
----
-
-## BRD — Business Requirements
-
-### What is PaletteMe?
-
-PaletteMe is a personal color analysis app. It tells users which of the 12 seasonal color types they are (Spring, Summer, Autumn, Winter + sub-seasons), then recommends products — clothing, makeup, accessories — that actually suit their natural coloring.
+PaletteMe is a personal style assistant. It helps users discover their seasonal color direction, then decide which makeup, outfits, wardrobe items, and products actually suit them.
 
 ### Problem
 
-Most people buy colors that clash with their skin tone, hair, and eyes because they follow trends instead of their own palette. Color analysis is traditionally expensive (in-person consultations cost $150–$500). There is no accessible, accurate, AI-powered alternative.
+Users buy colors that clash with their undertone, contrast, and personal style. Professional color analysis is expensive and slow. Free online quizzes are fun but shallow, and they do not help users make real shopping decisions.
 
 ### Solution
 
-Upload a selfie → get an instant seasonal color type analysis → get curated product picks matched to your palette.
+Free testing mode gives users full access while the product validates AI accuracy. The long-term product is recurring outfit, wardrobe, product, and makeup checks.
 
 ### Business Goals
 
-- Build a waitlist of early users before full launch
-- Validate willingness to pay for premium features (deeper analysis, saved palette, outfit builder)
-- Establish PaletteMe as the go-to brand for AI color analysis
-- Monetize via affiliate product links and/or subscription
+- Validate AI accuracy and user trust before re-testing payments.
+- Reach `1000+ MRR` through paid report and Pro subscription.
+- Use affiliate links as secondary revenue once approvals arrive.
+- Establish PaletteMe as a practical "before you wear or buy it" styling assistant.
 
-### Target Users
+### Revenue Model
 
-- Women 18–35 interested in personal style, fashion, and self-improvement
-- Users who have heard of seasonal color analysis but never had a professional consultation
-- Style-conscious shoppers who want to buy less but better
+Free:
 
-### Success Metrics
+- Quiz-first result.
+- Optional selfie accuracy boost.
+- Full report while testing.
+- Clothing, outfit, product, and makeup scan access while testing.
+- Early wardrobe matching while testing.
 
-- Waitlist signups
-- Analysis completion rate (upload → result)
-- Product click-through rate
-- Return visits
+Paid report:
+
+- Launch price: `2.99` to `4.99`.
+- Exact sub-season, full palette, avoid colors, makeup, jewelry, hair, and shopping guidance.
+
+Pro:
+
+- Launch price: `9.99/mo`.
+- Future recurring value: outfit scanner, before-you-buy product scanner, makeup scanner, wardrobe matchmaker, saved profile, saved products, and higher usage limits.
+
+Affiliate:
+
+- Product links should be affiliate-ready but must work without affiliate env vars.
 
 ---
 
-## PRD — Product Requirements
+## PRD - Product Requirements
 
 ### Core User Flow
 
-```
-Landing page
-  → User takes color quiz (/quiz)
-  → Quiz suggests preliminary season
-  → User uploads selfie (dashboard) to confirm
-  → Gemini analyzes image (with quiz as soft prior)
-  → User sees their seasonal type + palette
-  → User sees curated product picks matched to their colors
-  → User can join waitlist for full features
+```text
+Landing
+  -> Mobile-first quiz
+  -> Fast result
+  -> Optional selfie accuracy boost
+  -> Scan clothing/outfit/makeup/product
+  -> Save scan history
+  -> Add owned wardrobe items
+  -> Build outfits and buy-with-my-closet verdicts
 ```
 
 ### Pages
 
 | Page | Path | Purpose |
-|---|---|---|
-| Landing | `/` | Hero, how it works, demo, testimonials, FAQ, waitlist CTA |
-| Quiz | `/quiz` | Multi-step color quiz before analysis (Stylix-style funnel) |
-| Dashboard | `/dashboard` | Upload selfie after quiz, see analysis result, see products |
+| --- | --- | --- |
+| Landing | `/` | Explain value, start quiz, collect interest |
+| Quiz | `/quiz` | Onboarding and selfie/color flow |
+| Profile | `/profile` | Free result, paid report, Pro upsell |
+| Feed | `/feed` | Product recommendations |
+| Saved | `/saved` | Saved products |
+| Login/Auth | `/login` | Account recovery and saved profile |
+| Auth redirect | `/auth` | Legacy redirect to `/login` |
+| Dashboard | `/dashboard` | Legacy URL that redirects to `/quiz` |
 
-### Features — MVP
+### MVP Features
 
-- **Selfie upload** — drag and drop or tap to upload, client-side resize before sending
-- **Color analysis** — Gemini analyzes skin undertone, contrast, depth → returns seasonal type
-- **Season result** — shows season name, description, key palette colors
-- **Product picks** — real scraped products whose colors match the season palette
-- **Waitlist** — email signup with Telegram notification to founder
+- Selfie upload or live camera capture with client-side resize.
+- Color analysis through server-side AI routes.
+- Free testing result.
+- Full report while testing.
+- Clothing, outfit, makeup, and product scanner direction.
+- Early wardrobe matchmaker direction.
+- Affiliate-ready product links.
+- Waitlist and Telegram notification.
 
-### Features — Post-MVP
+### Post-MVP Features
 
-- Saved palette (user account)
-- Outfit builder
-- Re-analysis with different photo
-- Admin dashboard for waitlist CSV export
+- Stripe webhooks.
+- Supabase entitlement table.
+- PDF report generation.
+- Email lifecycle flows.
+- Affiliate feed ingestion.
+- Admin product dashboard.
+- Full wardrobe catalog and outfit builder.
+- Buy-with-my-closet scanner.
 
 ### Seasons
 
-12 seasonal types total. All season data lives in `lib/landing-data.ts` under `SEASONS`. Never hardcode season names or colors elsewhere.
-
-| Macro Season | Sub-seasons |
-|---|---|
-| Spring | True Spring, Bright Spring, Light Spring |
-| Summer | True Summer, Soft Summer, Light Summer |
-| Autumn | True Autumn, Soft Autumn, Dark Autumn |
-| Winter | True Winter, Bright Winter, Dark Winter |
-
-### Design System
-
-Brand tokens and patterns are in `design/PaletteMe-style-guide.md`. Read it before touching UI.
-
-- **Fonts**: DM Serif Display (headings, weight 400 only) · DM Sans (body/UI) · Allura (script flourish `.scr`)
-- **Key classes**: `.kicker` · `.scr` · `.polaroid` · `.wordmark`
-- **Color vars**: `--cream` `--ink` `--accent` (#FF2E7E) `--berry` `--blush` `--lilac`
-- **Never** uppercase + letter-spacing on buttons or nav — always `lowercase`, `letter-spacing: 0`
-- **Never** create `tailwind.config.js` — Tailwind v4 is CSS-first via `@theme inline` in `globals.css`
+Season names, palette colors, and season metadata live in `lib/landing-data.ts` under `SEASONS`. Do not hardcode season names or palette arrays elsewhere unless the value is clearly UI copy or test data.
 
 ---
 
-## TRD — Technical Requirements
+## TRD - Technical Requirements
 
 ### Stack
 
 | Layer | Package | Notes |
-|---|---|---|
-| Framework | Next.js 16.2.7 / React 19 | App Router. Read `node_modules/next/dist/docs/` before touching routing or data-fetching. |
-| Styles | Tailwind v4 | CSS-first config via `@theme inline`. No `tailwind.config.js`. |
-| Image AI | `@google/generative-ai` | Gemini only. Model cascade: `gemini-2.5-flash` → `gemini-2.5-flash-lite` → `gemini-2.0-flash-lite` |
-| Web scraping | `llm-scraper` + `playwright` | Node.js routes only — never Edge |
-| LLM provider | `@ai-sdk/anthropic` | Vercel AI SDK. Used as provider for LLMScraper |
-| Schema | `zod` v4 | Breaking changes from v3. Import `z` from `'zod'` directly |
+| --- | --- | --- |
+| Framework | Next.js 16 / React 19 | App Router |
+| Styles | Tailwind v4 | CSS-first config via `@theme inline` |
+| Image AI | OpenAI Responses API + legacy GPT-4o/Gemini fallback | New scan/outfit routes use `lib/server/openai.ts`; legacy routes can keep GPT-4o/Gemini until migrated |
+| Database/Auth | Supabase | Profiles, products, saved data, auth |
+| Payments now | Stripe Payment Links | Fast validation, no webhook required |
+| Payments later | Stripe Checkout + webhooks | Secure entitlements after demand is proven |
+| Affiliate | Custom URL wrapper | Rakuten/Awin/Amazon env-driven wrapping |
+| Validation | Zod v4 | Import `z` from `zod` |
 
-### File Map
+### Payment Env Vars
 
-```
-app/
-  page.tsx                  landing page (all sections)
-  dashboard/page.tsx        selfie upload + analysis UI
-  api/analyze/route.ts      POST /api/analyze — Gemini image analysis
-  api/waitlist/             waitlist signup + CSV export
-  landing.css               landing-only styles
-  globals.css               global styles + Tailwind @theme tokens
-
-components/
-  landing/                  one file per landing section
-  dashboard/color-analyzer.tsx   upload flow + results display
-  quiz/quiz-flow.tsx             dedicated quiz funnel UI
-
-lib/
-  analysis.ts               analyzeFaceImage() — all Gemini logic
-  landing-data.ts           SEASONS, PRODUCTS, REVIEWS, FAQS, QUIZ_QUESTIONS
-  quiz.ts                   quiz scoring + sessionStorage helpers
-  demo-images.ts            image URLs used in landing demos
-  resize-image.ts           client-side image resize before upload
-  telegram.ts               Telegram notification on waitlist signup
-  waitlist-store.ts         in-memory waitlist
-
-design/
-  PaletteMe-style-guide.md  brand tokens + component patterns
-  paletteme-v3.css          full v3 CSS reference
-
-docs/
-  TRACKER.yaml              source of truth for plan progress
-  plans/                    upcoming features
-  systems/                  shipped features
+```env
+NEXT_PUBLIC_PAID_REPORT_URL=
+NEXT_PUBLIC_SUBSCRIPTION_URL=
 ```
 
-### API Routes
+These are public URLs, not secrets.
 
-| Route | Method | Purpose |
-|---|---|---|
-| `/api/analyze` | POST | Accepts base64 image, returns season analysis via Gemini |
-| `/api/products` | GET | Scrapes products matching a season palette |
-| `/api/waitlist` | POST | Adds email to waitlist, fires Telegram notification |
-| `/api/waitlist/export` | GET | Returns waitlist CSV |
+### Affiliate Env Vars
 
-### Gemini Analysis
-
-All Gemini logic goes through `lib/analysis.ts` → `analyzeFaceImage()`. Never call `@google/generative-ai` directly from a route.
-
-Model cascade (automatic fallback):
-1. `gemini-2.5-flash`
-2. `gemini-2.5-flash-lite`
-3. `gemini-2.0-flash-lite`
-
-### llm-scraper + Playwright
-
-Used to scrape real product pages and return items whose colors match a season palette.
-
-```typescript
-// Always in a Node.js API route — never Edge
-export const runtime = 'nodejs'
-export const maxDuration = 60
-
-import LLMScraper from 'llm-scraper'
-import { chromium } from 'playwright'
-import { anthropic } from '@ai-sdk/anthropic'
-import { z } from 'zod'
-
-const ProductSchema = z.object({
-  products: z.array(z.object({
-    name: z.string(),
-    price: z.string(),
-    url: z.string().url(),
-    primaryColor: z.string().describe('dominant color as hex or plain name'),
-  }))
-})
-
-export async function scrapeProducts(url: string) {
-  const browser = await chromium.launch()
-  const scraper = new LLMScraper(anthropic('claude-haiku-4-5-20251001'))
-  const page = await browser.newPage()
-  try {
-    await page.goto(url, { timeout: 30_000 })
-    const { data } = await scraper.run(page, ProductSchema, { format: 'html' })
-    return data
-  } finally {
-    await browser.close() // ALWAYS — leaked browsers crash the server
-  }
-}
+```env
+AFFILIATE_ENABLED=false
+AFFILIATE_NETWORK=
+RAKUTEN_SITE_ID=
+RAKUTEN_ASOS_MID=
+AWIN_PUBLISHER_ID=
+AWIN_ASOS_MID=
+AMAZON_ASSOCIATE_TAG=
 ```
 
-**Rules:**
-- Always `finally { browser.close() }` — no exceptions
-- Always `export const runtime = 'nodejs'` on routes using Playwright
-- Use Haiku (`claude-haiku-4-5-20251001`), never Sonnet/Opus for scraping
-- Season palette colors are in `SEASONS[id].palette` from `lib/landing-data.ts`
-- `format: 'html'` for product pages · `'markdown'` for text-heavy · `'text'` for simple
+Missing affiliate env vars must never break product links.
 
-### Environment Variables
+### AI Rules
 
-```
-GEMINI_API_KEY=        # Gemini — read as process.env.GEMINI_API_KEY in lib/analysis.ts
-ANTHROPIC_API_KEY=     # llm-scraper via @ai-sdk/anthropic
-TELEGRAM_BOT_TOKEN=    # waitlist notifications
-TELEGRAM_CHAT_ID=      # waitlist notifications
-```
+- Never call AI providers directly from client components.
+- Never expose API keys to the client.
+- Keep AI routes on Node runtime.
+- Keep photo privacy copy truthful.
+- AI results must include confidence, reason, and practical next action.
+- User corrections must override AI guesses.
+- Do not reject most user clothes. Explain how to use, balance, or replace them.
+- Color analysis must use structured evidence plus deterministic scoring; do not let a model's season label override warm/cool/depth evidence.
 
-### Hard Rules
+Approved privacy copy:
 
-- **Never** call `analyzeFaceImage` from a client component
-- **Never** import server-only code (API keys, DB, Playwright) into client components
-- **Never** add `runtime = "edge"` to routes using Playwright, Gemini SDK, or Node built-ins
-- **Never** hardcode season colors or names — always read from `SEASONS` in `lib/landing-data.ts`
-- **Never** hardcode products — must come from scraping or be clearly marked as demo placeholders
-- **Never** mock the Playwright browser in tests — use real headless browser
-- **Never** create `tailwind.config.js`
+> Photos are processed securely for analysis. PaletteMe does not sell or share your images.
 
----
+Do not say photos never leave the device.
 
-## Agent Rules
+### Styling Rules
 
-### Before writing any code
+Read `design/PaletteMe-style-guide.md` before UI work.
 
-1. Read `node_modules/next/dist/docs/` for any routing or data-fetching task — this is Next.js 16, not what you know
-2. Read `design/PaletteMe-style-guide.md` before touching any UI
-3. Check `docs/TRACKER.yaml` to understand current plan progress
-4. Read the relevant SKILL.md before creating any file type (docx, pdf, pptx, etc.)
+- Use DM Serif Display at weight 400 only.
+- Use DM Sans for body/UI.
+- Use Allura only for script flourish spans.
+- Buttons and nav text stay lowercase with `letter-spacing: 0`.
+- Do not create `tailwind.config.js`.
+- Tailwind v4 tokens live in `app/globals.css`.
 
-### New API routes
+### Next.js Rules
 
-Mirror `app/api/analyze/route.ts`:
-- Validate input
-- Type all errors
-- `export const runtime = 'nodejs'`
+This project uses Next.js 16. Before touching routing, middleware/proxy, route handlers, Suspense boundaries, or data-fetching conventions, check local Next docs in `node_modules/next/dist/docs/`.
 
-### New UI components
+Known Next 16 issue:
 
-- One file per section under `components/landing/`
-- Use design tokens from `globals.css` — never raw hex values
-- Follow font and class rules from `design/PaletteMe-style-guide.md`
-
-### When asked to plan a feature
-
-Follow the Documentation Convention below — create the full plan folder structure before writing any code.
+- `middleware.ts` is deprecated in favor of `proxy.ts`.
+- Client pages using `useSearchParams()` must be wrapped in Suspense.
 
 ---
 
 ## Documentation Convention
 
-All documentation lives in `docs/` and follows a structured planning workflow.
+All active feature plans live under `docs/plans/`.
 
-### Directory Structure
+Every plan folder must include:
 
-```
-docs/
-├── systems/                    # Living docs for shipped systems
-│   └── <system-name>/
-│       ├── README.md
-│       └── diagram.excalidraw
-├── plans/                      # Upcoming features
-│   └── YYYY-MM-DD-<feature>/
-│       ├── plan.md             # Overview, goals, architecture, scope
-│       ├── diagram.excalidraw  # Architecture diagram
-│       ├── blockers.excalidraw # Dependency/blocker diagram
-│       ├── 01-<task>.md        # Task 1 spec
-│       ├── 02-<task>.md        # Task 2 spec
-│       └── ...
-└── TRACKER.yaml                # Source of truth for all plan progress
-```
+- `plan.md`
+- `diagram.excalidraw`
+- `blockers.excalidraw`
+- at least one task file
 
-### TRACKER.yaml Format
+`docs/TRACKER.yaml` is the plan progress source of truth.
 
-```yaml
-plans:
-  - name: feature-name
-    path: plans/YYYY-MM-DD-feature-name/
-    status: planned # planned → in-progress → shipped
-    created: YYYY-MM-DD
-    started:
-    shipped:
-    tasks:
-      - name: task-1-name
-        file: 01-task-name.md
-        status: pending # pending → in-progress → done
-```
+Status values:
 
-### Mandatory Rules
+- Plan: `planned`, `in-progress`, `shipped`
+- Task: `pending`, `in-progress`, `done`
 
-- Every plan folder MUST have: `plan.md`, `diagram.excalidraw`, `blockers.excalidraw`, at least one task file
-- **NEVER** create a plan without both diagrams
-- **ALWAYS** update `TRACKER.yaml` at every state change
-- **At the start of every session**, check `TRACKER.yaml` before doing any work
+Update `docs/TRACKER.yaml` when plan/task state changes.
 
-### State Transitions
+Current active plan:
 
-| Event | TRACKER.yaml update |
-|---|---|
-| Create plan | `status: planned`, all tasks `pending` |
-| Start a task | Task `status: in-progress`, plan `status: in-progress` |
-| Complete a task | Task `status: done` |
-| Ship the plan | Plan `status: shipped`, add `shipped:` date |
-
-### Shipping a Feature
-
-When all tasks are done:
-1. Compile `docs/systems/<name>/README.md` from `plan.md` + all task files
-2. Move `diagram.excalidraw` to `docs/systems/<name>/`
-3. Move folder from `plans/` to `systems/`
-4. Set plan `status: shipped` in `TRACKER.yaml`
+- `docs/plans/2026-06-13-monetization-affiliate-launch/`
 
 ---
 
-## Decision Log — ADR
+## Code Safety Rules
 
-Every significant architectural or product decision lives here. When you make a decision that affects how the system works, add an entry. Future agents must read this before suggesting changes — do not reverse a decision without a new entry explaining why.
-
-Format:
-```
-### ADR-XXX — <title>
-Date: YYYY-MM-DD
-Status: accepted | superseded by ADR-XXX
-Context: Why did this decision need to be made?
-Decision: What was chosen?
-Alternatives considered: What else was on the table?
-Consequences: What does this mean going forward?
-```
+- Do not revert user changes.
+- Do not delete dirty/untracked files unless the user explicitly asks.
+- Use `apply_patch` for manual file edits.
+- Do not import `lib/analysis.ts`, Supabase server helpers, Telegram helpers, or Playwright code into client components.
+- API routes using Node SDKs must export `runtime = "nodejs"`.
+- Always close Playwright browsers in `finally`.
+- Avoid raw hardcoded design colors in UI unless they are actual palette/product swatches.
+- Keep product links working even when affiliate programs are not approved yet.
 
 ---
 
-### ADR-001 — Gemini for image analysis, not GPT Vision
+## ADR - Decision Log
+
+### ADR-001 - Tailwind v4 CSS-first config
 
 Date: 2025-01-01
 Status: accepted
-Context: Need to analyze selfies for skin undertone, contrast, and seasonal color type. Needed a vision model that handles skin tone accurately and is cost-effective at scale.
-Decision: Use Google Gemini exclusively via `@google/generative-ai`. Model cascade: `gemini-2.5-flash` → `gemini-2.5-flash-lite` → `gemini-2.0-flash-lite`.
-Alternatives considered: GPT-4 Vision (more expensive, no cascade fallback), Claude Vision (no direct image analysis SDK at the time).
-Consequences: All image analysis must go through `lib/analysis.ts` → `analyzeFaceImage()`. Never call Gemini directly from a route.
+Decision: Use CSS-first Tailwind v4 tokens in `app/globals.css`. Do not create `tailwind.config.js`.
 
----
+### ADR-002 - GPT-4o for serious image analysis
 
-### ADR-002 — Tailwind v4 CSS-first config, no tailwind.config.js
-
-Date: 2025-01-01
+Date: 2026-06-13
 Status: accepted
-Context: Tailwind v4 introduced breaking changes — config moved from `tailwind.config.js` to CSS `@theme inline` blocks.
-Decision: All design tokens live in `app/globals.css` under `@theme inline`. No `tailwind.config.js` exists or should be created.
-Alternatives considered: Stay on Tailwind v3 (would miss v4 performance gains and CSS-native tokens).
-Consequences: Any agent that creates `tailwind.config.js` breaks the build. Custom colors/fonts must be added as CSS vars in `globals.css`.
+Context: Color undertone and outfit matching are subtle visual tasks.
+Decision: Use GPT-4o for serious selfie/outfit analysis. Keep Gemini fallback where already wired.
+Consequences: Documentation and code should not claim Gemini-only architecture.
 
----
+### ADR-003 - Stripe Payment Links before full billing
 
-### ADR-003 — llm-scraper with Haiku for product scraping
-
-Date: 2025-01-01
+Date: 2026-06-13
 Status: accepted
-Context: Need to scrape real product pages from fashion retailers and extract color-matched items for each seasonal type.
-Decision: Use `llm-scraper` + Playwright + `claude-haiku-4-5-20251001`. Never use Sonnet or Opus for scraping.
-Alternatives considered: Direct CSS selectors (breaks too often), Sonnet (10x more expensive per page, no quality gain for extraction).
-Consequences: All scraping routes must have `export const runtime = 'nodejs'` and `finally { browser.close() }`. Never run on Edge.
+Context: The fastest risk to validate is whether users will pay.
+Decision: Use Stripe Payment Links for paid report and Pro subscription in the first monetization launch.
+Consequences: MVP unlock can be redirect/local-state based. After demand is proven, add Stripe webhooks and Supabase entitlements.
 
----
+### ADR-004 - Affiliate wrapper before affiliate feed ingestion
 
-### ADR-004 — In-memory waitlist store, no database
-
-Date: 2025-01-01
+Date: 2026-06-13
 Status: accepted
-Context: Pre-launch MVP — need waitlist signup without the overhead of setting up a database.
-Decision: Use `lib/waitlist-store.ts` (in-memory array) + Telegram notification on each signup. CSV export available via `/api/waitlist/export`.
-Alternatives considered: Supabase, Postgres (overkill for MVP), Airtable (adds external dependency).
-Consequences: Waitlist resets on server restart. Acceptable for early beta. Must migrate to a real DB before launch.
+Context: Affiliate approvals are pending and should not block launch.
+Decision: Add a URL wrapper that returns original links when affiliate env vars are missing.
+Consequences: Product links remain usable before approval and become trackable after env vars are added.
+
+### ADR-005 - Supabase for persistence, local fallback only for development
+
+Date: 2026-06-13
+Status: accepted
+Context: Serverless filesystems are not reliable persistence.
+Decision: Supabase is the preferred persistence layer. Local file fallback is development-only.
+Consequences: Production features should not depend on `lib/waitlist-store.ts`.
+
+### ADR-006 - Style operating system direction
+
+Date: 2026-06-13
+Status: accepted
+Context: Competitor reviews show users are frustrated by inaccurate wardrobe recognition, bad outfit generation, narrow womenswear assumptions, poor size diversity, and lack of manual control.
+Decision: PaletteMe should move toward a broader style assistant for all style-conscious people. Color analysis remains the entry point, but the durable product is Scan Anything, wardrobe matching, makeup scanning, and buy-with-my-closet decisions.
+Consequences: New features must support men, women, nonbinary users, unisex styling, optional makeup, editable AI labels, and practical verdicts instead of rigid rejections.
+
+### ADR-007 - Accuracy and free testing before monetization
+
+Date: 2026-06-13
+Status: accepted
+Context: The user wants all features unlocked to test whether the AI is accurate before asking for payment.
+Decision: Keep current product work in free testing mode until quiz, selfie, scanner, and wardrobe features are trustworthy.
+Consequences: Payments stay dormant. Do not optimize paywalls before accuracy, mobile UX, and scan usefulness are proven.
+
+### ADR-008 - OpenAI Responses API for new style intelligence backend
+
+Date: 2026-06-13
+Status: accepted
+Context: New scan, wardrobe, and outfit features need stable structured outputs, prompt caching, and async job handling.
+Decision: Use `lib/server/openai.ts` with the OpenAI Responses API and Zod structured outputs for new style intelligence routes. `OPENAI_STYLE_MODEL` can override the model; default is `gpt-5.5`.
+Consequences: New frontend work should call `/api/ai/scan`, `/api/ai/jobs/[id]`, `/api/wardrobe`, and `/api/outfits` instead of adding provider calls inside components. Legacy `GPT-4o`/Gemini routes remain until intentionally migrated.
+
+### ADR-009 - Progressive Supabase auth with one login surface
+
+Date: 2026-06-13
+Status: accepted
+Context: PaletteMe needs saved profiles and history, but auth should not block quiz completion or first results.
+Decision: Use Supabase Auth progressively. `/login` is the only visible auth UI, `/api/auth/callback` is the canonical callback, `/auth` and `/auth/callback` remain compatibility redirects, and Next 16 `proxy.ts` refreshes sessions.
+Consequences: Do not rebuild a second auth page. Use `lib/auth-flow.ts` for callback URLs and safe post-login redirects.
+
+### ADR-010 - Accuracy Gate v1 for color analysis
+
+Date: 2026-06-13
+Status: accepted
+Context: Users lose trust when non-human images or bad selfies produce confident color-season results.
+Decision: `/api/analyze` must pass model output through `lib/analysis-normalizer.ts`. Non-human uploads, missing quality metadata, bad lighting, heavy filters, strong color cast, covered face, and low confidence return a retake/no-face message instead of a season.
+Consequences: Never bypass the normalizer when adding analysis providers. Results should include photo quality, evidence, confidence, and closest alternative seasons.
+
+### ADR-011 - Hybrid color evidence scoring
+
+Date: 2026-06-13
+Status: accepted
+Context: A real calibration case was mislabeled True Winter even though visible evidence pointed to Dark Autumn / Deep Autumn. Dark warm users are commonly confused with Winter when the app over-weights dark hair and contrast.
+Decision: `/api/analyze` uses OpenAI Responses API structured evidence first, then `lib/color-season-scoring.ts` deterministically scores all 12 sub-seasons. The model's season label is only a weak hint; traits and evidence decide the final result.
+Consequences: Deep warm earthy evidence should prefer Dark Autumn over True Winter. Keep `lib/analysis.test.ts` regression coverage for this case.
+
+### ADR-012 - One selfie capture flow
+
+Date: 2026-06-13
+Status: accepted
+Context: Multiple upload surfaces confused the product and duplicated analysis UI.
+Decision: `/quiz` is the canonical selfie analysis flow. `/dashboard` redirects to `/quiz`; upload/camera behavior lives in `components/selfie/selfie-capture.tsx`.
+Consequences: Do not add new selfie upload surfaces. Add capture improvements to the reusable component. Do not implement desktop camera by clicking a hidden `capture="user"` file input; desktop browsers can treat that as upload. Use live `getUserMedia` capture or hide the camera action.
+
+### ADR-013 - Quiz-first product2 foundation
+
+Date: 2026-06-14
+Status: accepted
+Context: The product2 direction requires value before permissions, support for menswear/womenswear/unisex users, and stronger quiz evidence before optional selfie confirmation.
+Decision: `/quiz` starts with wardrobe type and style challenge, then builds a deterministic color prior from observable answers. Selfie upload is offered after the quiz as an accuracy boost.
+Consequences: Do not move selfie upload back to the first screen. New style intelligence should use `quizColorEvidence`, `quizConfidence`, `wardrobeType`, and `styleChallenge` when present.
 
 ---
 
-## What Was Built — Feature Changelog
+## Feature Changelog
 
-When a feature ships, add an entry here. This is how the agent knows what already exists and should not be rebuilt.
+### Initial build - Core app
 
-Format:
-```
-### YYYY-MM-DD — <feature name>
-What was built: one sentence
-Files created/modified: list
-Notes: anything a future agent needs to know
-```
+Built landing page, dashboard selfie upload, color analysis, seasonal result display, and waitlist signup.
 
----
+### 2026-06-08 - Dedicated color quiz funnel
 
-### Initial build — Core app
+Built `/quiz` flow with quiz result storage and dashboard gating.
 
-What was built: Landing page, dashboard with selfie upload, Gemini color analysis, seasonal type result display, waitlist signup with Telegram notification.
-Files created:
-- `app/page.tsx` — landing page
-- `app/dashboard/page.tsx` — upload + analysis UI
-- `app/api/analyze/route.ts` — Gemini image analysis endpoint
-- `app/api/waitlist/route.ts` — waitlist signup
-- `app/api/waitlist/export/route.ts` — CSV export
-- `lib/analysis.ts` — all Gemini logic
-- `lib/landing-data.ts` — SEASONS, PRODUCTS, REVIEWS, FAQS, QUIZ_QUESTIONS
-- `lib/waitlist-store.ts` — in-memory waitlist
-- `lib/telegram.ts` — Telegram notification
-- `lib/resize-image.ts` — client-side image resize
-- `components/dashboard/color-analyzer.tsx` — upload flow + results
-- `design/PaletteMe-style-guide.md` — brand tokens
-Notes: Products in `landing-data.ts` are demo placeholders. Real scraping via `/api/products` is not yet built.
+### 2026-06-08 - Full onboarding quiz
 
----
+Expanded quiz into color, body, style, trend, and selfie flow.
 
-### 2026-06-08 — Dedicated color quiz funnel
+### 2026-06-13 - Monetization and affiliate launch plan
 
-What was built: Stylix-style quiz-first flow on `/quiz` — intro, one question per screen, calculating interstitial, preliminary result, then gated dashboard upload with quiz hint passed to Gemini.
-Files created/modified:
-- `app/quiz/page.tsx`, `app/quiz/quiz.css` — dedicated quiz page
-- `components/quiz/quiz-flow.tsx` — quiz funnel UI
-- `lib/quiz.ts` — scoring + sessionStorage
-- `components/landing/quiz-cta.tsx` — landing CTA linking to `/quiz`
-- `components/dashboard/color-analyzer.tsx` — quiz gate + hint to API
-- `lib/analysis.ts`, `app/api/analyze/route.ts` — quiz context in prompt
-Notes: Quiz result stored in `sessionStorage` (`paletteme_quiz_result`). Dashboard blocks upload until quiz is complete.
+Added current docs/spec direction for free result, paid report, Pro scanner, Stripe Payment Links, and affiliate wrapper.
 
-### 2026-06-08 — Full onboarding quiz (8 steps + selfie climax)
+### 2026-06-13 - Product north star update
 
-What was built: Expanded `/quiz` to full PaletteMe onboarding — goal, sun undertone test, natural hair (+ dyed follow-up), height, body shape, style vibe, optional trends, then selfie upload on the same page with AI merge.
-Files created/modified:
-- `lib/quiz-data.ts` — all question options and types
-- `lib/quiz.ts` — `QuizProfile` with full answers + `formatProfileForAI()`
-- `components/quiz/quiz-flow.tsx` — 8-step stepper UI
-- `components/quiz/quiz-selfie-step.tsx` — selfie drop + analyze + inline results
-- `app/quiz/quiz.css` — cards, shapes, tags, drop zone styles
-Notes: Question data lives in `lib/quiz-data.ts`. AI receives full profile summary via `profileSummary` in analyze API.
+Saved the current strategy in `docs/PRODUCT-NORTH-STAR.md`: mobile-first quiz, optional selfie, inclusive styling, Scan Anything, wardrobe matchmaker, makeup scanner, buy-with-my-closet, AI accuracy, user correction, and free testing before monetization.
+
+### 2026-06-13 - AI backend foundation
+
+Built the design-independent backend foundation for Scan Anything, wardrobe corrections, async AI jobs, OpenAI Responses structured outputs, and outfit-generation contracts.
+
+### 2026-06-13 - Supabase auth cleanup
+
+Consolidated auth into `/login`, canonicalized Supabase callbacks through `/api/auth/callback`, moved session refresh to `proxy.ts`, added sign out, and documented progressive auth rules.
+
+### 2026-06-13 - Accuracy Gate v1
+
+Added a no-face and photo-quality gate for color analysis, richer analysis evidence, closest alternatives, and user-facing retake messages instead of fake season results.
+
+### 2026-06-13 - Hybrid Color Algorithm v1
+
+Added OpenAI Responses API structured evidence extraction, deterministic 12-season scoring, and a Dark Autumn vs True Winter regression test.
+
+### 2026-06-13 - Single selfie capture flow
+
+Added native camera capture to `/quiz`, removed legacy dashboard analysis UI, deleted unused quiz selfie UI, and redirected `/dashboard` to `/quiz`.
+
+### 2026-06-13 - Desktop camera capture fix
+
+Replaced the duplicate desktop camera file-picker behavior with live `getUserMedia` webcam capture and hid the take-photo action when webcam capture is unsupported.
+
+### 2026-06-14 - Product2 Phase 1 quiz result foundation
+
+Added wardrobe type, style challenge, skin tone, detailed eye/hair answers, deterministic quiz color evidence, quiz confidence, and the optional selfie decision screen after the quiz result prior. Warm/deep/muted quiz evidence now prefers Dark Autumn over Winter.
 
 ---
 
-## Gotchas & Known Issues
+## Gotchas
 
-Things that look wrong but are intentional, or things that will bite you if you don't know about them. Add an entry any time you hit a surprise. Future agents must read this section before debugging.
+### Docs can drift
 
----
+If a doc says "single source of truth" but conflicts with current code and `docs/TRACKER.yaml`, fix the doc before building.
 
-### Next.js 16 is NOT the Next.js you know
+### Payment Links are an MVP shortcut
 
-This project uses Next.js 16.2.7 with React 19 and App Router. APIs, file conventions, and data-fetching patterns differ significantly from Next.js 13/14. **Before touching any routing or data-fetching code, read `node_modules/next/dist/docs/`.**
+They are good for fast payment validation. They are not a secure entitlement system. Use webhooks later.
 
----
+### Affiliate approval is not required for product links
 
-### Zod v4 breaking changes
+The app must keep normal product links working until affiliate IDs are available.
 
-This project uses Zod v4. Import as `import { z } from 'zod'` — same as before. But many internal APIs changed from v3. Do not copy Zod patterns from training data or Stack Overflow without verifying against v4 docs.
+### Privacy wording matters
 
----
+Photos are sent to server-side AI providers for analysis. Do not write copy that says otherwise.
 
-### Playwright cannot run on Edge runtime
+### Auth is progressive
 
-Any route that imports Playwright or llm-scraper **must** have `export const runtime = 'nodejs'`. The build will succeed but the route will crash at runtime on Edge. This includes any route that transitively imports from a file that uses Playwright.
+Users can finish the quiz and see results before signing in. Ask for auth when saving profile, restoring data, or using history/account features.
 
----
+### Color analysis must refuse fake certainty
 
-### browser.close() is not optional
+If the uploaded image is not a usable human selfie, ask for a retake. Do not produce a color season for objects, pets, screenshots, covered faces, harsh color-cast photos, or low-confidence images.
 
-If `browser.close()` is not in a `finally` block, a crashed or thrown route will leak a headless Chromium process. These accumulate and eventually crash the server. Always:
-```typescript
-try {
-  // scraping logic
-} finally {
-  await browser.close()
-}
-```
+### Deep warm users are not automatically Winter
 
----
+Dark hair plus high contrast is not enough for Winter. Golden/olive skin, warm brown or olive eyes, chocolate hair, and earthy/smoky evidence should push toward Dark Autumn / Deep Autumn.
 
-### Never import server code into client components
+### `/quiz` owns selfie analysis
 
-Files in `lib/` that use API keys, Playwright, or Node built-ins (`analysis.ts`, `telegram.ts`, `waitlist-store.ts`) cannot be imported in client components (`'use client'`). Next.js will throw a build error. Keep server logic in API routes only.
+Do not rebuild `/dashboard` as an analysis UI. Use `components/selfie/selfie-capture.tsx` for upload/camera capture and keep `/dashboard` as a redirect.
 
----
+### Take photo is not upload
 
-### SEASONS data is the single source of truth
+The `take photo` action must not click a hidden file input on desktop. Use `navigator.mediaDevices.getUserMedia()` for live webcam capture, and hide the action when the browser cannot support it.
 
-Season names, colors, descriptions, and palette arrays all live in `lib/landing-data.ts` under `SEASONS`. Never hardcode a season name or color hex anywhere else in the codebase. If you need season data in a new file, import `SEASONS` from there.
+### Camera preview must not be clipped
 
----
-
-### Tailwind classes must exist as CSS vars
-
-Tailwind v4 generates classes from CSS variables defined in `app/globals.css`. If you use a class like `bg-accent` and `--accent` is not defined in `globals.css`, the class silently does nothing. When adding new design tokens, always define them in `globals.css` first.
-
----
-
-### DM Serif Display: weight 400 only
-
-The heading font is DM Serif Display. It only has one weight — 400. Do not set `font-weight: 700` or `font-weight: bold` on any heading — it will fall back to the system serif and look broken.
-
----
-
-### Button and nav text: never uppercase
-
-Per the design system, buttons and nav links must always be `lowercase` with `letter-spacing: 0`. This is a deliberate brand choice, not a bug. Do not "fix" it.
+When the live webcam preview is active, the selfie capture card must grow with its content. Do not wrap the preview and capture buttons in the upload card's fixed `4/5` aspect-ratio box with hidden overflow, because short mobile viewports will hide the bottom action buttons.
