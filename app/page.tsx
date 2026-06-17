@@ -5,6 +5,7 @@ import { SeasonsCarousel } from "@/components/landing/seasons-carousel";
 import { BeforeAfter } from "@/components/landing/before-after";
 import { FeatureDemos } from "@/components/landing/feature-demos";
 import { QuizCta } from "@/components/landing/quiz-cta";
+import { PricingSection } from "@/components/landing/pricing-section";
 import { WaitlistForm } from "@/components/landing/waitlist-form";
 import { ScrollReveal } from "@/components/landing/scroll-reveal";
 import { MobileActionBar } from "@/components/landing/mobile-action-bar";
@@ -150,6 +151,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <PricingSection />
 
       <section id="faq" className="faq">
         <div className="wrap">

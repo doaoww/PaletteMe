@@ -31,14 +31,22 @@ async function weatherAt(latitude: number, longitude: number, city: string): Pro
 }
 
 async function cityFromCoords(latitude: number, longitude: number): Promise<string> {
-  const geoRes = await fetch(
-    `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=en&count=1`
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+    { headers: { "Accept-Language": "en" } }
   );
-  if (!geoRes.ok) return "Your location";
-  const geo = await geoRes.json();
-  const hit = geo.results?.[0];
-  if (!hit) return "Your location";
-  return hit.name ?? hit.admin1 ?? "Your location";
+  if (!res.ok) return "";
+  const data = await res.json() as {
+    address?: { city?: string; town?: string; village?: string; county?: string; state?: string };
+  };
+  return (
+    data.address?.city ??
+    data.address?.town ??
+    data.address?.village ??
+    data.address?.county ??
+    data.address?.state ??
+    ""
+  );
 }
 
 export function detectCityAndWeather(): Promise<LocationWeather | null> {

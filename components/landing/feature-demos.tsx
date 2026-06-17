@@ -3,7 +3,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { IMAGES } from "@/lib/demo-images";
 import { PRODUCTS, SEASONS } from "@/lib/landing-data";
-import { PricingSection } from "@/components/landing/pricing-section";
 
 const PALETTE = SEASONS[2].palette;
 const MATCHED_PICKS = PRODUCTS.slice(0, 3);
@@ -131,8 +130,6 @@ export function FeatureDemos() {
           </div>
         </div>
       </section>
-
-      <PricingSection />
 
       <section id="features" className="fdemo">
         <div className="wrap">

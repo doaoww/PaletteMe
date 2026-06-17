@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AnalysisResult } from "@/lib/analysis";
-import { PostQuizAuthScreen } from "@/components/auth/post-quiz-auth-screen";
 import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
 import { createClient } from "@/lib/supabase";
 import { saveAnalysisResult } from "@/lib/analysis-storage";
@@ -204,14 +203,13 @@ export function QuizFlow() {
   const [answers, setAnswers] = useState<QuizAnswers>({ styleDirections: [], occasions: [] });
   const [scores, setScores] = useState<QuizScores>(emptyScores());
   const [colorResult, setColorResult] = useState<ColorResult | null>(null);
-  const [pendingAuthProfile, setPendingAuthProfile] = useState<QuizProfile | null>(null);
-
   const [pendingWardrobe, setPendingWardrobe] = useState<WardrobeType | undefined>();
   const [pendingChallenge, setPendingChallenge] = useState<QuizAnswers["styleChallenge"]>();
 
   const [cityInput, setCityInput] = useState("");
   const [weather, setWeather] = useState<LocationWeather | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
+  const [geoFailed, setGeoFailed] = useState(false);
   const geoAttempted = useRef(false);
   const cityDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -241,7 +239,11 @@ export function QuizFlow() {
     setWeatherLoading(true);
     detectCityAndWeather()
       .then((data) => {
-        if (data) applyWeather(data);
+        if (data) {
+          applyWeather(data);
+        } else {
+          setGeoFailed(true);
+        }
       })
       .finally(() => setWeatherLoading(false));
   }, [step, applyWeather]);
@@ -359,23 +361,7 @@ export function QuizFlow() {
       saveQuizProfile(profile);
       saveQuizToLocalStorage(profile);
       saveQuizToSupabase(profile).catch(() => {});
-
-      if (!isSupabaseAuthConfigured(SUPABASE_AUTH_ENV)) {
-        router.push("/profile");
-        return;
-      }
-
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user?.id) {
-        router.push("/profile");
-        return;
-      }
-
-      setPendingAuthProfile(profile);
+      router.push("/profile");
     },
     [enrichedAnswers, scores, router]
   );
@@ -500,14 +486,6 @@ export function QuizFlow() {
 
   const screenPanel = "quiz-page__panel quiz-page__panel--screen on";
 
-  if (pendingAuthProfile) {
-    return (
-      <PostQuizAuthScreen
-        profile={pendingAuthProfile}
-        onComplete={() => router.push("/profile")}
-      />
-    );
-  }
 
   return (
     <div
@@ -946,11 +924,23 @@ export function QuizFlow() {
             <input
               type="text"
               className="quiz-page__field"
-              placeholder="Detecting your city…"
+              placeholder={
+                weatherLoading
+                  ? "Detecting your city…"
+                  : geoFailed
+                    ? "Enter your city"
+                    : "Your city"
+              }
               value={cityInput}
               onChange={(e) => handleCityChange(e.target.value)}
               autoComplete="address-level2"
+              aria-label="City"
             />
+            {geoFailed && !cityInput && (
+              <p className="quiz-page__inline-error" style={{ color: "var(--ink-soft)", fontStyle: "normal" }}>
+                Location access was denied — type your city above to continue.
+              </p>
+            )}
             <WeatherStatCards
               temperature={weather?.temperature}
               humidity={weather?.humidity}

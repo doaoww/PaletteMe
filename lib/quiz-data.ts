@@ -42,6 +42,8 @@ export type BodyShape =
   | "rectangle"
   | "apple"
   | "inverted-triangle"
+  | "diamond"
+  | "athletic"
   | "trapezoid"
   | "oval"
   | "triangle"
@@ -706,11 +708,13 @@ export const WOMENSWEAR_BODY_SHAPES: {
   label: string;
   sub: string;
 }[] = [
-  { id: "rectangle", label: "Rectangle", sub: "Shoulders and hips similar width, less defined waist" },
   { id: "hourglass", label: "Hourglass", sub: "Shoulders and hips similar, clearly defined waist" },
   { id: "pear", label: "Pear", sub: "Hips noticeably wider than shoulders" },
+  { id: "rectangle", label: "Rectangle", sub: "Shoulders and hips similar width, less defined waist" },
   { id: "apple", label: "Apple", sub: "Fuller midsection, slimmer legs" },
   { id: "inverted-triangle", label: "Inverted triangle", sub: "Shoulders wider than hips" },
+  { id: "diamond", label: "Diamond", sub: "Narrow shoulders and ankles, widest at hips" },
+  { id: "athletic", label: "Athletic", sub: "Broad shoulders, defined waist, lean hips" },
 ];
 
 export const MENSWEAR_BODY_SHAPES: {
