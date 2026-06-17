@@ -1,4 +1,4 @@
-import { QuizFlow } from "@/components/quiz/quiz-flow";
+import { QuizAuthGate } from "@/components/quiz/quiz-flow";
 import "./quiz.css";
 
 export const metadata = {
@@ -8,5 +8,5 @@ export const metadata = {
 };
 
 export default function QuizPage() {
-  return <QuizFlow />;
+  return <QuizAuthGate />;
 }

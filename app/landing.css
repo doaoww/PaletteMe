@@ -327,6 +327,15 @@ section {
   text-align: left;
 }
 
+.hero__intro {
+  max-width: 100%;
+}
+
+.hero__mast-keep {
+  display: block;
+  white-space: nowrap;
+}
+
 .hero__copy .hero__mast {
   max-width: 14ch;
 }
@@ -444,10 +453,22 @@ section {
   }
   .hero__copy {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero__intro {
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+    text-align: left;
+  }
+  .hero__eyebrow {
+    justify-content: flex-start;
   }
   .hero__mast,
   .hero__value {
-    margin-inline: auto;
+    margin-inline: 0;
   }
   .hero__cta {
     justify-content: center;
@@ -529,8 +550,8 @@ section {
 
 @media (max-width: 900px) {
   .hero__tagline {
-    text-align: center;
-    margin-inline: auto;
+    text-align: left;
+    margin-inline: 0;
   }
   .hero__values {
     grid-template-columns: 1fr;
@@ -574,6 +595,7 @@ section {
   margin: 0;
   color: var(--ink);
   text-shadow: none;
+  text-align: left;
 }
 
 .hero__tagline {
@@ -3884,20 +3906,20 @@ section {
   }
 
   .hero__eyebrow {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .hero__logo {
     font-size: 1.1rem;
     margin-bottom: 14px;
-    text-align: center;
+    text-align: left;
   }
 
   .hero__mast {
     font-size: clamp(2.2rem, 9vw, 3rem);
     max-width: 100%;
-    text-align: center;
-    margin-inline: auto;
+    text-align: left;
+    margin-inline: 0;
   }
 
   .hero__value {
@@ -4107,6 +4129,85 @@ section {
 
   .mob-bar__btn {
     font-size: 0.82rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INTERMEDIATE — 601px–900px  tablet / small-laptop fill
+   Bridges the gap between mobile (≤600px) and desktop (≥900px)
+   so every width looks deliberate rather than accidentally broken.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Topbar: restore the primary CTA where nav links are hidden
+   but the mobile action bar hasn't appeared yet (601–860px) */
+@media (min-width: 601px) and (max-width: 860px) {
+  .topbar__cta-desktop {
+    display: inline-block;
+  }
+}
+
+/* Hero preview: at its default 440px the before/after card is
+   ~550px tall in single-column mode — it dominates the hero.
+   Scale it down and drop the picks row (redundant when stacked). */
+@media (max-width: 900px) {
+  .hero__preview .ba {
+    max-width: 300px;
+  }
+  .hero__preview-picks,
+  .hero__preview-caption {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .hero__preview .ba {
+    max-width: 260px;
+  }
+}
+
+/* Hero value cards: a horizontal 3-col row reads better than a
+   narrow 1-col stacked list at 601–900px */
+@media (min-width: 601px) and (max-width: 900px) {
+  .hero__values {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 100%;
+  }
+}
+
+/* Hero foot steps: 2-col at 681–900px avoids 3 cramped columns */
+@media (min-width: 681px) and (max-width: 900px) {
+  .hero__steps {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Reviews: 2-col at 641–840px bridges the abrupt 3→1 col jump */
+@media (min-width: 641px) and (max-width: 840px) {
+  .rgrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .review {
+    transform: none !important;
+  }
+}
+
+/* Pricing: relax the tight 420px max-width cap at tablet sizes */
+@media (min-width: 601px) and (max-width: 900px) {
+  .pricing__grid {
+    max-width: 560px;
+  }
+}
+
+/* Feature next-grid: 2-col at 641–760px rather than jumping to 1-col */
+@media (min-width: 641px) and (max-width: 760px) {
+  .fdemo__next-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Free-flow steps: slightly wider scroll cards at 601–880px */
+@media (min-width: 601px) and (max-width: 880px) {
+  .free-flow__step {
+    flex: 0 0 min(62vw, 270px);
   }
 }
 

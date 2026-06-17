@@ -22,22 +22,27 @@ export default function Home() {
       <section className="hero">
         <div className="hero__main">
           <div className="hero__copy">
-            <div className="hero__eyebrow">
-              <span className="kicker">personal color analysis</span>
-              <span className="hero__live">
-                <span className="pulse" />
-                free · 60 seconds
-              </span>
+            <div className="hero__intro">
+              <div className="hero__eyebrow">
+                <span className="kicker">personal color analysis</span>
+                <span className="hero__live">
+                  <span className="pulse" />
+                  free · 60 seconds
+                </span>
+              </div>
+              <p className="hero__logo wordmark">
+                palette<span className="me">me</span>
+              </p>
+              <p className="hero__tagline">
+                Your AI stylist. Know what works for you.
+              </p>
+              <h1 className="hero__mast">
+                Find the colors that make{" "}
+                <span className="hero__mast-keep">
+                  <span className="scr">you</span> glow
+                </span>
+              </h1>
             </div>
-            <p className="hero__logo wordmark">
-              palette<span className="me">me</span>
-            </p>
-            <p className="hero__tagline">
-              Your AI stylist. Know what works for you.
-            </p>
-            <h1 className="hero__mast">
-              Find the colors that make <span className="scr">you</span> glow
-            </h1>
             <p className="hero__value">
               A short quiz about your natural coloring and style goals comes
               first. Add a selfie only if you want extra accuracy — then get

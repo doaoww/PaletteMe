@@ -12,7 +12,6 @@ import {
 } from "@/lib/profile-restore";
 import { getPaymentUrls, isFreeTestingMode, resolvePremiumLevel, type PremiumLevel } from "@/lib/premium";
 import { ProfileView } from "@/components/profile/profile-view";
-import { PostQuizAuthScreen } from "@/components/auth/post-quiz-auth-screen";
 import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
 import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe-store";
 import "./profile.css";
@@ -121,12 +120,8 @@ function ProfileContent() {
   }
 
   if (requiresAuth) {
-    return (
-      <PostQuizAuthScreen
-        profile={profile}
-        onComplete={() => setRequiresAuth(false)}
-      />
-    );
+    router.replace("/login?next=/profile");
+    return <ProfileLoading />;
   }
 
   return (

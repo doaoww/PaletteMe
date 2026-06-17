@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
     root: process.cwd(),
   },
   images: {
-    unoptimized: process.env.NODE_ENV === "development",
     remotePatterns: [
       {
         protocol: "https",
@@ -21,6 +20,21 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
         pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "image.uniqlo.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "assets.adidas.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.sephora.com",
+        pathname: "/productimages/**",
       },
     ],
   },

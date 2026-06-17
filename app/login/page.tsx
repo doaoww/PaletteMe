@@ -15,6 +15,7 @@ import {
 import { LS_USER_ID, LS_COLORTYPE, LS_BEST_COLORS, LS_QUIZ } from "@/lib/quiz";
 import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe-store";
 import Link from "next/link";
+import { BottomNav } from "@/components/nav/bottom-nav";
 
 type Mode = "choice" | "email" | "loading" | "check-email";
 
@@ -78,17 +79,18 @@ function LoginContent() {
       }
 
       if (json.mode === "restored" && json.user_id) {
-        // Returning user — put their data back into localStorage
+        // Returning user — restore data and go home
         localStorage.setItem(LS_USER_ID, json.user_id);
         if (json.colortype) localStorage.setItem(LS_COLORTYPE, json.colortype);
         if (json.best_colors?.length)
           localStorage.setItem(LS_BEST_COLORS, JSON.stringify(json.best_colors));
         if (json.quiz_answers)
           localStorage.setItem(LS_QUIZ, JSON.stringify(json.quiz_answers));
+        router.push("/home");
+      } else {
+        // New user — send to quiz
+        router.push("/quiz");
       }
-
-      // Go to the normalized post-login destination.
-      router.push(next);
       return true;
     } catch {
       setErrorMsg(friendlyProfileLinkError(null));
@@ -165,13 +167,14 @@ function LoginContent() {
   }
 
   return (
+    <>
     <main
       style={{
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "20px",
+        padding: "20px 20px 96px",
         fontFamily: "var(--sans)",
       }}
     >
@@ -312,6 +315,8 @@ function LoginContent() {
         )}
       </div>
     </main>
+    <BottomNav />
+    </>
   );
 }
 

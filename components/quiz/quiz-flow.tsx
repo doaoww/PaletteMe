@@ -18,12 +18,17 @@ import {
   deriveStyleVectorFromAnswers,
   emptyScores,
   enrichColorAnswers,
+  loadQuizProfile,
   saveQuizProfile,
   saveQuizToLocalStorage,
   saveQuizToSupabase,
   type QuizProfile,
   type QuizScores,
 } from "@/lib/quiz";
+import {
+  loadSupabaseQuizProfile,
+  saveRestoredQuizProfileToBrowserStorage,
+} from "@/lib/profile-restore";
 import {
   detectCityAndWeather,
   fetchWeatherForCity,
@@ -550,7 +555,6 @@ export function QuizFlow() {
             >
               let&apos;s start
             </button>
-            <p className="quiz-page__fine">No account needed to begin</p>
           </div>
         )}
 
@@ -1047,4 +1051,41 @@ export function QuizFlow() {
       ) : null}
     </div>
   );
+}
+
+export function QuizAuthGate() {
+  const router = useRouter();
+  const authConfigured = isSupabaseAuthConfigured(SUPABASE_AUTH_ENV);
+  const [authChecked, setAuthChecked] = useState(!authConfigured);
+
+  useEffect(() => {
+    if (!authConfigured) return;
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) {
+        router.replace("/login?next=/quiz");
+        return;
+      }
+      // Returning user: check localStorage first (fast path)
+      if (loadQuizProfile()) {
+        router.replace("/home");
+        return;
+      }
+      // Returning user: check Supabase (handles cleared browser data / cross-device)
+      try {
+        const restored = await loadSupabaseQuizProfile(supabase, user.id);
+        if (restored) {
+          saveRestoredQuizProfileToBrowserStorage(restored);
+          router.replace("/home");
+          return;
+        }
+      } catch {
+        // ignore — let them take the quiz
+      }
+      setAuthChecked(true);
+    });
+  }, [router, authConfigured]);
+
+  if (!authChecked) return null;
+  return <QuizFlow />;
 }

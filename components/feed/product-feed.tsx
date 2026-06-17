@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { QuizProfile } from "@/lib/quiz";
 import "@/app/feed/feed.css";
@@ -48,6 +49,7 @@ function ProductCard({
   const score = product.score ?? (product.match ? product.match / 100 : 0.7);
   const swatch = product.hex ?? product.swatches?.[0] ?? "#c2a477";
   const isLight = hexIsLight(swatch);
+  const imgUrl = product.image?.sizes?.Best?.url ?? "";
 
   const dotColor = score >= 0.82 ? "#22c55e" : score >= 0.64 ? "#eab308" : "#94a3b8";
 
@@ -93,7 +95,17 @@ function ProductCard({
             background: `linear-gradient(145deg, ${swatch}, color-mix(in srgb, ${swatch} 70%, #fff))`,
           }}
         />
-        <div className="feed-product-card__swatch-overlay" style={{ opacity: isLight ? 0.15 : 0.35 }} />
+        {imgUrl && (
+          <Image
+            src={imgUrl}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, 33vw"
+            style={{ objectFit: "cover", objectPosition: "top center" }}
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
+        )}
+        <div className="feed-product-card__swatch-overlay" style={{ opacity: imgUrl ? 0.45 : (isLight ? 0.15 : 0.35) }} />
 
         <div className={`feed-product-card__verdict-badge ${verdictClass}`}>
           {verdictLabel}
