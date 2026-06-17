@@ -791,6 +791,72 @@
   color: var(--ink-soft);
 }
 
+/* ── Picks teaser card ── */
+
+.home-hub__picks-card {
+  display: block;
+  text-decoration: none;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--outline-variant);
+  background: #fff;
+  box-shadow: 0 8px 24px -12px rgba(23, 18, 26, 0.1);
+  transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease);
+}
+
+.home-hub__picks-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px -12px rgba(23, 18, 26, 0.14);
+}
+
+.home-hub__picks-swatches {
+  display: flex;
+  height: 72px;
+}
+
+.home-hub__picks-swatch {
+  flex: 1;
+}
+
+.home-hub__picks-body {
+  padding: 16px 18px 18px;
+}
+
+.home-hub__picks-label {
+  margin: 0 0 6px;
+  font-family: var(--sans);
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+}
+
+.home-hub__picks-label strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.home-hub__picks-sub {
+  margin: 0 0 14px;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.home-hub__picks-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--pink-deep);
+}
+
+.home-hub__picks-cta svg {
+  width: 14px;
+  height: 14px;
+}
+
 .home-hub__coming-title {
   margin: 0 0 14px;
   font-family: var(--serif);
@@ -2804,7 +2870,8 @@
   }
 
   .app-chrome--home .home-hub__main,
-  .app-chrome--scan .scan-page__main {
+  .app-chrome--scan .scan-page__main,
+  .app-chrome--feed .feed-page {
     width: 100%;
     max-width: min(90rem, 100%);
     padding: clamp(32px, 4vw, 56px) clamp(24px, 5vw, 64px) clamp(40px, 5vw, 72px);

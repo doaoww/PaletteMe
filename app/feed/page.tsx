@@ -3,16 +3,29 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AppChrome } from "@/components/nav/app-chrome";
 import { loadQuizProfile, type QuizProfile } from "@/lib/quiz";
 import { SEASONS } from "@/lib/landing-data";
+import { buildPreviewColors } from "@/lib/result-palette";
 import { ProductFeed } from "@/components/feed/product-feed";
-import { BottomNav } from "@/components/nav/bottom-nav";
 import "../app-shell.css";
+import "./feed.css";
+
+const CATEGORIES = [
+  { id: "", label: "all" },
+  { id: "tops", label: "tops" },
+  { id: "bottoms", label: "bottoms" },
+  { id: "shoes", label: "shoes" },
+  { id: "makeup", label: "makeup" },
+] as const;
+
+type CategoryId = (typeof CATEGORIES)[number]["id"];
 
 export default function FeedPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<QuizProfile | null>(null);
   const [ready, setReady] = useState(false);
+  const [category, setCategory] = useState<CategoryId>("");
 
   useEffect(() => {
     const p = loadQuizProfile();
@@ -26,39 +39,63 @@ export default function FeedPage() {
 
   if (!ready || !profile) {
     return (
-      <div style={{ minHeight: "100svh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--sans)", color: "var(--ink-soft)" }}>
-        Loading…
-      </div>
+      <AppChrome className="app-chrome--feed">
+        <div className="app-shell feed-page">
+          <div className="feed-page__loading">loading…</div>
+        </div>
+      </AppChrome>
     );
   }
 
   const season = SEASONS.find((s) => s.id === profile.seasonId) ?? SEASONS[0];
+  const subSeason = profile.subSeason ?? season.name;
+  const palette = buildPreviewColors(season, 6, subSeason);
+  const hasMakeup = profile.answers?.makeupPref !== "no";
+
+  const visibleCategories = hasMakeup
+    ? CATEGORIES
+    : CATEGORIES.filter((c) => c.id !== "makeup");
 
   return (
-    <div className="app-shell">
-      <header className="app-topbar glass-nav">
-        <Link href="/home" className="wordmark app-topbar__wordmark">
-          palette<span className="me">me</span>
-        </Link>
-        <span className="app-chip app-chip--pink">{season.name}</span>
-      </header>
+    <AppChrome className="app-chrome--feed">
+      <div className="app-shell feed-page">
+        <header className="feed-page__header">
+          <div className="feed-page__palette" aria-hidden>
+            {palette.map((hex) => (
+              <span key={hex} className="feed-page__swatch" style={{ background: hex }} />
+            ))}
+          </div>
+          <div className="feed-page__header-body">
+            <p className="feed-page__kicker">your picks</p>
+            <h1 className="feed-page__title">
+              Curated for{" "}
+              <span className="feed-page__season">{subSeason}</span>
+            </h1>
+            <p className="feed-page__subtitle">
+              Ranked by color match
+              {profile.bodyType ? ` · ${profile.bodyType} fit` : ""}
+              {profile.answers?.wardrobeType ? ` · ${profile.answers.wardrobeType}` : ""}
+            </p>
+          </div>
+        </header>
 
-      <div className="app-shell__main">
-        <div style={{ marginBottom: 24 }}>
-          <p className="kicker" style={{ fontSize: "0.58rem", marginBottom: 10 }}>your feed</p>
-          <p className="font-serif" style={{ fontSize: "clamp(1.8rem,4vw,2.8rem)", lineHeight: 1.08 }}>
-            Picks for <span className="scr" style={{ color: "var(--pink)" }}>{season.name}</span>
-          </p>
-          <p style={{ fontFamily: "var(--sans)", fontSize: "0.88rem", color: "var(--ink-soft)", marginTop: 8 }}>
-            Ranked by color match
-            {profile.bodyType ? ` · ${profile.bodyType} silhouettes` : ""}
-            {profile.styleVector?.aesthetics.length ? ` · ${profile.styleVector.aesthetics.slice(0, 2).join(", ")} style` : ""}
-          </p>
+        <div className="feed-page__filters" role="group" aria-label="Filter by category">
+          {visibleCategories.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              className={`feed-filter-chip${category === cat.id ? " feed-filter-chip--active" : ""}`}
+              onClick={() => setCategory(cat.id)}
+            >
+              {cat.label}
+            </button>
+          ))}
         </div>
 
-        <ProductFeed profile={profile} />
+        <div className="feed-page__body">
+          <ProductFeed profile={profile} category={category} />
+        </div>
       </div>
-      <BottomNav />
-    </div>
+    </AppChrome>
   );
 }

@@ -40,11 +40,6 @@ const COMING_SOON = [
     desc: "Build outfits and plan what to wear",
     icon: "outfit",
   },
-  {
-    title: "Shop for your palette",
-    desc: "Curated picks matched to your color type",
-    icon: "shop",
-  },
 ] as const;
 
 function displayNameFromEmail(email?: string | null): string {
@@ -302,6 +297,36 @@ export function HomeHub() {
               </div>
             </section>
           ) : null}
+
+          <section className="home-hub__section home-hub__section--picks">
+            <div className="home-hub__section-head">
+              <h3 className="home-hub__section-title">your picks</h3>
+              <Link href="/feed" className="home-hub__text-link home-hub__text-link--primary">
+                see all
+              </Link>
+            </div>
+            <Link href="/feed" className="home-hub__picks-card">
+              <div className="home-hub__picks-swatches" aria-hidden>
+                {palette.map((hex) => (
+                  <span key={hex} className="home-hub__picks-swatch" style={{ background: hex }} />
+                ))}
+              </div>
+              <div className="home-hub__picks-body">
+                <p className="home-hub__picks-label">
+                  Curated for <strong>{subSeason}</strong>
+                </p>
+                <p className="home-hub__picks-sub">
+                  Real products from UNIQLO, adidas, Sephora — ranked by color match.
+                </p>
+                <span className="home-hub__picks-cta">
+                  shop your palette
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </div>
+            </Link>
+          </section>
 
           <section className="home-hub__coming">
             <h3 className="home-hub__coming-title">Coming soon</h3>

@@ -11,10 +11,11 @@ import {
 export const APP_NAV = [
   { href: "/home", label: "home", icon: "home" },
   { href: "/scan", label: "scan", icon: "scan" },
+  { href: "/feed", label: "picks", icon: "picks" },
   { href: "/profile", label: "profile", icon: "profile" },
 ] as const;
 
-export type AppNavIcon = (typeof APP_NAV)[number]["icon"];
+export type AppNavIcon = "home" | "scan" | "picks" | "profile";
 
 export function isNavActive(pathname: string, href: string): boolean {
   if (href === "/scan") return pathname === href || pathname.startsWith("/scan");
@@ -36,6 +37,14 @@ export function NavIcon({ name, className }: { name: AppNavIcon; className?: str
         <rect x="4" y="7" width="16" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
         <circle cx="12" cy="13" r="3" stroke="currentColor" strokeWidth="1.8" />
         <path d="M9 7V5.5A2.5 2.5 0 0 1 11.5 3h1A2.5 2.5 0 0 1 15 5.5V7" stroke="currentColor" strokeWidth="1.8" />
+      </svg>
+    );
+  }
+  if (name === "picks") {
+    return (
+      <svg className={cn} viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path d="M6 7h15l-1.5 12H7.5L6 7z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+        <path d="M9 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       </svg>
     );
   }

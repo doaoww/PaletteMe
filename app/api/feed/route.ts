@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
-import { SEASON_PRODUCTS } from "@/lib/landing-data";
+import { SEASONS } from "@/lib/landing-data";
 import { searchProducts, rankProduct } from "@/lib/shopstyle";
 import { buildAffiliateUrl } from "@/lib/affiliate";
+import { rankShoppingIntents, toFeedShoppingProduct } from "@/lib/shopping-matcher";
+import { rankCuratedProducts, toFeedCuratedProduct } from "@/lib/curated-product-matcher";
+import type {
+  BudgetPref,
+  ClimatePref,
+  HeightRange,
+  MakeupPref,
+  OccasionPref,
+  StyleDirection,
+  StyleTrend,
+  WardrobeType,
+  WeightRange,
+} from "@/lib/quiz-data";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -11,7 +24,10 @@ export async function GET(request: Request) {
   const season = searchParams.get("season") ?? "spring";
   const bodyType = searchParams.get("bodyType") ?? "";
   const aesthetics = searchParams.get("aesthetics")?.split(",").filter(Boolean) ?? [];
-  const offset = parseInt(searchParams.get("offset") ?? "0");
+  const styleDirections = searchParams.get("styleDirections")?.split(",").filter(Boolean) as StyleDirection[];
+  const occasions = searchParams.get("occasions")?.split(",").filter(Boolean) as OccasionPref[];
+  const trends = searchParams.get("trends")?.split(",").filter(Boolean) as StyleTrend[];
+  const offset = Math.max(0, parseInt(searchParams.get("offset") ?? "0", 10) || 0);
 
   // Use ShopStyle if UID is configured
   if (process.env.SHOPSTYLE_UID) {
@@ -42,20 +58,51 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, products: ranked, source: "shopstyle" });
   }
 
-  // Demo fallback
-  const picks = SEASON_PRODUCTS[season] ?? SEASON_PRODUCTS.spring;
-  const mapped = picks.map((p) => ({
-    id: p.name.toLowerCase().replace(/\s+/g, "-"),
-    name: p.name,
-    brandedName: p.brand,
-    price: parseFloat(p.price.replace(/[^0-9.]/g, "")),
-    image: { sizes: { Best: { url: p.image } } },
-    clickUrl: buildAffiliateUrl(`https://www.asos.com/search/?q=${encodeURIComponent(p.name)}`),
-    hex: p.hex,
-    match: p.match,
-    score: p.match / 100,
-    source: "demo",
-  }));
+  const category = searchParams.get("category") ?? "";
+  const seasonName = SEASONS.find((item) => item.id === season)?.name ?? "your palette";
+  const matchProfile = {
+    seasonId: season,
+    seasonName,
+    subSeason: searchParams.get("subSeason") ?? undefined,
+    bodyType: bodyType || undefined,
+    styleVector: {
+      aesthetics,
+      occasions,
+    },
+    answers: {
+      wardrobeType: (searchParams.get("wardrobeType") as WardrobeType | null) ?? undefined,
+      height: (searchParams.get("height") as HeightRange | null) ?? undefined,
+      weightRange: (searchParams.get("weightRange") as WeightRange | null) ?? undefined,
+      budgetPref: (searchParams.get("budgetPref") as BudgetPref | null) ?? undefined,
+      climatePref: (searchParams.get("climatePref") as ClimatePref | null) ?? undefined,
+      makeupPref: (searchParams.get("makeupPref") as MakeupPref | null) ?? undefined,
+      styleDirections,
+      occasions,
+      trends,
+    },
+  };
 
-  return NextResponse.json({ ok: true, products: mapped, source: "demo" });
+  const pageSize = 20;
+  const curatedAll = rankCuratedProducts(matchProfile, { limit: 100, offset: 0 })
+    .filter((p) => !category || p.intent.category === category);
+  const curatedPage = curatedAll.slice(offset, offset + pageSize).map(toFeedCuratedProduct);
+  const remaining = pageSize - curatedPage.length;
+  const intentOffset = Math.max(0, offset - curatedAll.length);
+  const intentPage =
+    remaining > 0
+      ? rankShoppingIntents(matchProfile, { limit: remaining * 3, offset: intentOffset })
+          .filter((p) => !category || p.intent.category === category)
+          .slice(0, remaining)
+          .map(toFeedShoppingProduct)
+      : [];
+
+  const ranked = [...curatedPage, ...intentPage];
+  const source =
+    curatedPage.length > 0
+      ? intentPage.length > 0
+        ? "curated-products+intent-catalog"
+        : "curated-products"
+      : "intent-catalog";
+
+  return NextResponse.json({ ok: true, products: ranked, source });
 }

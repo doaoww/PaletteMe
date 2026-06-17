@@ -1,99 +1,164 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { QuizProfile } from "@/lib/quiz";
+import "@/app/feed/feed.css";
 
 type FeedProduct = {
   id: string;
   name: string;
   brandedName?: string;
-  price: number;
+  price?: number;
+  priceLabel?: string;
   salePrice?: number;
   image: { sizes: { Best: { url: string } } };
   clickUrl: string;
   hex?: string;
+  swatches?: string[];
   match?: number;
   score?: number;
   source?: string;
+  merchant?: string;
+  searchQuery?: string;
+  reason?: string;
+  fitNote?: string;
+  verdict?: "great" | "good-with-styling" | "maybe";
+  category?: string;
+  colorName?: string;
+  placement?: string;
 };
 
-function ScoreDot({ score }: { score: number }) {
-  const color = score >= 0.8 ? "#22c55e" : score >= 0.55 ? "#eab308" : "#ef4444";
-  return (
-    <span
-      title={`${Math.round(score * 100)}% match`}
-      style={{
-        display: "inline-block",
-        width: 8,
-        height: 8,
-        borderRadius: "50%",
-        background: color,
-        border: "1px solid rgba(0,0,0,0.1)",
-        flexShrink: 0,
-      }}
-    />
-  );
+function hexIsLight(hex: string): boolean {
+  const c = hex.replace("#", "");
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 160;
 }
 
-function ProductCard({ product, onSave }: { product: FeedProduct; onSave: (p: FeedProduct) => void }) {
+function ProductCard({
+  product,
+  onSave,
+  saved,
+}: {
+  product: FeedProduct;
+  onSave: (p: FeedProduct) => void;
+  saved: boolean;
+}) {
   const score = product.score ?? (product.match ? product.match / 100 : 0.7);
-  const imgUrl = product.image?.sizes?.Best?.url ?? "";
+  const swatch = product.hex ?? product.swatches?.[0] ?? "#c2a477";
+  const isLight = hexIsLight(swatch);
+
+  const dotColor = score >= 0.82 ? "#22c55e" : score >= 0.64 ? "#eab308" : "#94a3b8";
+
+  const verdictLabel =
+    product.verdict === "great"
+      ? "great match"
+      : product.verdict === "good-with-styling"
+        ? "style it"
+        : "maybe";
+
+  const verdictClass =
+    product.verdict === "great"
+      ? "feed-product-card__verdict-badge--great"
+      : product.verdict === "good-with-styling"
+        ? "feed-product-card__verdict-badge--good"
+        : "feed-product-card__verdict-badge--maybe";
+
+  const retailerLabel = product.merchant ?? "retailer";
+  const ctaLabel = product.source === "curated-product"
+    ? `view at ${retailerLabel}`
+    : "shop similar";
+
+  const track = (action: "click" | "save") => {
+    fetch("/api/interactions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        productId: product.id,
+        action,
+        merchant: product.merchant,
+        source: product.source,
+        score,
+      }),
+    }).catch(() => {});
+  };
 
   return (
-    <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid var(--hair)", background: "#fff", boxShadow: "0 4px 18px rgba(23,18,26,0.05)" }}>
-      <a
-        href={product.clickUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ display: "block", position: "relative", aspectRatio: "4/5", background: "#f3ede5" }}
-        onClick={() => {
-          // Track click (fire-and-forget)
-          fetch("/api/interactions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productId: product.id, action: "click" }),
-          }).catch(() => {});
-        }}
-      >
-        {imgUrl && (
-          <Image src={imgUrl} alt={product.name} fill style={{ objectFit: "cover" }} unoptimized sizes="240px" />
-        )}
-        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.92)", borderRadius: 100, padding: "4px 8px" }}>
-          <ScoreDot score={score} />
+    <div className="feed-product-card">
+      <div className="feed-product-card__swatch">
+        <div
+          className="feed-product-card__swatch-bg"
+          style={{
+            background: `linear-gradient(145deg, ${swatch}, color-mix(in srgb, ${swatch} 70%, #fff))`,
+          }}
+        />
+        <div className="feed-product-card__swatch-overlay" style={{ opacity: isLight ? 0.15 : 0.35 }} />
+
+        <div className={`feed-product-card__verdict-badge ${verdictClass}`}>
+          {verdictLabel}
         </div>
-      </a>
-      <div style={{ padding: "12px 14px 14px" }}>
-        <p style={{ fontFamily: "var(--sans)", fontSize: "0.88rem", fontWeight: 600, color: "var(--ink)", lineHeight: 1.3, marginBottom: 4 }}>{product.name}</p>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          {product.brandedName && <span style={{ fontFamily: "var(--sans)", fontSize: "0.76rem", color: "var(--ink-soft)" }}>{product.brandedName}</span>}
-          <span style={{ fontFamily: "var(--sans)", fontSize: "0.86rem", fontWeight: 700, color: "var(--ink)" }}>
-            {product.salePrice ? (
-              <>
-                <span style={{ color: "var(--pink)" }}>${product.salePrice}</span>{" "}
-                <span style={{ textDecoration: "line-through", opacity: 0.5, fontSize: "0.76rem" }}>${product.price}</span>
-              </>
-            ) : (
-              `$${product.price}`
-            )}
+
+        <div className="feed-product-card__match-pill">
+          <span className="feed-product-card__match-dot" style={{ background: dotColor }} />
+          <span className="feed-product-card__match-pct">{Math.round(score * 100)}%</span>
+        </div>
+
+        <div className="feed-product-card__swatch-content">
+          <span
+            className="feed-product-card__color-name"
+            style={{ color: isLight ? "rgba(0,0,0,0.82)" : "#fff" }}
+          >
+            {product.colorName ?? product.name}
+          </span>
+          <span
+            className="feed-product-card__category-badge"
+            style={{ color: isLight ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.75)" }}
+          >
+            {product.category ?? "style"}
           </span>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+      </div>
+
+      <div className="feed-product-card__body">
+        <p className="feed-product-card__name">{product.name}</p>
+
+        {product.brandedName && (
+          <div className="feed-product-card__brand">
+            <span className="feed-product-card__brand-name">{product.brandedName.split(" at ")[0]}</span>
+            {product.merchant && (
+              <span className="feed-product-card__retailer-badge">{product.merchant}</span>
+            )}
+          </div>
+        )}
+
+        {product.reason && (
+          <p className="feed-product-card__reason">{product.reason}</p>
+        )}
+
+        <div className="feed-product-card__actions">
           <a
             href={product.clickUrl}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ flex: 1, textAlign: "center", fontFamily: "var(--sans)", fontSize: "0.78rem", fontWeight: 600, background: "var(--ink)", color: "var(--cream)", borderRadius: 100, padding: "8px 0" }}
+            className="feed-product-card__cta"
+            onClick={() => track("click")}
           >
-            shop →
+            {ctaLabel}
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </a>
           <button
             type="button"
-            title="Save"
-            onClick={() => onSave(product)}
-            style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid var(--hair)", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+            className={`feed-product-card__save${saved ? " feed-product-card__save--saved" : ""}`}
+            title={saved ? "saved" : "save"}
+            onClick={() => { onSave(product); track("save"); }}
+            aria-pressed={saved}
           >
-            ♡
+            <svg viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} aria-hidden>
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+            </svg>
           </button>
         </div>
       </div>
@@ -101,23 +166,53 @@ function ProductCard({ product, onSave }: { product: FeedProduct; onSave: (p: Fe
   );
 }
 
-export function ProductFeed({ profile }: { profile: QuizProfile }) {
+export function ProductFeed({
+  profile,
+  category = "",
+}: {
+  profile: QuizProfile;
+  category?: string;
+}) {
   const [products, setProducts] = useState<FeedProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const [source, setSource] = useState("demo");
+  const [source, setSource] = useState("intent-catalog");
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const key = "paletteme_saved";
+    const existing = JSON.parse(localStorage.getItem(key) ?? "[]") as FeedProduct[];
+    setSavedIds(new Set(existing.map((p) => p.id)));
+  }, []);
+
   const loadProducts = useCallback(
-    async (nextOffset: number) => {
+    async (nextOffset: number, cat: string) => {
       setLoading(true);
       const params = new URLSearchParams({
         season: profile.seasonId,
         offset: String(nextOffset),
       });
+      if (cat) params.set("category", cat);
       if (profile.bodyType) params.set("bodyType", profile.bodyType);
-      if (profile.styleVector?.aesthetics.length) {
+      if (profile.subSeason) params.set("subSeason", profile.subSeason);
+      if (profile.answers?.wardrobeType) params.set("wardrobeType", profile.answers.wardrobeType);
+      if (profile.answers?.height) params.set("height", profile.answers.height);
+      if (profile.answers?.weightRange) params.set("weightRange", profile.answers.weightRange);
+      if (profile.answers?.budgetPref) params.set("budgetPref", profile.answers.budgetPref);
+      if (profile.answers?.climatePref) params.set("climatePref", profile.answers.climatePref);
+      if (profile.answers?.makeupPref) params.set("makeupPref", profile.answers.makeupPref);
+      if (profile.answers?.styleDirections?.length) {
+        params.set("styleDirections", profile.answers.styleDirections.join(","));
+      }
+      if (profile.answers?.occasions?.length) {
+        params.set("occasions", profile.answers.occasions.join(","));
+      }
+      if (profile.answers?.trends?.length) {
+        params.set("trends", profile.answers.trends.join(","));
+      }
+      if (profile.styleVector?.aesthetics?.length) {
         params.set("aesthetics", profile.styleVector.aesthetics.join(","));
       }
 
@@ -125,20 +220,24 @@ export function ProductFeed({ profile }: { profile: QuizProfile }) {
       const data = await res.json();
 
       if (data.ok && Array.isArray(data.products)) {
-        setProducts((prev) => nextOffset === 0 ? data.products : [...prev, ...data.products]);
-        setSource(data.source ?? "demo");
+        setProducts((prev) =>
+          nextOffset === 0 ? data.products : [...prev, ...data.products]
+        );
+        setSource(data.source ?? "intent-catalog");
         setHasMore(data.products.length >= 20);
       }
       setLoading(false);
     },
-    [profile.seasonId, profile.bodyType, profile.styleVector]
+    [profile]
   );
 
   useEffect(() => {
-    loadProducts(0);
-  }, [loadProducts]);
+    setProducts([]);
+    setOffset(0);
+    setHasMore(true);
+    loadProducts(0, category);
+  }, [loadProducts, category]);
 
-  // Infinite scroll observer
   useEffect(() => {
     if (!sentinelRef.current) return;
     const obs = new IntersectionObserver(
@@ -146,54 +245,57 @@ export function ProductFeed({ profile }: { profile: QuizProfile }) {
         if (entry.isIntersecting && !loading && hasMore) {
           const next = offset + 20;
           setOffset(next);
-          loadProducts(next);
+          loadProducts(next, category);
         }
       },
       { rootMargin: "200px" }
     );
     obs.observe(sentinelRef.current);
     return () => obs.disconnect();
-  }, [loading, hasMore, offset, loadProducts]);
+  }, [loading, hasMore, offset, loadProducts, category]);
 
   const handleSave = (product: FeedProduct) => {
     const key = "paletteme_saved";
     const existing = JSON.parse(localStorage.getItem(key) ?? "[]") as FeedProduct[];
-    const already = existing.some((p) => p.id === product.id);
-    if (!already) {
+    const alreadySaved = existing.some((p) => p.id === product.id);
+    if (alreadySaved) {
+      const filtered = existing.filter((p) => p.id !== product.id);
+      localStorage.setItem(key, JSON.stringify(filtered));
+      setSavedIds((prev) => { const next = new Set(prev); next.delete(product.id); return next; });
+    } else {
       localStorage.setItem(key, JSON.stringify([product, ...existing]));
+      setSavedIds((prev) => new Set([...prev, product.id]));
     }
-    // Track save (fire-and-forget)
-    fetch("/api/interactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: product.id, action: "save" }),
-    }).catch(() => {});
   };
+
+  const sourceNote =
+    source.includes("curated-products")
+      ? "Showing curated real product pages. Prices and availability are checked on the retailer site."
+      : "These are personalized shopping directions. Links open marketplace searches.";
 
   return (
     <div>
-      <p style={{ fontFamily: "var(--sans)", fontSize: "0.76rem", color: "var(--ink-soft)", opacity: 0.72, marginBottom: 16 }}>
-        Some product links may be affiliate links. PaletteMe may earn a commission.
-      </p>
+      <p className="feed-source-note">{sourceNote}</p>
 
-      {source === "demo" && (
-        <p style={{ fontFamily: "var(--sans)", fontSize: "0.76rem", color: "var(--ink-soft)", opacity: 0.6, marginBottom: 20 }}>
-          Showing placeholder picks — real ShopStyle feed coming soon
-        </p>
-      )}
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 20 }}>
+      <div className="feed-grid">
         {products.map((p) => (
-          <ProductCard key={p.id} product={p} onSave={handleSave} />
+          <ProductCard
+            key={p.id}
+            product={p}
+            onSave={handleSave}
+            saved={savedIds.has(p.id)}
+          />
         ))}
         {loading &&
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} style={{ borderRadius: 12, aspectRatio: "4/5", background: "#f3ede5", animation: "pulse 1.4s ease-in-out infinite" }} />
+            <div key={i} className="feed-skeleton" />
           ))}
+        {!loading && products.length === 0 && (
+          <p className="feed-empty">No picks in this category yet.</p>
+        )}
       </div>
 
       <div ref={sentinelRef} style={{ height: 1 }} />
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }`}</style>
     </div>
   );
 }
