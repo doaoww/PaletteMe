@@ -12,8 +12,8 @@ const WOMENSWEAR_SHAPE_IMAGES: Partial<Record<BodyShape, string>> = {
 const MENSWEAR_SHAPE_IMAGES: Partial<Record<BodyShape, string>> = {
   triangle:            "/images/body-shapes/triangle-men.png",
   rectangle:           "/images/body-shapes/rectangle-men.png",
-  trapezoid:           "/images/body-shapes/trapezoid.png",
-  oval:                "/images/body-shapes/oval.png",
+  trapezoid:           "/images/body-shapes/trapezoid-men.png",
+  oval:                "/images/body-shapes/oval-men.png",
   "inverted-triangle": "/images/body-shapes/inverted-triangle.png",
 };
 
