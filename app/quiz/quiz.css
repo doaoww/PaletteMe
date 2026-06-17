@@ -1233,13 +1233,31 @@
 
 @media (max-width: 620px) {
   .quiz__opts,
-  .quiz-page__cards,
-  .quiz-page__cards--wardrobe {
+  .quiz-page__cards {
     grid-template-columns: 1fr;
   }
 
+  /* Keep wardrobe cards in 2 columns on mobile — 1 column makes them huge */
+  .quiz-page__cards--wardrobe {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .quiz-wardrobe-card {
+    padding: 10px 8px 12px;
+    gap: 8px;
+  }
+
   .quiz-wardrobe-card__frame {
-    max-width: 180px;
+    max-width: 80px;
+  }
+
+  .quiz-wardrobe-card__title {
+    font-size: 0.88rem;
+  }
+
+  .quiz-wardrobe-card__sub {
+    font-size: 0.72rem;
   }
 
   .quiz-swatch-grid--3,
