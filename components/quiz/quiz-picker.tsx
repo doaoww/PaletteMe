@@ -178,12 +178,14 @@ export function BodyShapeCard({
   selected,
   onClick,
   solo,
+  wardrobeType,
 }: {
   label: string;
   shape: BodyShape;
   selected?: boolean;
   onClick: () => void;
   solo?: boolean;
+  wardrobeType?: WardrobeType;
 }) {
   return (
     <button
@@ -192,7 +194,7 @@ export function BodyShapeCard({
       onClick={onClick}
       aria-pressed={selected}
     >
-      <BodyShapeSilhouette shape={shape} className="quiz-body-card__svg" />
+      <BodyShapeSilhouette shape={shape} className="quiz-body-card__svg" wardrobeType={wardrobeType} />
       <span className="quiz-body-card__label">{label}</span>
     </button>
   );

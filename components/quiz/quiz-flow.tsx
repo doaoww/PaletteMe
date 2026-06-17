@@ -815,6 +815,7 @@ export function QuizFlow() {
                   key={opt.id}
                   label={opt.label}
                   shape={opt.id}
+                  wardrobeType={answers.wardrobeType}
                   selected={answers.bodyShape === opt.id}
                   solo={list.length % 2 === 1 && index === list.length - 1}
                   onClick={() => setAnswers((a) => ({ ...a, bodyShape: opt.id }))}

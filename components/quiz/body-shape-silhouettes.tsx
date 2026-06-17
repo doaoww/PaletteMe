@@ -1,27 +1,33 @@
 import type { BodyShape, WardrobeType } from "@/lib/quiz-data";
 
-const SHAPE_IMAGES: Partial<Record<BodyShape, string>> = {
+const WOMENSWEAR_SHAPE_IMAGES: Partial<Record<BodyShape, string>> = {
   hourglass:           "/images/body-shapes/hourglass.png",
   "bottom-hourglass":  "/images/body-shapes/bottom-hourglass.png",
   triangle:            "/images/body-shapes/triangle.png",
   "inverted-triangle": "/images/body-shapes/inverted-triangle.png",
   pear:                "/images/body-shapes/pear.png",
   rectangle:           "/images/body-shapes/rectangle.png",
-  apple:               "/images/body-shapes/apple.png",
-  diamond:             "/images/body-shapes/diamond.png",
-  athletic:            "/images/body-shapes/atheletic.png",
+};
+
+const MENSWEAR_SHAPE_IMAGES: Partial<Record<BodyShape, string>> = {
+  triangle:            "/images/body-shapes/triangle-men.png",
+  rectangle:           "/images/body-shapes/rectangle-men.png",
   trapezoid:           "/images/body-shapes/trapezoid.png",
   oval:                "/images/body-shapes/oval.png",
+  "inverted-triangle": "/images/body-shapes/inverted-triangle.png",
 };
 
 export function BodyShapeSilhouette({
   shape,
   className,
+  wardrobeType,
 }: {
   shape: BodyShape;
   className?: string;
+  wardrobeType?: WardrobeType;
 }) {
-  const src = SHAPE_IMAGES[shape];
+  const map = wardrobeType === "menswear" ? MENSWEAR_SHAPE_IMAGES : WOMENSWEAR_SHAPE_IMAGES;
+  const src = map[shape] ?? WOMENSWEAR_SHAPE_IMAGES[shape];
   if (!src) return null;
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={src} alt={shape} className={className} draggable={false} />;
