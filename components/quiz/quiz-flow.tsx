@@ -192,7 +192,7 @@ const SUPABASE_AUTH_ENV = {
 
 function toggleStyleDirection(current: StyleDirection[], id: StyleDirection): StyleDirection[] {
   if (current.includes(id)) return current.filter((item) => item !== id);
-  if (current.length >= 2) return [current[1], id];
+  if (current.length >= 3) return [...current.slice(1), id];
   return [...current, id];
 }
 
@@ -479,7 +479,7 @@ export function QuizFlow() {
         : step === "body-shape"
           ? "We focus only on what works beautifully for your shape"
           : step === "style-direction"
-            ? "Pick up to 2 style directions"
+            ? "Pick up to 3 — we'll drop the oldest if you pick more"
             : step === "location"
               ? "Used only for outfit and weather suggestions"
               : undefined;
@@ -828,7 +828,7 @@ export function QuizFlow() {
           <div className={screenPanel}>
             <QuizStepHead
               kicker="step 12"
-              title="Pick up to 2 styles that feel like you"
+              title="Pick the styles that feel like you"
             />
             <QuizCardList stack>
               {STYLE_DIRECTION_OPTIONS.map((opt) => (
