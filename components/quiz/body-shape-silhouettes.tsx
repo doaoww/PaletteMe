@@ -14,7 +14,7 @@ const MENSWEAR_SHAPE_IMAGES: Partial<Record<BodyShape, string>> = {
   rectangle:           "/images/body-shapes/rectangle-men.png",
   trapezoid:           "/images/body-shapes/trapezoid-men.png",
   oval:                "/images/body-shapes/oval-men.png",
-  "inverted-triangle": "/images/body-shapes/inverted-triangle.png",
+  "inverted-triangle": "/images/body-shapes/athleticV-men.png",
 };
 
 export function BodyShapeSilhouette({
