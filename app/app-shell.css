@@ -5,7 +5,7 @@
   bottom: 0;
   z-index: 70;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 4px;
   padding: 10px var(--pad) max(12px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--outline-variant);
@@ -2940,14 +2940,6 @@
 
   .scan-page__placeholder {
     text-align: left;
-  }
-
-  .app-chrome--profile-result {
-    grid-template-columns: 1fr;
-  }
-
-  .app-chrome--profile-result .app-sidebar {
-    display: none;
   }
 
   .app-chrome--profile-result .profile-shell--result {
