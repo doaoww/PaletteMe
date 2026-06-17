@@ -2816,7 +2816,7 @@
   }
 
   .home-hub__cards-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
   }
 
@@ -2847,7 +2847,7 @@
   }
 
   .home-hub__coming-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .scan-page__workspace {
@@ -2875,6 +2875,14 @@
     text-align: left;
   }
 
+  .app-chrome--profile-result {
+    grid-template-columns: 1fr;
+  }
+
+  .app-chrome--profile-result .app-sidebar {
+    display: none;
+  }
+
   .app-chrome--profile-result .profile-shell--result {
     min-height: 100dvh;
     overflow: visible;
@@ -2898,6 +2906,14 @@
 }
 
 @media (min-width: 1024px) {
+  .home-hub__cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-hub__coming-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .home-hub__headline {
     font-size: clamp(2.5rem, 3.5vw, 3.5rem);
   }
