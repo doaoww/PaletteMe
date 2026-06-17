@@ -1,5 +1,6 @@
 "use client";
 
+import * as amplitude from "@amplitude/unified";
 import Link from "next/link";
 import { ResultCarousel } from "@/components/profile/result-carousel";
 import { AppChrome } from "@/components/nav/app-chrome";
@@ -344,10 +345,12 @@ function CheckoutButton({
   href,
   children,
   muted,
+  product = "report",
 }: {
   href?: string;
   children: React.ReactNode;
   muted?: boolean;
+  product?: "report" | "pro";
 }) {
   if (!href) {
     return (
@@ -362,6 +365,7 @@ function CheckoutButton({
       href={href}
       className={muted ? "btn btn--ghost" : "btn"}
       style={{ display: "inline-block", textAlign: "center" }}
+      onClick={() => amplitude.track("Report Upgrade Initiated", { product })}
     >
       {children}
     </a>
@@ -381,8 +385,8 @@ function UpgradePanel({ paymentUrls, compact = false }: { paymentUrls: PaymentUr
         </p>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        <CheckoutButton href={paymentUrls.report}>unlock report - $2.99</CheckoutButton>
-        <CheckoutButton href={paymentUrls.pro} muted>upgrade to pro</CheckoutButton>
+        <CheckoutButton href={paymentUrls.report} product="report">unlock report - $2.99</CheckoutButton>
+        <CheckoutButton href={paymentUrls.pro} muted product="pro">upgrade to pro</CheckoutButton>
       </div>
     </div>
   );
@@ -405,7 +409,7 @@ function LockedReportPreview({ paymentUrls }: { paymentUrls: PaymentUrls }) {
           <span key={item} style={lockedChip}>{item}</span>
         ))}
       </div>
-      <CheckoutButton href={paymentUrls.report}>get my full report - $2.99</CheckoutButton>
+      <CheckoutButton href={paymentUrls.report} product="report">get my full report - $2.99</CheckoutButton>
     </div>
   );
 }
@@ -510,7 +514,7 @@ function ProScannerCard({
       </p>
       {!hasPro && (
         <div style={{ marginTop: 8 }}>
-          <CheckoutButton href={paymentUrls.pro}>unlock pro scanner</CheckoutButton>
+          <CheckoutButton href={paymentUrls.pro} product="pro">unlock pro scanner</CheckoutButton>
         </div>
       )}
       {hasPro && (
@@ -664,7 +668,8 @@ export function ProfileView({
   paymentUrls: PaymentUrls;
   freeTestingMode: boolean;
 }) {
-  const season = SEASONS.find((s) => s.id === profile.seasonId) ?? SEASONS[0];
+  const seasonId = analysisResult?.seasonId ?? profile.seasonId;
+  const season = SEASONS.find((s) => s.id === seasonId) ?? SEASONS[0];
   const hasReport = freeTestingMode || canAccessPremium(premiumLevel, "report");
   const hasPro = freeTestingMode || canAccessPremium(premiumLevel, "pro");
   const traits: ColorTraits = {
@@ -673,6 +678,9 @@ export function ProfileView({
     depth: analysisResult?.traits?.depth ?? "medium",
     chroma: analysisResult?.traits?.chroma ?? "balanced",
   };
+  // Sub-season must come from the same source as the macro season above, or the
+  // displayed sub-season name can belong to a different season family entirely
+  // (e.g. a selfie re-analysis disagreeing with the quiz prior on warm vs cool).
   const displaySubSeason = analysisResult?.subSeason ?? profile.subSeason ?? season.name;
   const report = analysisResult?.report ?? buildColorIntelligenceReport({
     season,

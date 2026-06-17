@@ -225,11 +225,8 @@ function mapAxesToSeason(
   // ── WARM ──────────────────────────────────────────────────────────────────
   if (warmCool === "warm") {
     if (depth === "deep") {
-      // Deep + muted = earthy rich autumn; deep + clear = darker warm autumn
-      return {
-        seasonId: "autumn",
-        subSeason: clarity === "muted" ? "Deep Autumn" : "Dark Autumn",
-      };
+      // Warm + deep is always the database's single deep-autumn entry.
+      return { seasonId: "autumn", subSeason: "Dark Autumn" };
     }
     if (depth === "medium") {
       // Warm medium + low contrast or muted = autumn territory
@@ -250,9 +247,9 @@ function mapAxesToSeason(
   // ── COOL ──────────────────────────────────────────────────────────────────
   if (warmCool === "cool") {
     if (depth === "deep") {
-      // Cool deep + high contrast + clear = True Winter (vivid cool)
+      // Cool deep + high contrast + bright = Bright Winter (vivid cool)
       if (contrast === "high" && clarity === "bright") {
-        return { seasonId: "winter", subSeason: "True Winter" };
+        return { seasonId: "winter", subSeason: "Bright Winter" };
       }
       return { seasonId: "winter", subSeason: "Dark Winter" };
     }

@@ -90,7 +90,6 @@ export async function runStructuredStyleResponse<TSchema extends z.ZodType>({
       format: zodTextFormat(schema, schemaName),
     },
     max_output_tokens: maxOutputTokens,
-    temperature: 0,
     store: false,
     prompt_cache_key: promptCacheKey,
     prompt_cache_retention: promptCacheKey ? "24h" : undefined,

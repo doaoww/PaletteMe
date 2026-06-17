@@ -62,6 +62,7 @@ test("structured style response sends schema format and returns parsed output", 
     input: Array<{ role: string; content: Array<{ type: string }> }>;
     text: { format: { type: string } };
     prompt_cache_key: string;
+    temperature?: number;
   };
 
   assert.equal(params.model, "gpt-5.5");
@@ -71,4 +72,9 @@ test("structured style response sends schema format and returns parsed output", 
   assert.equal(params.input[0].content[1].type, "input_image");
   assert.equal(params.text.format.type, "json_schema");
   assert.equal(params.prompt_cache_key, "scan");
+  assert.equal(
+    params.temperature,
+    undefined,
+    "gpt-5.x Responses models reject an explicit temperature param"
+  );
 });

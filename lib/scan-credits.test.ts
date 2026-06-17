@@ -52,7 +52,7 @@ test("blocks scans when the weekly bucket cannot cover the scan cost", () => {
 
   assert.equal(finalAttempt.ok, false);
   assert.equal(finalAttempt.remaining, 1);
-  assert.match(finalAttempt.message, /weekly style checks/i);
+  assert.match(finalAttempt.message ?? "", /weekly style checks/i);
 });
 
 test("refunds consumed credits without exceeding the weekly allowance", () => {

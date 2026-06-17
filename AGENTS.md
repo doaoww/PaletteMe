@@ -341,6 +341,14 @@ Context: The product2 direction requires value before permissions, support for m
 Decision: `/quiz` starts with wardrobe type and style challenge, then builds a deterministic color prior from observable answers. Selfie upload is offered after the quiz as an accuracy boost.
 Consequences: Do not move selfie upload back to the first screen. New style intelligence should use `quizColorEvidence`, `quizConfidence`, `wardrobeType`, and `styleChallenge` when present.
 
+### ADR-014 - Registration required before viewing quiz results
+
+Date: 2026-06-17
+Status: accepted
+Context: Deployment testing showed the team wants signed-in accounts attached to every saved result rather than relying on anonymous local-storage profiles.
+Decision: `components/quiz/quiz-flow.tsx` renders `PostQuizAuthScreen` with no `onSkip` once the quiz finishes, so users must sign in or create an account before being routed to `/profile`. The deterministic quiz prior (and the optional pre-result selfie analysis) still run and save to `localStorage` before this screen renders, so analysis itself stays login-free; only navigating to the results page requires auth.
+Consequences: This supersedes the "see results before signing in" framing in ADR-009/ADR-013. Do not add a skip option back without an explicit product decision, since the two ADRs above no longer reflect the live quiz-completion flow.
+
 ---
 
 ## Feature Changelog
@@ -393,6 +401,10 @@ Replaced the duplicate desktop camera file-picker behavior with live `getUserMed
 
 Added wardrobe type, style challenge, skin tone, detailed eye/hair answers, deterministic quiz color evidence, quiz confidence, and the optional selfie decision screen after the quiz result prior. Warm/deep/muted quiz evidence now prefers Dark Autumn over Winter.
 
+### 2026-06-17 - Scan feature fix and quiz sub-season corrections
+
+Turned on `NEXT_PUBLIC_SCAN_FEATURE_ENABLED` and fixed the actual bug blocking every scan: `lib/server/openai.ts` sent an explicit `temperature: 0` to the OpenAI Responses API, which `gpt-5.5` (and `gpt-5.4`, the analyze-route default) rejects outright. This also meant `/api/analyze` had been silently falling back to the legacy GPT-4o path on every request instead of using the ADR-011 hybrid evidence scorer. Also fixed `lib/quiz.ts`'s `mapAxesToSeason`: warm+deep evidence was labeled "Deep Autumn", a name that does not exist in `lib/season-palettes.ts`'s 12-season database (breaking palette lookups for those users); it now always resolves to the real "Dark Autumn" entry. Cool+deep+high-contrast+bright evidence now resolves to "Bright Winter" instead of "True Winter" to match the database and existing tests. Added a registration-before-results decision record as ADR-014.
+
 ---
 
 ## Gotchas
@@ -413,9 +425,9 @@ The app must keep normal product links working until affiliate IDs are available
 
 Photos are sent to server-side AI providers for analysis. Do not write copy that says otherwise.
 
-### Auth is progressive
+### Auth is progressive, but results now require an account
 
-Users can finish the quiz and see results before signing in. Ask for auth when saving profile, restoring data, or using history/account features.
+Quiz answers and the optional pre-result selfie analysis still run without signing in, and the prior is saved to `localStorage` immediately. As of ADR-014, viewing the results page itself requires sign-in or account creation — `PostQuizAuthScreen` has no skip option. Ask for auth when saving profile, restoring data, or using history/account features, same as before.
 
 ### Color analysis must refuse fake certainty
 

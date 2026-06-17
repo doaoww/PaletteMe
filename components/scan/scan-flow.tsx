@@ -1,5 +1,6 @@
 "use client";
 
+import * as amplitude from "@amplitude/unified";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -18,7 +19,9 @@ import {
 import {
   loadSupabaseQuizProfile,
   saveRestoredQuizProfileToBrowserStorage,
+  loadLocalAnalysisResultForProfile,
 } from "@/lib/profile-restore";
+import type { AnalysisResult } from "@/lib/analysis";
 import { createClient } from "@/lib/supabase";
 import {
   addWardrobeItem,
@@ -66,10 +69,38 @@ type Step = "upload" | "processing" | "result";
 
 const PROCESSING_MSGS = ["Reading colors...", "Matching to your palette...", "Building your verdict..."];
 
+function makeScanThumbnail(file: File, size = 240): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      try {
+        const scale = Math.min(size / img.naturalWidth, size / img.naturalHeight, 1);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { resolve(null); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.7));
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(null);
+    };
+    img.src = objectUrl;
+  });
+}
+
 export function ScanFlow() {
   const router = useRouter();
   const scanFeatureEnabled = isScanFeatureEnabled();
   const [profile, setProfile] = useState<QuizProfile | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [step, setStep] = useState<Step>("upload");
   const [scanType, setScanType] = useState<ScanRequestType>("clothing_item");
   const [file, setFile] = useState<File | null>(null);
@@ -155,6 +186,7 @@ export function ScanFlow() {
       }
 
       setProfile(nextProfile);
+      setAnalysisResult(loadLocalAnalysisResultForProfile<AnalysisResult>());
     }
 
     void restoreScanProfile();
@@ -181,6 +213,7 @@ export function ScanFlow() {
     const creditAttempt = consumeBrowserScanCredits(scanType);
     setCreditState(creditAttempt);
     if (!creditAttempt.ok) {
+      amplitude.track("Paywall Opened", { trigger: "scan_credit_exhausted", scan_type: scanType });
       setPaywallOpen(true);
       return;
     }
@@ -194,16 +227,32 @@ export function ScanFlow() {
   const runScan = async (image: File) => {
     if (!profile) return;
     try {
+      const effectiveProfile: QuizProfile = analysisResult
+        ? {
+            ...profile,
+            seasonId: analysisResult.seasonId ?? profile.seasonId,
+            subSeason: analysisResult.subSeason ?? profile.subSeason,
+          }
+        : profile;
       const formData = buildOutfitScanFormData({
         file: image,
         scanType,
-        profile,
+        profile: effectiveProfile,
       });
+      const thumbnailUrl = await makeScanThumbnail(image);
+      if (thumbnailUrl) formData.append("imageUrl", thumbnailUrl);
       const data = await requestAiScanResult(formData);
-      setResult(adaptAiScanResultToOutfitScanResult(data));
+      const scanResult = adaptAiScanResultToOutfitScanResult(data);
+      amplitude.track("Item Scanned", {
+        scan_type: scanType,
+        verdict: scanResult.score >= 70 ? "yes" : "skip",
+        match_score: Math.round(scanResult.score),
+      });
+      setResult(scanResult);
       setStep("result");
     } catch (err) {
       console.error("[scan] Scan flow failed", err);
+      amplitude.track("Scan Failed", { scan_type: scanType, error_message: err instanceof Error ? err.message : "unknown" });
       setCreditState(refundBrowserScanCredits(scanType));
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setStep("upload");
@@ -212,7 +261,7 @@ export function ScanFlow() {
 
   useEffect(() => {
     if (!profile) return;
-    const sub = profile.subSeason ?? profile.seasonId;
+    const sub = analysisResult?.subSeason ?? profile.subSeason ?? profile.seasonId;
     const subs = [
       `Let's see if this works for your ${sub} palette`,
       "Your palette knows best — let's check",
@@ -220,7 +269,7 @@ export function ScanFlow() {
       "Scan it before you buy it",
     ];
     setScanSubtitle(subs[Math.floor(Math.random() * subs.length)] ?? subs[0]!);
-  }, [profile]);
+  }, [profile, analysisResult]);
 
   const tryOpenPaywall = () => {
     const state = creditState ?? getBrowserScanCreditState();
@@ -239,7 +288,7 @@ export function ScanFlow() {
     setStep("upload");
   };
 
-  const subSeason = profile?.subSeason ?? profile?.seasonId ?? "palette";
+  const subSeason = analysisResult?.subSeason ?? profile?.subSeason ?? profile?.seasonId ?? "palette";
   const remaining = creditState?.remaining ?? DEFAULT_WEEKLY_SCAN_CREDITS;
   const outOfScans = remaining <= 0;
 
@@ -560,6 +609,7 @@ function ReferenceScanResult({
       paletteMatch: scanScoreToMatch(result.score),
       imageDataUrl,
     });
+    amplitude.track("Wardrobe Item Saved", { scan_type: scanType, color_label: parsedColor.name, match_score: Math.round(result.score) });
     setSaved(true);
   };
 

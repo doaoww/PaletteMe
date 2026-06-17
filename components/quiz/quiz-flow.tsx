@@ -1,5 +1,6 @@
 "use client";
 
+import * as amplitude from "@amplitude/unified";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -283,6 +284,7 @@ export function QuizFlow() {
       if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
       setSelfieFile(prepared);
       setSelfiePreviewUrl(URL.createObjectURL(prepared));
+      amplitude.track("Selfie Uploaded", { file_size_bytes: next.size, file_type: next.type });
       setStep("color-selfie");
     },
     [selfiePreviewUrl]
@@ -292,6 +294,12 @@ export function QuizFlow() {
     const enriched = enrichColorAnswers(nextAnswers);
     const quizProfile = buildQuizProfile(enriched, nextScores);
     const winner = SEASONS.find((s) => s.id === quizProfile.seasonId) ?? SEASONS[0];
+    amplitude.track("Quiz Completed", {
+      season_id: quizProfile.seasonId,
+      sub_season: quizProfile.subSeason ?? null,
+      wardrobe_type: nextAnswers.wardrobeType ?? null,
+      confidence: quizProfile.quizConfidence ?? null,
+    });
     setColorResult({
       seasonId: quizProfile.seasonId,
       seasonName: quizProfile.seasonName,
@@ -315,8 +323,10 @@ export function QuizFlow() {
       const res = await fetch("/api/analyze", { method: "POST", body: formData });
       const data = (await res.json().catch(() => ({}))) as AnalyzeResponse;
       if (!res.ok) {
+        const isHardReject = res.status === 422 && data.error === "no_face";
+        amplitude.track("Selfie Analysis Failed", { error_code: data.error ?? "unknown", hard_reject: isHardReject });
         setSelfieError(data.message || data.error || "Analysis failed.");
-        setSelfieHardReject(res.status === 422 && data.error === "no_face");
+        setSelfieHardReject(isHardReject);
         setStep("color-selfie");
         return;
       }
@@ -329,6 +339,7 @@ export function QuizFlow() {
       }
       completeWithSelfieAnalysis(data.result);
     } catch (err) {
+      amplitude.track("Selfie Analysis Failed", { error_code: "exception", hard_reject: false });
       setSelfieError(err instanceof Error ? err.message : "Something went wrong. Try again.");
       setSelfieHardReject(false);
       setStep("color-selfie");
@@ -370,6 +381,11 @@ export function QuizFlow() {
   );
 
   const completeWithSelfieAnalysis = (result: AnalysisResult) => {
+    amplitude.track("Selfie Analysis Completed", {
+      season_id: result.seasonId,
+      sub_season: result.subSeason ?? null,
+      confidence: result.confidence ?? null,
+    });
     saveAnalysisResult(result);
     setColorResult({
       seasonId: result.seasonId,
@@ -546,7 +562,14 @@ export function QuizFlow() {
               palette<span className="me">me</span>
             </p>
             <p className="quiz-page__tagline">Your AI stylist. Know what works for you.</p>
-            <button type="button" className="btn quiz-page__start" onClick={() => setStep("wardrobe-type")}>
+            <button
+              type="button"
+              className="btn quiz-page__start"
+              onClick={() => {
+                amplitude.track("Quiz Started", { source: "intro_screen" });
+                setStep("wardrobe-type");
+              }}
+            >
               let&apos;s start
             </button>
             <p className="quiz-page__fine">No account needed to begin</p>

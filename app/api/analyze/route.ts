@@ -7,6 +7,7 @@ import {
   type SeasonId,
 } from "@/lib/analysis";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { serverTrack, serverFlush } from "@/lib/amplitude-server";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -57,6 +58,13 @@ export async function POST(request: Request) {
 
     const quizHint = parseQuizHint(formData.get("quizHint"));
     const result = await analyzeFaceImage(base64, file.type, quizHint);
+
+    serverTrack("Color Analysis Completed", {
+      season_id: result.seasonId,
+      sub_season: result.subSeason ?? null,
+      confidence: result.confidence ?? null,
+    });
+    void serverFlush();
 
     return NextResponse.json({
       ok: true,

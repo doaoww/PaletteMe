@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { serverTrack, serverFlush } from "@/lib/amplitude-server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createClient as createServerSupabaseClient } from "@/lib/supabase-server";
 import { isSupabaseConfigured } from "@/lib/supabase-db";
@@ -230,6 +231,12 @@ async function runAndSaveScan(
   metadata: ScanHistoryMetadata
 ) {
   const result = await runScanAnalysis(input);
+  serverTrack("Scan Analysis Completed", {
+    scan_type: input.scanType,
+    season_id: metadata.seasonId ?? null,
+    match_score: typeof result.score === "number" ? Math.round(result.score) : null,
+  }, historyContext?.userId);
+  void serverFlush();
   if (historyContext) {
     await saveAuthenticatedScanHistory({
       supabase: historyContext.supabase,

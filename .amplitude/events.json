@@ -1,0 +1,54 @@
+[
+  {
+    "name": "Quiz Started",
+    "description": "User taps 'let's start' on the quiz intro screen."
+  },
+  {
+    "name": "Quiz Completed",
+    "description": "User finishes all quiz steps and a color season prior is determined."
+  },
+  {
+    "name": "Selfie Uploaded",
+    "description": "User selects or captures a selfie photo for color analysis."
+  },
+  {
+    "name": "Selfie Analysis Completed",
+    "description": "AI selfie analysis returns a successful color season result."
+  },
+  {
+    "name": "Selfie Analysis Failed",
+    "description": "AI selfie analysis returns a retake error or hard rejection."
+  },
+  {
+    "name": "Account Created",
+    "description": "User successfully creates a new account after completing the quiz."
+  },
+  {
+    "name": "User Signed In",
+    "description": "User successfully signs in to an existing account."
+  },
+  {
+    "name": "Item Scanned",
+    "description": "User submits an item photo and receives a palette match verdict."
+  },
+  {
+    "name": "Scan Failed",
+    "description": "Item scan returns an error before a verdict is produced."
+  },
+  {
+    "name": "Paywall Opened",
+    "description": "Scan credit paywall modal is shown when user runs out of free scans."
+  },
+  {
+    "name": "Wardrobe Item Saved",
+    "description": "User saves a scanned clothing item to their wardrobe."
+  },
+  {
+    "name": "Color Analysis Completed",
+    "description": "Server-side selfie analysis route returns a successful result."
+  },
+  {
+    "name": "Report Upgrade Initiated",
+    "description": "User taps the unlock report button on the profile page."
+  }
+]

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import * as amplitude from "@amplitude/unified";
 import { createClient } from "@/lib/supabase";
 import {
   AUTH_UNAVAILABLE_MESSAGE,
@@ -91,6 +92,13 @@ export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
 
       const saved = await saveAuthedQuizResult(supabase, data.user);
       if (!saved) return;
+      if (data.user) {
+        amplitude.setUserId(data.user.id);
+        const identifyObj = new amplitude.Identify();
+        identifyObj.setOnce("auth_method", "email");
+        amplitude.identify(identifyObj);
+        amplitude.track("Account Created", { auth_method: "email" });
+      }
       onComplete();
       return;
     }
@@ -104,6 +112,10 @@ export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
 
     const saved = await saveAuthedQuizResult(supabase, data.user);
     if (!saved) return;
+    if (data.user) {
+      amplitude.setUserId(data.user.id);
+      amplitude.track("User Signed In", { auth_method: "email" });
+    }
     onComplete();
   }
 

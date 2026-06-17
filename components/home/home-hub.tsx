@@ -8,6 +8,8 @@ import { ScanPaywallModal } from "@/components/billing/scan-paywall-modal";
 import { loadQuizProfile, type QuizProfile } from "@/lib/quiz";
 import { SEASONS } from "@/lib/landing-data";
 import { buildPreviewColors } from "@/lib/result-palette";
+import { loadLocalAnalysisResultForProfile } from "@/lib/profile-restore";
+import type { AnalysisResult } from "@/lib/analysis";
 import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
 import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan-feature";
 import {
@@ -87,6 +89,7 @@ export function HomeHub() {
   const scanEnabled = isScanFeatureEnabled();
   const scanCopy = getScanComingSoonCopy();
   const [profile, setProfile] = useState<QuizProfile | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [displayName, setDisplayName] = useState("there");
   const [greeting, setGreeting] = useState("Hello");
   const [subtitle, setSubtitle] = useState("");
@@ -133,6 +136,7 @@ export function HomeHub() {
 
       if (!cancelled) {
         setProfile(quizProfile);
+        setAnalysisResult(loadLocalAnalysisResultForProfile<AnalysisResult>());
         setScansLeft(getBrowserScanCreditState().remaining);
         const hour = new Date().getHours();
         setGreeting(greetingFor(hour));
@@ -157,8 +161,9 @@ export function HomeHub() {
     );
   }
 
-  const season = SEASONS.find((s) => s.id === profile.seasonId) ?? SEASONS[0];
-  const subSeason = profile.subSeason ?? season.name;
+  const seasonId = analysisResult?.seasonId ?? profile.seasonId;
+  const season = SEASONS.find((s) => s.id === seasonId) ?? SEASONS[0];
+  const subSeason = analysisResult?.subSeason ?? profile.subSeason ?? season.name;
   const palette = buildPreviewColors(season, 5, subSeason);
   const outOfScans = scansLeft <= 0;
 
@@ -253,15 +258,21 @@ export function HomeHub() {
                       <div
                         className="home-hub__recent-thumb"
                         style={{
-                          background:
-                            scan.colorHex ??
-                            "linear-gradient(145deg, var(--blush), var(--cream-2))",
+                          background: scan.thumbnailUrl
+                            ? undefined
+                            : scan.colorHex ?? "linear-gradient(145deg, var(--blush), var(--cream-2))",
                         }}
                       >
-                        {scan.thumbnailUrl && !scan.colorHex ? (
+                        {scan.thumbnailUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={scan.thumbnailUrl} alt="" />
-                        ) : null}
+                          <img src={scan.thumbnailUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} />
+                        ) : (
+                          <svg viewBox="0 0 24 24" fill="none" aria-hidden style={{ width: 24, height: 24, opacity: 0.4 }}>
+                            <rect x="4" y="7" width="16" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.6" />
+                            <circle cx="12" cy="13" r="3" stroke="currentColor" strokeWidth="1.6" />
+                            <path d="M9 7V5.5A2.5 2.5 0 0 1 11.5 3h1A2.5 2.5 0 0 1 15 5.5V7" stroke="currentColor" strokeWidth="1.6" />
+                          </svg>
+                        )}
                       </div>
                       <div className="home-hub__recent-body">
                         <span

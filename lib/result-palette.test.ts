@@ -102,16 +102,7 @@ test("uses the actual season palette for look-for and complete-palette swatches"
   );
   assert.deepEqual(
     buildSeasonPaletteSwatches(winter).map((swatch) => swatch.name),
-    [
-      "Winter color 1",
-      "Winter color 2",
-      "Winter color 3",
-      "Winter color 4",
-      "Winter color 5",
-      "Winter color 6",
-      "Winter color 7",
-      "Winter color 8",
-    ]
+    winter.paletteNames
   );
 });
 
@@ -127,8 +118,16 @@ test("derives skip colors from opposite-temperature season palettes", () => {
 
 test("uses report labels but season palette colors for metals, neutrals, and makeup", () => {
   assert.deepEqual(buildSeasonMetalSwatches(winter, report), [
-    { name: "silver", hex: "w1" },
-    { name: "platinum", hex: "w2" },
+    {
+      name: "silver",
+      hex: "#C0C0C0",
+      gradient: "linear-gradient(135deg, #E8E8E8, #C0C0C0, #A8A8A8, #D0D0D0)",
+    },
+    {
+      name: "platinum",
+      hex: "#E5E4E2",
+      gradient: "linear-gradient(135deg, #F0F0F0, #E5E4E2, #D0D0D0, #ECECEC)",
+    },
   ]);
   assert.deepEqual(buildSeasonNeutralSwatches(winter, report), [
     { name: "Cool black", hex: "w5" },

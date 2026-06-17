@@ -242,20 +242,78 @@ async function waitForExportStackRender() {
   });
 }
 
+// html2canvas 1.4.1 throws on modern CSS color functions (oklch, color(display-p3 ...))
+// that Tailwind v4 emits. Root cause: html2canvas calls window.getComputedStyle() from
+// the main window on cloned iframe elements, getting oklch/color() values from the main
+// document's CSS cascade, then its own parser throws on those values.
+//
+// Fix: monkeypatch window.getComputedStyle for the duration of the html2canvas call.
+// Every CSSStyleDeclaration it returns is wrapped in a Proxy that converts any
+// oklch/color() string value to rgb() via a single-pixel Canvas 2D lookup — before
+// html2canvas's parser ever sees it.
+
+const MODERN_COLOR_RE = /\b(oklch|oklab|lab|lch|hwb)\s*\(|color\s*\(/i;
+
+function makeCanvasColorConverter(): (cssColor: string) => string {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 1;
+  const ctx = canvas.getContext("2d")!;
+  return (cssColor: string): string => {
+    ctx.clearRect(0, 0, 1, 1);
+    ctx.fillStyle = cssColor;
+    ctx.fillRect(0, 0, 1, 1);
+    const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+    return a < 255
+      ? `rgba(${r},${g},${b},${(a / 255).toFixed(3)})`
+      : `rgb(${r},${g},${b})`;
+  };
+}
+
+function proxyStyleDeclaration(
+  style: CSSStyleDeclaration,
+  toRgb: (c: string) => string,
+): CSSStyleDeclaration {
+  return new Proxy(style, {
+    get(target, prop) {
+      if (typeof prop === "symbol") return Reflect.get(target, prop);
+      if (prop === "getPropertyValue") {
+        return (name: string) => {
+          const v = target.getPropertyValue(name);
+          return typeof v === "string" && MODERN_COLOR_RE.test(v) ? toRgb(v) : v;
+        };
+      }
+      const v = (target as unknown as Record<string, unknown>)[prop];
+      if (typeof v === "string" && MODERN_COLOR_RE.test(v)) return toRgb(v);
+      if (typeof v === "function") return (v as (...a: unknown[]) => unknown).bind(target);
+      return v;
+    },
+  });
+}
+
 async function captureResultElement(element: HTMLElement): Promise<HTMLCanvasElement> {
   const { default: html2canvas } = await import("html2canvas");
   await waitForExportFonts();
 
-  return html2canvas(element, {
-    backgroundColor: "#fff0f5",
-    scale: Math.min(window.devicePixelRatio || 2, 2),
-    useCORS: true,
-    logging: false,
-    windowWidth: element.scrollWidth,
-    windowHeight: element.scrollHeight,
-    scrollX: 0,
-    scrollY: 0,
-  });
+  const toRgb = makeCanvasColorConverter();
+  const originalGCS = window.getComputedStyle;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).getComputedStyle = (el: Element, pseudo?: string | null) =>
+    proxyStyleDeclaration(originalGCS.call(window, el, pseudo ?? null), toRgb);
+
+  try {
+    return await html2canvas(element, {
+      backgroundColor: "#fff0f5",
+      scale: Math.min(window.devicePixelRatio || 2, 2),
+      useCORS: true,
+      logging: false,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+      scrollX: 0,
+      scrollY: 0,
+    });
+  } finally {
+    window.getComputedStyle = originalGCS;
+  }
 }
 
 async function downloadSlidesPdf(
