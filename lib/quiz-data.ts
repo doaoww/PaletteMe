@@ -55,7 +55,7 @@ export type StyleDirection =
   | "romantic"
   | "office"
   | "eclectic";
-export type OccasionPref = "work" | "casual" | "dates" | "events" | "everything";
+export type OccasionPref = "work" | "casual" | "dates" | "events" | "everything" | "nights-out" | "travel" | "gym" | "home";
 export type MakeupPref = "yes" | "no" | "sometimes";
 export type BudgetPref = "budget" | "mid" | "no-limit";
 export type StyleVibe = "minimalist" | "classic" | "casual" | "feminine" | "edgy";
@@ -745,7 +745,11 @@ export const OCCASION_OPTIONS: { id: OccasionPref; label: string }[] = [
   { id: "work", label: "Work" },
   { id: "casual", label: "Everyday casual" },
   { id: "dates", label: "Dates" },
-  { id: "events", label: "Events and parties" },
+  { id: "events", label: "Events & parties" },
+  { id: "nights-out", label: "Nights out" },
+  { id: "travel", label: "Traveling" },
+  { id: "gym", label: "Gym & active days" },
+  { id: "home", label: "Home & WFH" },
   { id: "everything", label: "Everything equally" },
 ];
 
