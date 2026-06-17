@@ -1,13 +1,17 @@
 import type { BodyShape, WardrobeType } from "@/lib/quiz-data";
 
 const SHAPE_IMAGES: Partial<Record<BodyShape, string>> = {
-  hourglass:          "/images/body-shapes/hourglass.png",
-  pear:               "/images/body-shapes/pear.png",
-  rectangle:          "/images/body-shapes/rectangle.png",
-  apple:              "/images/body-shapes/apple.png",
-  "inverted-triangle":"/images/body-shapes/inverted%20triangle.png",
-  diamond:            "/images/body-shapes/diamond.png",
-  athletic:           "/images/body-shapes/atheletic.png",
+  hourglass:           "/images/body-shapes/hourglass.png",
+  "bottom-hourglass":  "/images/body-shapes/bottom-hourglass.png",
+  triangle:            "/images/body-shapes/triangle.png",
+  "inverted-triangle": "/images/body-shapes/inverted-triangle.png",
+  pear:                "/images/body-shapes/pear.png",
+  rectangle:           "/images/body-shapes/rectangle.png",
+  apple:               "/images/body-shapes/apple.png",
+  diamond:             "/images/body-shapes/diamond.png",
+  athletic:            "/images/body-shapes/atheletic.png",
+  trapezoid:           "/images/body-shapes/trapezoid.png",
+  oval:                "/images/body-shapes/oval.png",
 };
 
 export function BodyShapeSilhouette({
@@ -26,13 +30,12 @@ export function BodyShapeSilhouette({
 export type BodyShapeScreenOption = { id: BodyShape; label: string };
 
 const WOMENSWEAR_SHAPES: BodyShapeScreenOption[] = [
-  { id: "hourglass",           label: "Hourglass" },
-  { id: "pear",                label: "Pear" },
-  { id: "rectangle",           label: "Rectangle" },
-  { id: "apple",               label: "Apple" },
-  { id: "inverted-triangle",   label: "Inverted Triangle" },
-  { id: "diamond",             label: "Diamond" },
-  { id: "athletic",            label: "Athletic" },
+  { id: "hourglass",          label: "Hourglass" },
+  { id: "bottom-hourglass",   label: "Bottom Hourglass" },
+  { id: "triangle",           label: "Triangle" },
+  { id: "inverted-triangle",  label: "Inverted Triangle" },
+  { id: "pear",               label: "Pear" },
+  { id: "rectangle",          label: "Rectangle" },
 ];
 
 const MENSWEAR_SHAPES: BodyShapeScreenOption[] = [

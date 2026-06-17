@@ -38,15 +38,16 @@ export type WeightRange = "under-55" | "55-75" | "over-75";
 export type ClimatePref = "hot" | "four-seasons" | "cold";
 export type BodyShape =
   | "hourglass"
+  | "bottom-hourglass"
+  | "triangle"
+  | "inverted-triangle"
   | "pear"
   | "rectangle"
   | "apple"
-  | "inverted-triangle"
   | "diamond"
   | "athletic"
   | "trapezoid"
   | "oval"
-  | "triangle"
   | "petite";
 export type StyleDirection =
   | "minimalist"
@@ -709,12 +710,11 @@ export const WOMENSWEAR_BODY_SHAPES: {
   sub: string;
 }[] = [
   { id: "hourglass", label: "Hourglass", sub: "Shoulders and hips similar, clearly defined waist" },
-  { id: "pear", label: "Pear", sub: "Hips noticeably wider than shoulders" },
+  { id: "bottom-hourglass", label: "Bottom Hourglass", sub: "Similar to hourglass but hips slightly fuller than shoulders" },
+  { id: "triangle", label: "Triangle", sub: "Hips noticeably wider than shoulders" },
+  { id: "inverted-triangle", label: "Inverted Triangle", sub: "Shoulders wider than hips" },
+  { id: "pear", label: "Pear", sub: "Hips wider than shoulders, fuller lower body" },
   { id: "rectangle", label: "Rectangle", sub: "Shoulders and hips similar width, less defined waist" },
-  { id: "apple", label: "Apple", sub: "Fuller midsection, slimmer legs" },
-  { id: "inverted-triangle", label: "Inverted triangle", sub: "Shoulders wider than hips" },
-  { id: "diamond", label: "Diamond", sub: "Narrow shoulders and ankles, widest at hips" },
-  { id: "athletic", label: "Athletic", sub: "Broad shoulders, defined waist, lean hips" },
 ];
 
 export const MENSWEAR_BODY_SHAPES: {
