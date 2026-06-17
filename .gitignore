@@ -52,6 +52,10 @@ next-env.d.ts
 .superpowers/
 *.png
 *.jpeg
+# allow app assets in public/
+!public/**/*.png
+!public/**/*.jpeg
+!public/**/*.jpg
 
 # local dev-server process artifacts
 .codex-next-*.log

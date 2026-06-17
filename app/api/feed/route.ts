@@ -4,6 +4,7 @@ import { searchProducts, rankProduct } from "@/lib/shopstyle";
 import { buildAffiliateUrl } from "@/lib/affiliate";
 import { rankShoppingIntents, toFeedShoppingProduct } from "@/lib/shopping-matcher";
 import { rankCuratedProducts, toFeedCuratedProduct } from "@/lib/curated-product-matcher";
+import { buildShoppingQuery, searchGoogleShopping, toFeedSerpProducts } from "@/lib/serpapi";
 import type {
   BudgetPref,
   ClimatePref,
@@ -28,6 +29,22 @@ export async function GET(request: Request) {
   const occasions = searchParams.get("occasions")?.split(",").filter(Boolean) as OccasionPref[];
   const trends = searchParams.get("trends")?.split(",").filter(Boolean) as StyleTrend[];
   const offset = Math.max(0, parseInt(searchParams.get("offset") ?? "0", 10) || 0);
+
+  // Use Serpapi Google Shopping if key is configured
+  if (process.env.SERPAPI_KEY) {
+    const query = buildShoppingQuery({
+      season,
+      subSeason: searchParams.get("subSeason") ?? undefined,
+      wardrobeType: searchParams.get("wardrobeType") ?? undefined,
+      category: searchParams.get("category") ?? "",
+      styleDirections: styleDirections ?? [],
+    });
+
+    const results = await searchGoogleShopping({ query, num: 40, start: offset });
+    const products = toFeedSerpProducts(results, query).slice(0, 20);
+
+    return NextResponse.json({ ok: true, products, source: "serpapi" });
+  }
 
   // Use ShopStyle if UID is configured
   if (process.env.SHOPSTYLE_UID) {

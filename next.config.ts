@@ -36,6 +36,11 @@ const nextConfig: NextConfig = {
         hostname: "www.sephora.com",
         pathname: "/productimages/**",
       },
+      {
+        protocol: "https",
+        hostname: "**.gstatic.com",
+        pathname: "/**",
+      },
     ],
   },
 };
