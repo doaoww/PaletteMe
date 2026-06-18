@@ -2986,3 +2986,129 @@
     padding: clamp(40px, 6vw, 64px);
   }
 }
+
+/* ── Shared skeleton / shimmer ── */
+
+@keyframes skel-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skel {
+  background: linear-gradient(
+    90deg,
+    var(--cream-2) 25%,
+    color-mix(in srgb, var(--pink) 8%, var(--cream-2)) 50%,
+    var(--cream-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* ── Profile skeleton ── */
+
+.profile-skel {
+  min-height: 100dvh;
+  padding: 18px var(--pad) 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.profile-skel__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--outline-variant);
+  margin-bottom: clamp(32px, 6vh, 56px);
+}
+
+.profile-skel__wordmark {
+  width: 96px;
+  height: 20px;
+}
+
+.profile-skel__chip {
+  width: 64px;
+  height: 20px;
+}
+
+.profile-skel__eyebrow {
+  width: 120px;
+  height: 12px;
+  margin-bottom: 18px;
+}
+
+.profile-skel__season {
+  width: min(280px, 72%);
+  height: clamp(52px, 10vw, 72px);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.profile-skel__sub {
+  width: min(180px, 48%);
+  height: 18px;
+  margin-bottom: clamp(28px, 5vh, 44px);
+}
+
+.profile-skel__palette {
+  display: flex;
+  gap: 8px;
+  margin-bottom: clamp(28px, 5vh, 44px);
+}
+
+.profile-skel__swatch {
+  flex: 1;
+  aspect-ratio: 1 / 2;
+  border-radius: 6px;
+  max-width: 48px;
+}
+
+.profile-skel__line {
+  height: 14px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.profile-skel__line--full  { width: 100%; }
+.profile-skel__line--long  { width: 82%; }
+.profile-skel__line--mid   { width: 60%; }
+.profile-skel__line--short { width: 40%; }
+
+/* ── Saved skeleton ── */
+
+.saved-skel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 32px;
+}
+
+.saved-skel-card {
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 4px;
+}
+
+.saved-skel-card__img {
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+}
+
+.saved-skel-card__title {
+  height: 14px;
+  border-radius: 6px;
+  width: 80%;
+}
+
+.saved-skel-card__sub {
+  height: 11px;
+  border-radius: 6px;
+  width: 50%;
+}

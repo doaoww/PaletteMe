@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     });
 
     const results = await searchGoogleShopping({ query, num: 40, start: offset });
-    const products = toFeedSerpProducts(results, query).slice(0, 20);
+    const products = toFeedSerpProducts(results, query, offset).slice(0, 20);
 
     return NextResponse.json({ ok: true, products, source: "serpapi" });
   }

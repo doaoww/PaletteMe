@@ -54,7 +54,17 @@ export default function SavedPage() {
           Saved <span className="scr" style={{ color: "var(--pink)" }}>pieces</span>
         </p>
 
-        {!ready ? null : items.length === 0 ? (
+        {!ready ? (
+          <div className="saved-skel-grid">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="saved-skel-card">
+                <div className="skel saved-skel-card__img" />
+                <div className="skel saved-skel-card__title" />
+                <div className="skel saved-skel-card__sub" />
+              </div>
+            ))}
+          </div>
+        ) : items.length === 0 ? (
           <div style={{ textAlign: "center", paddingTop: 80 }}>
             <p style={{ fontFamily: "var(--sans)", fontSize: "1.05rem", color: "var(--ink-soft)", marginBottom: 20 }}>
               Nothing saved yet.

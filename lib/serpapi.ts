@@ -4,7 +4,8 @@
 type SerpResult = {
   position: number;
   title: string;
-  link: string;
+  link?: string;
+  product_link?: string;
   source: string;
   price?: string;
   extracted_price?: number;
@@ -122,16 +123,17 @@ function scoreResult(title: string, colorKeywords: string[], position: number): 
 
 export function toFeedSerpProducts(
   results: SerpResult[],
-  query: string
+  query: string,
+  start = 0
 ): object[] {
   const colorKeywords = query.split(" ");
 
   return results
     .filter((r) => r.thumbnail)
-    .map((r) => {
+    .map((r, index) => {
       const score = scoreResult(r.title, colorKeywords, r.position);
       const verdict = score >= 0.82 ? "great" : score >= 0.64 ? "good-with-styling" : "maybe";
-      const id = `serp-${r.position}-${r.source.replace(/\W/g, "").slice(0, 8).toLowerCase()}`;
+      const id = `serp-${start + index}`;
 
       return {
         id,
@@ -141,7 +143,7 @@ export function toFeedSerpProducts(
         priceLabel: r.price ?? "check price",
         salePrice: r.extracted_old_price,
         image: { sizes: { Best: { url: r.thumbnail ?? "" } } },
-        clickUrl: r.link,
+        clickUrl: r.product_link ?? r.link ?? "",
         match: Math.round(score * 100),
         score,
         source: "serpapi",

@@ -137,17 +137,25 @@ function ProfileContent() {
 
 function ProfileLoading() {
   return (
-    <div
-      style={{
-        minHeight: "100svh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "var(--sans)",
-        color: "var(--ink-soft)",
-      }}
-    >
-      Loading your profile…
+    <div className="profile-skel">
+      <div className="profile-skel__topbar">
+        <div className="skel profile-skel__wordmark" />
+        <div className="skel profile-skel__chip" />
+      </div>
+      <div className="skel profile-skel__eyebrow" />
+      <div className="skel profile-skel__season" />
+      <div className="skel profile-skel__sub" />
+      <div className="profile-skel__palette">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="skel profile-skel__swatch" />
+        ))}
+      </div>
+      <div className="skel profile-skel__line profile-skel__line--full" />
+      <div className="skel profile-skel__line profile-skel__line--long" />
+      <div className="skel profile-skel__line profile-skel__line--mid" />
+      <div className="skel profile-skel__line profile-skel__line--short" style={{ marginTop: 24 }} />
+      <div className="skel profile-skel__line profile-skel__line--full" />
+      <div className="skel profile-skel__line profile-skel__line--long" />
     </div>
   );
 }

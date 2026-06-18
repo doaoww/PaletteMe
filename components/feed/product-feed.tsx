@@ -68,9 +68,10 @@ function ProductCard({
         : "feed-product-card__verdict-badge--maybe";
 
   const retailerLabel = product.merchant ?? "retailer";
-  const ctaLabel = product.source === "curated-product"
-    ? `view at ${retailerLabel}`
-    : "shop similar";
+  const ctaLabel =
+    product.source === "serpapi" || product.source === "curated-product"
+      ? `view at ${retailerLabel}`
+      : "shop similar";
 
   const track = (action: "click" | "save") => {
     fetch("/api/interactions", {
@@ -88,7 +89,14 @@ function ProductCard({
 
   return (
     <div className="feed-product-card">
-      <div className="feed-product-card__swatch">
+      <a
+        href={product.clickUrl || undefined}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="feed-product-card__swatch"
+        onClick={() => product.clickUrl && track("click")}
+        style={{ display: "block", textDecoration: "none" }}
+      >
         <div
           className="feed-product-card__swatch-bg"
           style={{
@@ -130,7 +138,7 @@ function ProductCard({
             {product.category ?? "style"}
           </span>
         </div>
-      </div>
+      </a>
 
       <div className="feed-product-card__body">
         <p className="feed-product-card__name">{product.name}</p>
@@ -192,6 +200,10 @@ export function ProductFeed({
   const [source, setSource] = useState("intent-catalog");
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const sentinelRef = useRef<HTMLDivElement>(null);
+  // Track loading synchronously so the scroll observer reads fresh state, not stale closure.
+  const isLoadingRef = useRef(false);
+  // Increment on every new category load; stale responses check against this before writing state.
+  const generationRef = useRef(0);
 
   useEffect(() => {
     const key = "paletteme_saved";
@@ -201,7 +213,11 @@ export function ProductFeed({
 
   const loadProducts = useCallback(
     async (nextOffset: number, cat: string) => {
+      // New category = new generation; scroll pages keep the current generation.
+      const gen = nextOffset === 0 ? ++generationRef.current : generationRef.current;
+      isLoadingRef.current = true;
       setLoading(true);
+
       const params = new URLSearchParams({
         season: profile.seasonId,
         offset: String(nextOffset),
@@ -228,21 +244,33 @@ export function ProductFeed({
         params.set("aesthetics", profile.styleVector.aesthetics.join(","));
       }
 
-      const res = await fetch(`/api/feed?${params}`);
-      const data = await res.json();
+      try {
+        const res = await fetch(`/api/feed?${params}`);
+        const data = await res.json();
 
-      if (data.ok && Array.isArray(data.products)) {
-        setProducts((prev) =>
-          nextOffset === 0 ? data.products : [...prev, ...data.products]
-        );
-        setSource(data.source ?? "intent-catalog");
-        setHasMore(data.products.length >= 20);
+        // Discard if a newer category was selected while this fetch was in flight.
+        if (gen !== generationRef.current) return;
+
+        if (data.ok && Array.isArray(data.products)) {
+          setProducts((prev) =>
+            nextOffset === 0 ? data.products : [...prev, ...data.products]
+          );
+          setSource(data.source ?? "intent-catalog");
+          setHasMore(data.products.length >= 20);
+        }
+      } finally {
+        if (gen === generationRef.current) {
+          isLoadingRef.current = false;
+          setLoading(false);
+        }
       }
-      setLoading(false);
     },
     [profile]
   );
 
+  // This effect runs BEFORE the scroll observer effect below (React runs effects in order).
+  // loadProducts sets isLoadingRef.current=true synchronously, so the observer created
+  // immediately after won't double-fire even though the sentinel is visible (list is empty).
   useEffect(() => {
     setProducts([]);
     setOffset(0);
@@ -254,7 +282,8 @@ export function ProductFeed({
     if (!sentinelRef.current) return;
     const obs = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !loading && hasMore) {
+        // Use the ref, not the `loading` state closure, to get the live value.
+        if (entry.isIntersecting && !isLoadingRef.current && hasMore) {
           const next = offset + 20;
           setOffset(next);
           loadProducts(next, category);
@@ -281,7 +310,9 @@ export function ProductFeed({
   };
 
   const sourceNote =
-    source.includes("curated-products")
+    source === "serpapi"
+      ? "Live products from Google Shopping. Tap any item to visit the retailer."
+      : source.includes("curated-products")
       ? "Showing curated real product pages. Prices and availability are checked on the retailer site."
       : "These are personalized shopping directions. Links open marketplace searches.";
 

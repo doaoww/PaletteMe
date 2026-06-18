@@ -41,6 +41,11 @@ const nextConfig: NextConfig = {
         hostname: "**.gstatic.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "serpapi.com",
+        pathname: "/**",
+      },
     ],
   },
 };
