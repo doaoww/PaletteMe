@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { AppBrand, AppNavLinks, SidebarCreditsCard } from "@/components/nav/app-nav-shared";
+import { AppBrand, AppNavLinks, SidebarCreditsCard, SignOutButton } from "@/components/nav/app-nav-shared";
 
 type Props = {
   open: boolean;
@@ -45,6 +45,7 @@ export function AppMobileDrawer({ open, onClose }: Props) {
         <nav className="app-mobile-drawer__nav">
           <AppNavLinks variant="drawer" onNavigate={onClose} />
         </nav>
+        <SignOutButton onNavigate={onClose} />
         <SidebarCreditsCard />
       </aside>
     </div>

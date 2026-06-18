@@ -8,12 +8,13 @@ import { useRouter } from "next/navigation";
 import type { AnalysisResult } from "@/lib/analysis";
 import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
 import { createClient } from "@/lib/supabase";
-import { saveAnalysisResult } from "@/lib/analysis-storage";
+import { clearAnalysisResult, saveAnalysisResult } from "@/lib/analysis-storage";
 import { SelfieCapture } from "@/components/selfie/selfie-capture";
 import { getBodyShapeScreenOptions } from "@/components/quiz/body-shape-silhouettes";
 import {
   applyAnswer,
   buildQuizProfile,
+  clearQuizProfile,
   deriveBodyType,
   deriveStyleVectorFromAnswers,
   emptyScores,
@@ -813,7 +814,7 @@ export function QuizFlow() {
               title="Which silhouette is closest to yours?"
               helper="This stays completely private and only affects outfit suggestions"
             />
-            <div className="quiz-body-grid">
+            <div className={`quiz-body-grid${answers.wardrobeType === "menswear" ? " quiz-body-grid--men" : ""}`}>
               {getBodyShapeScreenOptions(answers.wardrobeType).map((opt, index, list) => (
                 <BodyShapeCard
                   key={opt.id}
@@ -1060,6 +1061,15 @@ export function QuizAuthGate() {
 
   useEffect(() => {
     if (!authConfigured) return;
+    const isRetake = new URLSearchParams(window.location.search).get("retake") === "1";
+
+    if (isRetake) {
+      clearQuizProfile();
+      clearAnalysisResult();
+      setAuthChecked(true);
+      return;
+    }
+
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) {

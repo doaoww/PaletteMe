@@ -1733,6 +1733,10 @@
     grid-template-columns: repeat(3, 1fr);
   }
 
+  .quiz-body-grid--men {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .quiz-page__cards--wardrobe {
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;

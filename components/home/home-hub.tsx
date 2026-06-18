@@ -193,12 +193,21 @@ export function HomeHub() {
                 <span key={hex} className="home-hub__swatch" style={{ background: hex }} />
               ))}
             </div>
-            <Link href="/profile" className="home-hub__report-link">
-              see full color report
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
+            <div className="home-hub__profile-links">
+              <Link href="/profile" className="home-hub__report-link">
+                see full color report
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
+              <Link href="/quiz?retake=1" className="home-hub__retake-link">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path d="M4 12a8 8 0 1 1 1.5 4.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4 17v-5h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                retake quiz
+              </Link>
+            </div>
           </section>
 
           <section className="home-hub__scan-card">

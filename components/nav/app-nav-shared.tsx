@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   DEFAULT_WEEKLY_SCAN_CREDITS,
@@ -90,6 +90,49 @@ export function AppNavLinks({
         );
       })}
     </>
+  );
+}
+
+export function SignOutButton({ onNavigate }: { onNavigate?: () => void }) {
+  const router = useRouter();
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) return;
+    import("@/lib/supabase").then(({ createClient }) => {
+      createClient().auth.getUser().then(({ data: { user } }) => {
+        setVisible(!!user);
+      });
+    });
+  }, []);
+
+  if (!visible) return null;
+
+  async function handleSignOut() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) return;
+    const { createClient } = await import("@/lib/supabase");
+    await createClient().auth.signOut();
+    onNavigate?.();
+    router.push("/quiz");
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleSignOut()}
+      className="app-nav-signout"
+    >
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden className="app-nav-icon">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points="10 17 15 12 10 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+      <span>sign out</span>
+    </button>
   );
 }
 

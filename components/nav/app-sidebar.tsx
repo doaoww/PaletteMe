@@ -1,6 +1,6 @@
 "use client";
 
-import { AppBrand, AppNavLinks, SidebarCreditsCard } from "@/components/nav/app-nav-shared";
+import { AppBrand, AppNavLinks, SidebarCreditsCard, SignOutButton } from "@/components/nav/app-nav-shared";
 
 export function AppSidebar() {
   return (
@@ -9,6 +9,7 @@ export function AppSidebar() {
       <nav className="app-sidebar__nav">
         <AppNavLinks variant="sidebar" />
       </nav>
+      <SignOutButton />
       <SidebarCreditsCard />
     </aside>
   );
