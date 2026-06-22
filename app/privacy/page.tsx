@@ -45,7 +45,7 @@ export default function PrivacyPage() {
           </p>
           <p>
             <strong>Contact:</strong><br />
-            Email: <a href="mailto:privacy@paletteme.com" style={{ color: "var(--primary)" }}>privacy@paletteme.com</a><br />
+            Email: <a href="mailto:privacy@paletteme.app" style={{ color: "var(--primary)" }}>privacy@paletteme.app</a><br />
             For data deletion or access requests, please email us with subject line &quot;Data Request&quot;.
           </p>
         </Section>
@@ -198,8 +198,8 @@ export default function PrivacyPage() {
           </ul>
           <p>
             To exercise any of these rights, email{" "}
-            <a href="mailto:privacy@paletteme.com" style={{ color: "var(--primary)" }}>
-              privacy@paletteme.com
+            <a href="mailto:privacy@paletteme.app" style={{ color: "var(--primary)" }}>
+              privacy@paletteme.app
             </a>{" "}
             with subject &quot;Data Request&quot;. We will respond within 30 days.
           </p>
@@ -225,7 +225,7 @@ export default function PrivacyPage() {
             PaletteMe is not directed at children under 13 years of age. We do not knowingly collect
             personal data from children under 13. If you believe a child has provided us with personal
             data, please contact us at{" "}
-            <a href="mailto:privacy@paletteme.com" style={{ color: "var(--primary)" }}>privacy@paletteme.com</a>{" "}
+            <a href="mailto:privacy@paletteme.app" style={{ color: "var(--primary)" }}>privacy@paletteme.app</a>{" "}
             and we will delete it promptly.
           </p>
         </Section>
