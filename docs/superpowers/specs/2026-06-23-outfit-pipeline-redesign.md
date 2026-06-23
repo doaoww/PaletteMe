@@ -131,13 +131,18 @@ type OutfitItemBrief = {
 
 ```typescript
 function buildSearchQueries(item: OutfitItemBrief, dna: StyleDNA, gender: string): string[] {
-  const base = `${item.category} ${item.color} ${gender}`;
   return [
-    `${item.category} ${item.color} ${item.fabric} ${gender}`,  // primary
-    `${item.category} ${item.color} ${gender}`,                  // fallback 1
-    `${item.category} ${gender}`,                                // fallback 2
+    // Primary: category + color + fabric + style signal
+    `${item.category} ${item.color} ${item.fabric} ${dna.styleDirection} ${gender}`,
+    // Fallback 1: category + color + gender
+    `${item.category} ${item.color} ${gender}`,
+    // Fallback 2: category only + gender
+    `${item.category} ${gender}`,
   ];
 }
+// Style direction is included in the primary query so SerpAPI returns
+// style-matched products (streetwear cargo, not office cargo).
+```
 ```
 
 **SerpAPI with fallback chain:**
@@ -160,32 +165,46 @@ best = pickBestProduct(filtered)
 
 ---
 
-### Layer 4 — Pinterest Hero Image per Outfit
+### Layer 4 — Pinterest as Inspiration (before brief generation)
 
 **File:** `app/api/style-analysis/full/route.ts`
 
-Pinterest is already wired for hair + moodboard. Extend to outfits:
+Pinterest runs BEFORE outfit brief generation, not after. Pins serve as visual reference for the AI — not decoration added after the fact.
+
+**Timing:** after Style DNA is computed, before the AI brief generation call. Pinterest HTTP call takes ~0.8s — negligible vs the ~20s AI call it precedes.
 
 ```typescript
-// For each outfit brief, build a style-specific Pinterest query
-function buildPinterestOutfitQuery(brief: OutfitBrief, dna: StyleDNA): string {
-  return `${dna.styleDirection} outfit ${brief.vibe} ${brief.occasion}`;
-  // e.g.: "streetwear outfit editorial casual Dark Autumn"
+// Build query from the full Style DNA — includes user's stated style
+function buildPinterestInspirationQuery(dna: StyleDNA): string {
+  // All four dimensions of the user's style:
+  const style = dna.styleDirection;       // "streetwear"
+  const season = dna.colorSeason;         // "Dark Autumn"
+  const occasion = dna.occasionMix[0];   // "casual"
+  const gender = dna.gender;             // "women"
+  return `${style} outfit ${season} editorial ${occasion} ${gender}`;
+  // e.g.: "streetwear outfit Dark Autumn editorial casual women"
 }
 
-// In the enrichment Promise.all:
-const enrichedOutfits = await Promise.all(
-  outfitBriefs.map(async (brief) => {
-    const [pinterestPin, items] = await Promise.all([
-      searchPinterestPins(buildPinterestOutfitQuery(brief, dna), 1).catch(() => []),
-      enrichOutfitItems(brief.items, dna),
-    ]);
-    return { ...brief, heroImage: pinterestPin[0] ?? null, items };
-  })
-);
+// Step 4.5 — before brief generation:
+const inspirationPins = await searchPinterestPins(
+  buildPinterestInspirationQuery(dna), 3
+).catch(() => []);
+
+// Pins are injected into the outfit brief prompt:
+// "VISUAL INSPIRATION (style reference only — match this aesthetic):
+//  Pin 1: [imageUrl] — [title]
+//  Pin 2: [imageUrl] — [title]"
 ```
 
-**Fallback:** if `PINTEREST_ACCESS_TOKEN` is not set or returns empty, `heroImage: null`. UI renders items grid only — no error state.
+**Pinterest query always includes:**
+- User's stated styleDirection (streetwear, minimalist, etc.)
+- Color season (Dark Autumn, True Winter, etc.)
+- User's primary occasion (casual, work, etc.)
+- Gender
+
+**Result:** one pin per outfit used as hero image. AI brief generation is grounded in real editorial fashion photos matching the user's style.
+
+**Fallback:** if `PINTEREST_ACCESS_TOKEN` is not set, brief generation proceeds without visual reference. `heroImage: null` in enriched outfit — UI renders items grid only.
 
 ---
 
