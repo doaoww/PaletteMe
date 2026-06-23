@@ -260,7 +260,6 @@ export function buildStyleProfilePrompt(data: {
 
   // Deterministic color season guard — uses derivedUndertone from bridge (not from faceFeatures)
   const contrastScore = scores.contrastScore as number | undefined;
-  const contrastLevel = scores.contrastLevel as string | undefined;
   const undertone = data.derivedUndertone;
 
   let colorGuard = "";
@@ -269,14 +268,14 @@ export function buildStyleProfilePrompt(data: {
 Build all color recommendations around this season's palette.
 Do not assign a different season. Do not suggest "borderline" alternatives as the primary.`;
   } else if (contrastScore !== undefined && undertone) {
-    if (contrastScore >= 65 && (undertone === "cool" || undertone === "cool-neutral")) {
+    if (contrastScore >= 65 && undertone === "cool") {
       colorGuard = `⚠ HIGH CONTRAST + COOL UNDERTONE (contrastScore: ${contrastScore}).
 Assign a WINTER season: True Winter, Dark Winter, or Bright Winter.
 DO NOT assign Summer — Summer requires low contrast (score <40).`;
-    } else if (contrastScore < 40 && (undertone === "cool" || undertone === "cool-neutral")) {
+    } else if (contrastScore < 40 && undertone === "cool") {
       colorGuard = `Low contrast + cool undertone (contrastScore: ${contrastScore}) → Summer family.
 DO NOT assign Winter — that requires high contrast (≥65).`;
-    } else if ((undertone === "warm" || undertone === "warm-neutral") && contrastScore && contrastScore >= 55) {
+    } else if (undertone === "warm" && contrastScore && contrastScore >= 55) {
       colorGuard = `Warm undertone + moderate-high contrast (${contrastScore}) → Autumn family.
 DO NOT assign Winter — Winter requires COOL undertone.`;
     }
