@@ -10,8 +10,9 @@ import { buildReportComposerInstructions, buildReportComposerPrompt } from "@/li
 import { searchGoogleShopping } from "@/lib/serpapi";
 import { searchPinterestPins } from "@/lib/clients/pinterest";
 import { searchUnsplashPhotos } from "@/lib/clients/unsplash";
-import { extractDominantColors, productMatchesPalette } from "@/lib/clients/google-vision";
+import { extractDominantColors, productMatchesPalette, colorDistance } from "@/lib/clients/google-vision";
 import { pickBestProduct } from "@/lib/product-ranker";
+import { buildStyleDNA, StyleDNA } from "@/lib/style-dna";
 import { pickBestMakeupProduct, buildMakeupSearchQuery } from "@/lib/makeup-ranker";
 import { searchBeautyProduct, scoreIngredientsForSkinType, extractKeyIngredients } from "@/lib/clients/openbeautyfacts";
 import {
@@ -106,6 +107,70 @@ async function fetchMakeupProduct(
   }
 }
 
+async function fetchProductWithFallback(
+  queries: [string, string, string],
+  targetColorHex?: string | null,
+  paletteHexes?: string[],
+  gl?: string,
+  hl?: string,
+  siteOperators?: string,
+): Promise<Awaited<ReturnType<typeof fetchProduct>>> {
+  for (const query of queries) {
+    const results = await searchGoogleShopping({ query, num: 10, gl, hl, siteOperators }).catch(() => []);
+    if (results.length === 0) continue;
+
+    // Color proximity filter if targetColorHex and Vision key are available
+    let filtered = results;
+    if (targetColorHex && process.env.GOOGLE_VISION_API_KEY) {
+      const colorChecked = await Promise.all(
+        results.slice(0, 5).map(async (r) => {
+          if (!r.thumbnail) return { r, match: false };
+          try {
+            const colors = await extractDominantColors(r.thumbnail);
+            const match = colors.some(
+              (c) => c.score > 0.05 && colorDistance(c.hex, targetColorHex) < 45,
+            );
+            return { r, match };
+          } catch { return { r, match: false }; }
+        })
+      );
+      const colorMatches = colorChecked.filter((x) => x.match).map((x) => x.r);
+      if (colorMatches.length >= 2) filtered = colorMatches;
+    }
+
+    const best = pickBestProduct(filtered);
+    if (best?.imageUrl) {
+      return {
+        title: best.title,
+        price: best.price,
+        imageUrl: best.imageUrl,
+        link: best.link,
+        source: best.source,
+        tasteScore: best.tasteScore,
+        qualityScore: best.qualityScore,
+        paletteMatch: paletteHexes && best.imageUrl
+          ? null  // skip Vision check — already did it above
+          : null,
+      };
+    }
+  }
+  return null;
+}
+
+function buildItemFallbackQueries(
+  item: { piece?: string; searchQuery: string; colorHex?: string | null; fabric?: string | null },
+  dna: StyleDNA,
+): [string, string, string] {
+  const piece = item.piece ?? item.searchQuery.split(" ").slice(0, 2).join(" ");
+  const gender = dna.gender === "man" ? "men" : "women";
+  const colorName = item.colorHex ? item.colorHex : "";
+  return [
+    item.searchQuery,                                              // primary (from AI, includes style vocab)
+    `${piece} ${colorName} ${gender}`.trim(),                     // simpler
+    `${piece.split(" ").slice(-2).join(" ")} ${gender}`,          // category only
+  ];
+}
+
 async function enrichWithProducts<T extends { searchQuery: string }>(
   items: T[],
   paletteHexes?: string[],
@@ -184,6 +249,22 @@ export async function POST(request: Request) {
 
     const model = getConfiguredStyleModel();
 
+    // ── Step 4.5: Style DNA + Pinterest inspiration ──────────────────────────
+    const resolvedSeason =
+      (profileData.colorBridgeResult?.locked ? profileData.colorBridgeResult.season : null)
+      ?? (profileData.styleProfile.colorSeasonFamily as string | undefined)
+      ?? "True Summer";
+
+    const styleDNA = buildStyleDNA(
+      profileData.styleProfile as { kibbeType: string; bestFabrics: string[]; colorSeasonFamily?: string },
+      quiz,
+      resolvedSeason,
+      profileData.gender,
+    );
+
+    // Fetch Pinterest inspiration BEFORE the AI call (~0.8s, runs before the ~20s AI call)
+    const inspirationPins = await searchPinterestPins(styleDNA.pinterestQuery, 3).catch(() => []);
+
     // ── Step 5: Full report generation ───────────────────────────────────────
     // Uses FullReportSchema directly — no mini-result overhead since mini was already generated.
     const report = await runStructuredStyleResponse({
@@ -197,6 +278,8 @@ export async function POST(request: Request) {
         bodyAnalysis: bodyAnalysis as object,
         quiz: quiz as object,
         seasonContext,
+        styleDNA,
+        inspirationPins,
       }),
       model,
       maxOutputTokens: 14000,
@@ -221,10 +304,32 @@ export async function POST(request: Request) {
       searchPinterestPins(moodboardQuery, 6).catch(() => []),
       enrichWithProducts(report.clothing.items, paletteHexes, serpGl, currentSeason, hl, siteOperators),
       Promise.all(
-        report.outfits.outfits.map(async (outfit) => ({
-          ...outfit,
-          items: await enrichWithProducts(outfit.items, paletteHexes, serpGl, currentSeason, hl, siteOperators),
-        }))
+        report.outfits.outfits.map(async (outfit) => {
+          // Find Pinterest pin for this outfit as hero image
+          const heroPinQuery = `${styleDNA.styleDirection} ${outfit.occasion} outfit editorial ${styleDNA.colorSeason}`;
+          const heroPin = await searchPinterestPins(heroPinQuery, 1).catch(() => []);
+
+          const enrichedItems = await Promise.all(
+            outfit.items.map(async (item) => {
+              const queries = buildItemFallbackQueries(item, styleDNA);
+              const product = await fetchProductWithFallback(
+                queries,
+                (item as { colorHex?: string | null }).colorHex ?? null,
+                paletteHexes,
+                serpGl,
+                hl,
+                siteOperators,
+              );
+              return { ...item, product };
+            })
+          );
+
+          return {
+            ...outfit,
+            items: enrichedItems,
+            heroImage: heroPin[0] ?? null,
+          };
+        })
       ),
       enrichWithProducts(report.shoppingList.buyFirst, paletteHexes, serpGl, currentSeason, hl, siteOperators),
       enrichWithProducts(
