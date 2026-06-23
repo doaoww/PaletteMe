@@ -29,17 +29,27 @@ import { z } from "zod";
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-// ── Product helpers (identical to main route) ────────────────────────────────
+// Request-scoped SerpAPI cache — prevents duplicate calls for identical queries
+// within a single enrichment pass (e.g. same category appears in multiple outfits)
+type SerpCache = Map<string, Awaited<ReturnType<typeof searchGoogleShopping>>>;
+
+// ── Product helpers ───────────────────────────────────────────────────────────
 
 async function fetchProduct(
   searchQuery: string,
   paletteHexes?: string[],
   gl?: string,
   hl?: string,
-  siteOperators?: string
+  siteOperators?: string,
+  cache?: SerpCache,
 ) {
   try {
-    const results = await searchGoogleShopping({ query: searchQuery, num: 8, gl, hl, siteOperators });
+    const cacheKey = `${searchQuery}|${gl}|${siteOperators ?? ""}`;
+    let results = cache?.get(cacheKey);
+    if (!results) {
+      results = await searchGoogleShopping({ query: searchQuery, num: 5, gl, hl, siteOperators });
+      cache?.set(cacheKey, results);
+    }
     if (results.length === 0) return null;
 
     const best = pickBestProduct(results);
@@ -73,13 +83,19 @@ async function fetchMakeupProduct(
   skinType?: string,
   skinConcerns?: string[],
   gl?: string,
-  hl?: string
+  hl?: string,
+  cache?: SerpCache,
 ) {
   try {
     const query = skinType
       ? buildMakeupSearchQuery(baseQuery, skinType, skinConcerns ?? [])
       : baseQuery;
-    const results = await searchGoogleShopping({ query, num: 8, gl, hl });
+    const cacheKey = `${query}|${gl}|makeup`;
+    let results = cache?.get(cacheKey);
+    if (!results) {
+      results = await searchGoogleShopping({ query, num: 5, gl, hl });
+      cache?.set(cacheKey, results);
+    }
     if (results.length === 0) return null;
 
     const best = pickBestMakeupProduct(results);
@@ -114,9 +130,15 @@ async function fetchProductWithFallback(
   gl?: string,
   hl?: string,
   siteOperators?: string,
+  cache?: SerpCache,
 ): Promise<Awaited<ReturnType<typeof fetchProduct>>> {
   for (const query of queries) {
-    const results = await searchGoogleShopping({ query, num: 10, gl, hl, siteOperators }).catch(() => []);
+    const cacheKey = `${query}|${gl}|${siteOperators ?? ""}`;
+    let results = cache?.get(cacheKey);
+    if (!results) {
+      results = await searchGoogleShopping({ query, num: 5, gl, hl, siteOperators }).catch(() => []);
+      cache?.set(cacheKey, results);
+    }
     if (results.length === 0) continue;
 
     // Color proximity filter if targetColorHex and Vision key are available
@@ -175,7 +197,8 @@ async function enrichWithProducts<T extends { searchQuery: string }>(
   gl?: string,
   season?: string,
   hl?: string,
-  siteOperators?: string
+  siteOperators?: string,
+  cache?: SerpCache,
 ): Promise<(T & { product: Awaited<ReturnType<typeof fetchProduct>> })[]> {
   const results: (T & { product: Awaited<ReturnType<typeof fetchProduct>> })[] = [];
   for (let i = 0; i < items.length; i += 4) {
@@ -185,7 +208,7 @@ async function enrichWithProducts<T extends { searchQuery: string }>(
         const query = season
           ? addSeasonToQuery(item.searchQuery, season as Parameters<typeof addSeasonToQuery>[1])
           : item.searchQuery;
-        return { ...item, product: await fetchProduct(query, paletteHexes, gl, hl, siteOperators) };
+        return { ...item, product: await fetchProduct(query, paletteHexes, gl, hl, siteOperators, cache) };
       })
     );
     results.push(...fetched);
@@ -221,6 +244,9 @@ const FullReportRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  // One cache per request — deduplicates identical SerpAPI queries across sections
+  const serpCache: SerpCache = new Map();
+
   try {
     const body = await request.json();
     const parsed = FullReportRequestSchema.safeParse(body);
@@ -300,10 +326,10 @@ export async function POST(request: Request) {
       searchPinterestPins(report.hair.referenceSearchQueries[0], 4).catch(() => []),
       searchUnsplashPhotos(report.hair.referenceSearchQueries[0], 3).catch(() => []),
       searchPinterestPins(moodboardQuery, 6).catch(() => []),
-      enrichWithProducts(report.clothing.items, paletteHexes, serpGl, currentSeason, hl, siteOperators),
+      enrichWithProducts(report.clothing.items, paletteHexes, serpGl, currentSeason, hl, siteOperators, serpCache),
       Promise.all(
-        report.outfits.outfits.map(async (outfit) => {
-          // Find Pinterest pin for this outfit as hero image
+        // Cap at 8 outfits for enrichment — the AI may generate 12-15 but enriching all burns SerpAPI budget
+        report.outfits.outfits.slice(0, 8).map(async (outfit) => {
           const heroPinQuery = `${styleDNA.styleDirection} ${outfit.occasion} outfit editorial ${styleDNA.colorSeason}`;
           const heroPin = await searchPinterestPins(heroPinQuery, 1).catch(() => []);
 
@@ -317,6 +343,7 @@ export async function POST(request: Request) {
                 serpGl,
                 hl,
                 siteOperators,
+                serpCache,
               );
               return { ...item, product };
             })
@@ -329,19 +356,20 @@ export async function POST(request: Request) {
           };
         })
       ),
-      enrichWithProducts(report.shoppingList.buyFirst, paletteHexes, serpGl, currentSeason, hl, siteOperators),
+      enrichWithProducts(report.shoppingList.buyFirst, paletteHexes, serpGl, currentSeason, hl, siteOperators, serpCache),
       enrichWithProducts(
         report.styleMistakes.replaceThese.map((m) => ({ ...m, searchQuery: m.replacementSearchQuery })),
         paletteHexes,
         serpGl,
         undefined,
         hl,
-        siteOperators
+        siteOperators,
+        serpCache,
       ),
       Promise.all(
         report.makeup.products.map(async (p) => ({
           ...p,
-          product: await fetchMakeupProduct(p.searchQuery, skinType ?? undefined, skinConcerns, serpGl, hl),
+          product: await fetchMakeupProduct(p.searchQuery, skinType ?? undefined, skinConcerns, serpGl, hl, serpCache),
         }))
       ),
     ]);
