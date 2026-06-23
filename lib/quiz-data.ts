@@ -62,6 +62,87 @@ export type BudgetPref = "budget" | "mid" | "no-limit";
 export type StyleVibe = "minimalist" | "classic" | "casual" | "feminine" | "edgy";
 export type StyleTrend = "y2k" | "old-money" | "boho" | "retro" | "goth-lite" | "none";
 
+// ─── Taste signals — captured before any visual analysis ─────────────────────
+export type StyleMood =
+  | "quiet-luxury"      // understated, investment pieces, old money energy
+  | "editorial"         // fashion-forward, current, slightly avant-garde
+  | "soft-romantic"     // feminine, soft fabrics, delicate, intimate
+  | "sharp-minimal"     // geometric, structured, monochrome, clean
+  | "natural-ease"      // relaxed, earthy, effortless, organic textures
+  | "street-edge"       // urban, bold, sneakers, contrast, asymmetry
+  | "classic-polished"  // tailored, timeless, always appropriate
+  | "not-sure";         // suggest based on their visual type
+
+export type AdventureLevel =
+  | "safe"      // proven classics, nothing risky
+  | "balanced"  // 70% reliable, 30% fresh and interesting
+  | "bold";     // push me toward something interesting
+
+export const STYLE_MOOD_OPTIONS: {
+  id: StyleMood;
+  label: string;
+  sub: string;
+  keywords: string[];
+}[] = [
+  { id: "quiet-luxury",    label: "Quiet luxury",      sub: "Quality over flash, nothing loud",         keywords: ["cashmere", "tailored", "neutral", "old money"] },
+  { id: "editorial",       label: "Trend-forward",     sub: "Current, statement, fashion-aware",        keywords: ["avant-garde", "statement", "contemporary"] },
+  { id: "soft-romantic",   label: "Soft & feminine",   sub: "Flowy fabrics, delicate details",          keywords: ["flowy", "lace", "soft", "feminine"] },
+  { id: "sharp-minimal",   label: "Sharp minimal",     sub: "Clean lines, structured, nothing extra",   keywords: ["structured", "monochrome", "architectural"] },
+  { id: "natural-ease",    label: "Natural & relaxed", sub: "Earthy tones, linen, effortless",          keywords: ["linen", "earthy", "relaxed", "organic"] },
+  { id: "street-edge",     label: "Street & bold",     sub: "Urban, expressive, your own rules",        keywords: ["urban", "oversized", "bold", "sneakers"] },
+  { id: "classic-polished",label: "Classic & polished",sub: "Timeless, tailored, always put-together",  keywords: ["classic", "polished", "tailored"] },
+  { id: "not-sure",        label: "Help me find it",   sub: "No clear vision yet — AI picks for you",   keywords: [] },
+];
+
+export const ADVENTURE_LEVEL_OPTIONS: {
+  id: AdventureLevel;
+  label: string;
+  sub: string;
+}[] = [
+  {
+    id: "safe",
+    label: "Keep it proven",
+    sub: "Show me what always works — classics I can trust",
+  },
+  {
+    id: "balanced",
+    label: "Mix it up",
+    sub: "Mostly reliable, but with some fresh and interesting pieces",
+  },
+  {
+    id: "bold",
+    label: "Push me",
+    sub: "I want something memorable — I can handle more interesting choices",
+  },
+];
+
+export type Aesthetic =
+  | "old-money"
+  | "clean-girl"
+  | "soft-feminine"
+  | "streetwear"
+  | "office-siren"
+  | "minimal-luxury"
+  | "dark-romantic"
+  | "coastal";
+
+export const AESTHETIC_OPTIONS: {
+  id: Aesthetic;
+  label: string;
+  sub: string;
+  keywords: string[];
+  emoji: string;
+}[] = [
+  { id: "old-money",      label: "Old money",       sub: "Quiet luxury, neutral palette, quality fabrics",    keywords: ["cashmere", "tailored", "camel", "neutral", "investment"], emoji: "🏛" },
+  { id: "clean-girl",     label: "Clean girl",      sub: "Minimal, effortless, white + neutral tones",        keywords: ["minimal", "clean", "effortless", "white", "tote"],       emoji: "☁️" },
+  { id: "soft-feminine",  label: "Soft feminine",   sub: "Romantic, draped, blush tones, delicate details",   keywords: ["romantic", "floral", "draped", "blush", "lace"],         emoji: "🌸" },
+  { id: "streetwear",     label: "Streetwear",      sub: "Relaxed, oversized, utilitarian, urban",            keywords: ["oversized", "cargo", "sneakers", "urban", "hooded"],     emoji: "🏙" },
+  { id: "office-siren",   label: "Office siren",    sub: "Tailored, polished, powerful silhouettes",          keywords: ["blazer", "tailored", "structured", "power dressing"],    emoji: "💼" },
+  { id: "minimal-luxury", label: "Minimal luxury",  sub: "Structured, monochrome, editorial",                 keywords: ["monochrome", "architectural", "structured", "editorial"], emoji: "◼" },
+  { id: "dark-romantic",  label: "Dark romantic",   sub: "Rich colors, velvet, moody, layered",               keywords: ["velvet", "burgundy", "moody", "lace", "dark"],           emoji: "🌹" },
+  { id: "coastal",        label: "Coastal",         sub: "Linen, light, relaxed, nautical",                   keywords: ["linen", "striped", "relaxed", "nautical", "natural"],    emoji: "🌊" },
+];
+
 // Phase 1 — color quiz
 export type VeinColor = "blue-purple" | "green" | "greenish" | "mix";
 export type MetalPref = "gold" | "silver" | "both";
@@ -120,14 +201,25 @@ export type QuizAnswers = {
   weightSkipped?: boolean;
   weightRange?: WeightRange;
   city?: string;
+  countryCode?: string;
   climatePref?: ClimatePref;
   locationSkipped?: boolean;
   weatherTemp?: number;
   weatherHumidity?: number;
   weatherUv?: number;
+  // taste signals
+  styleMood?: StyleMood;
+  styleMoods?: StyleMood[];
+  adventureLevel?: AdventureLevel;
   // compat
   height?: HeightRange;
   bodyShape?: BodyShape;
+  // free-text measurements (new style-setup flow)
+  heightCm?: string;
+  weightKg?: string;
+  // from selfie AI analysis
+  faceShape?: string;
+  aesthetics?: Aesthetic[];
 };
 
 // ─── Color quiz options ────────────────────────────────────────────────────
@@ -248,22 +340,22 @@ export const VEIN_OPTIONS: {
   {
     id: "blue-purple",
     label: "Blue or purple",
-    sub: "cool undertone",
+    sub: "cool",
     swatch: "#8B89C8",
     scores: { summer: 2, winter: 2 },
     undertone: "cool",
   },
   {
     id: "green",
-    label: "Greenish",
-    sub: "warm undertone",
+    label: "Green or olive",
+    sub: "warm",
     swatch: "#6B8E4E",
     scores: { spring: 2, autumn: 2 },
     undertone: "warm",
   },
   {
     id: "mix",
-    label: "Both / hard to tell",
+    label: "Can't tell",
     sub: "neutral",
     swatch: "#9B96A8",
     scores: { spring: 1, summer: 1, autumn: 1, winter: 1 },
@@ -613,8 +705,8 @@ export const SUN_OPTIONS: {
   {
     id: "burns",
     emoji: "",
-    label: "Burns quickly, barely tans",
-    hint: "I always need SPF, I rarely get color",
+    label: "Burns, rarely tans",
+    hint: "",
     scores: { summer: 2, winter: 1 },
     undertone: "cool",
   },
@@ -622,7 +714,7 @@ export const SUN_OPTIONS: {
     id: "burns-tans",
     emoji: "",
     label: "Burns first, then tans",
-    hint: "Takes time but I eventually tan",
+    hint: "",
     scores: { spring: 1, summer: 1, autumn: 1, winter: 1 },
     undertone: "neutral",
   },
@@ -630,15 +722,15 @@ export const SUN_OPTIONS: {
     id: "tans",
     emoji: "",
     label: "Tans easily, rarely burns",
-    hint: "Sun doesn't bother me much",
+    hint: "",
     scores: { spring: 2, autumn: 1 },
     undertone: "warm",
   },
   {
     id: "never-burns",
     emoji: "",
-    label: "Never burns, always tans",
-    hint: "My skin handles sun very well",
+    label: "Never burns, tans deeply",
+    hint: "",
     scores: { autumn: 2, spring: 1 },
     undertone: "warm",
   },
@@ -768,9 +860,19 @@ export const BUDGET_PREF_OPTIONS: {
   label: string;
   sub: string;
 }[] = [
-  { id: "budget", label: "Budget-friendly", sub: "I love a good find, value matters" },
-  { id: "mid", label: "Mid-range", sub: "I invest in pieces I'll wear for years" },
-  { id: "no-limit", label: "No limit", sub: "I buy what I love when I love it" },
+  { id: "budget", label: "Under $50 per item", sub: "High street, sales, good finds" },
+  { id: "mid", label: "$50 – $200 per item", sub: "Quality basics, occasional splurges" },
+  { id: "no-limit", label: "$200+ per item", sub: "I invest in pieces that last" },
+];
+
+export const WARDROBE_TYPE_SIMPLE_OPTIONS: {
+  id: WardrobeType;
+  label: string;
+  sub: string;
+}[] = [
+  { id: "womenswear", label: "Women's", sub: "dresses, skirts, feminine cuts" },
+  { id: "menswear", label: "Men's", sub: "shirts, trousers, suits" },
+  { id: "unisex", label: "Both / unisex", sub: "I wear from both or prefer no labels" },
 ];
 
 export const BODY_SHAPE_OPTIONS = [

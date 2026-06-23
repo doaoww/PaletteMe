@@ -44,8 +44,21 @@
 .quiz-page__track span {
   display: block;
   height: 100%;
+  width: 100%;
   background: var(--pink-deep);
-  transition: width 0.6s ease-in-out;
+  transform-origin: left center;
+  transition: transform 0.6s ease-in-out;
+  border-radius: 0 2px 2px 0;
+}
+
+/* Progress bar used in style-setup — compositor-only animation via scaleX */
+.quiz-page__bar-progress {
+  display: block;
+  height: 3px;
+  width: 100%;
+  background: var(--pink-deep);
+  transform-origin: left center;
+  transition: transform 0.55s ease-in-out;
   border-radius: 0 2px 2px 0;
 }
 
@@ -807,10 +820,79 @@
   color: #fff;
 }
 
+.selfie-capture__flash-overlay {
+  position: fixed;
+  inset: 0;
+  /* Warm white — softer on the face than cold blue-white */
+  background: #fffdf7;
+  z-index: 40;
+  pointer-events: none;
+  /* Subtle fade-in so it doesn't flash harshly */
+  animation: fillLightIn 0.3s ease;
+}
+
+@keyframes fillLightIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Glow ring around the camera to signal fill light is active */
+.selfie-capture__camera--lit .selfie-capture__video {
+  box-shadow: 0 0 0 3px rgba(255, 253, 240, 0.9), 0 0 24px 8px rgba(255, 248, 210, 0.6);
+}
+
+.selfie-capture__fill-light-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.04em;
+  text-align: center;
+  user-select: none;
+}
+
 .selfie-capture__camera {
+  position: relative;
+  z-index: 41;
   width: min(320px, 100%);
   display: grid;
   gap: 12px;
+}
+
+.selfie-capture__ctrl-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.selfie-capture__ctrl-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.28);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0.72;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.selfie-capture__ctrl-btn:hover {
+  opacity: 1;
+}
+
+.selfie-capture__ctrl-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.selfie-capture__ctrl-btn--active {
+  background: rgba(255, 255, 255, 0.9);
+  color: #111111;
+  border-color: rgba(0, 0, 0, 0.08);
+  opacity: 1;
 }
 
 .selfie-capture__video {
@@ -1330,6 +1412,70 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--pink-deep) 18%, transparent);
 }
 
+/* ── Measurements step ──────────────────────────────────────────────────────── */
+
+.quiz-page__measurements {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 4px;
+}
+
+.quiz-page__measure-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quiz-page__measure-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.quiz-page__measure-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quiz-page__measure-input {
+  flex: 1;
+  padding: 14px 16px;
+  border: 1.5px solid var(--outline-variant);
+  border-radius: 12px;
+  background: #fff;
+  font-family: var(--sans);
+  font-size: 1.1rem;
+  color: var(--on-surface);
+  -moz-appearance: textfield;
+}
+
+.quiz-page__measure-input::-webkit-outer-spin-button,
+.quiz-page__measure-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.quiz-page__measure-input::placeholder {
+  color: color-mix(in srgb, var(--ink-soft) 60%, transparent);
+}
+
+.quiz-page__measure-input:focus {
+  outline: none;
+  border-color: var(--pink-deep);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pink-deep) 18%, transparent);
+}
+
+.quiz-page__measure-unit {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  min-width: 28px;
+}
+
 .quiz-page__footer-btn {
   width: min(480px, 100%);
   min-height: 52px;
@@ -1783,4 +1929,252 @@
     width: 80px;
     height: 120px;
   }
+}
+
+/* ── Analysis loading screen ───────────────────────────────────────────────── */
+
+.analyzing-screen {
+  min-height: 100dvh;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(32px, 8vw, 64px) var(--pad);
+}
+
+.analyzing-screen__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: min(480px, 100%);
+  text-align: center;
+}
+
+/* Pulsing face photo ring */
+.analyzing-screen__photo-ring {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  padding: 4px;
+  background: linear-gradient(135deg, var(--pink-deep), var(--lilac));
+  animation: ring-pulse 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes ring-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pink-deep) 30%, transparent); }
+  50%       { box-shadow: 0 0 0 12px color-mix(in srgb, var(--pink-deep) 0%, transparent); }
+}
+
+.analyzing-screen__photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Title */
+.analyzing-screen__title {
+  font-family: var(--serif);
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-weight: 400;
+  color: var(--on-surface);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* Cycling message */
+.analyzing-screen__message {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+  min-height: 1.4em;
+  animation: fade-in-up 0.5s ease both;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Progress bar */
+.analyzing-screen__track {
+  width: 100%;
+  height: 3px;
+  background: var(--outline-variant);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.analyzing-screen__fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--pink-deep), var(--lilac));
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.8s ease-out;
+  border-radius: 2px;
+}
+
+/* Sub-text */
+.analyzing-screen__sub {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  opacity: 0.7;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  margin: 0;
+}
+
+/* Error state */
+.analyzing-screen__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: color-mix(in srgb, var(--pink-deep) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pink-deep) 20%, transparent);
+  border-radius: 12px;
+  width: 100%;
+}
+
+.analyzing-screen__error p {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--on-surface);
+  margin: 0;
+  text-align: center;
+}
+
+.analyzing-screen__retry {
+  background: var(--pink-deep);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: lowercase;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.analyzing-screen__retry:hover { opacity: 0.88; }
+
+/* ── Style setup: photo steps ──────────────────────────────────────────────── */
+
+.style-setup__photo-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0 4px;
+}
+
+.style-setup__photo-preview-img {
+  width: min(260px, 100%);
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(23, 18, 26, 0.14);
+  display: block;
+}
+
+.style-setup__photo-retake {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-transform: lowercase;
+  cursor: pointer;
+  letter-spacing: 0;
+  transition: color 0.15s;
+}
+
+.style-setup__photo-retake:hover {
+  color: var(--on-surface);
+}
+
+.style-setup__skip-link {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  background: none;
+  border: none;
+  padding: 12px 0;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  text-align: center;
+  text-transform: lowercase;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.style-setup__skip-link:hover {
+  color: var(--on-surface);
+}
+
+/* ── Aesthetic selection step ──────────────────────────────────────────────── */
+
+.quiz-aesthetic-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 16px 24px;
+}
+
+.quiz-aesthetic-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 12%, transparent);
+  background: var(--color-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.quiz-aesthetic-card--selected {
+  border-color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.quiz-aesthetic-emoji {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.quiz-aesthetic-label {
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: 0;
+}
+
+.quiz-aesthetic-sub {
+  font-family: var(--font-sans);
+  font-size: 0.77rem;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  line-height: 1.3;
 }
