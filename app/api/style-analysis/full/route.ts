@@ -148,9 +148,7 @@ async function fetchProductWithFallback(
         source: best.source,
         tasteScore: best.tasteScore,
         qualityScore: best.qualityScore,
-        paletteMatch: paletteHexes && best.imageUrl
-          ? null  // skip Vision check — already did it above
-          : null,
+        paletteMatch: null,
       };
     }
   }
