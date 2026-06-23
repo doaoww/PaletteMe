@@ -181,11 +181,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, products: [], queries: searchQueries, source: "dna-queries" });
   }
 
-  // Run the first two queries and merge results
+  // Run first 4 queries in parallel — enough for a full feed without excessive latency
   const countryCode = (body?.countryCode as string | undefined) ?? "us";
   const allResults = await Promise.all(
-    searchQueries.slice(0, 2).map((q) =>
-      searchGoogleShopping({ query: q, num: 20, start: 0, gl: countryCode })
+    searchQueries.slice(0, 4).map((q) =>
+      searchGoogleShopping({ query: q, num: 10, start: 0, gl: countryCode })
     )
   );
   const merged = allResults.flat();
