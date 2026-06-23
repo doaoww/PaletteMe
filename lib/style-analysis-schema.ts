@@ -251,6 +251,9 @@ const OutfitSchema = z.object({
   heroPiece: z.string(),
   searchQuery: z.string(),
   stylistNote: z.string().nullish(),  // why this outfit works for their specific type+DNA
+  pinterestQuery: z.string().describe(
+    'Pinterest search query for the outfit mood image. Format: "{aesthetic} {occasion} outfit {main color} editorial". Example: "old money everyday outfit cream ivory editorial women"'
+  ),
 });
 
 const OutfitsSectionSchema = z.object({

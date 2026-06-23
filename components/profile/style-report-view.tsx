@@ -167,6 +167,7 @@ type FullReport = {
       heroPiece: string;
       searchQuery: string;
       stylistNote?: string | null;
+      pinterestQuery?: string | null;
       heroImage?: { imageUrl: string; pinLink: string; title: string | null } | null;
     }[];
     buildingPrinciple: string;

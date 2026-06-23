@@ -830,6 +830,7 @@ export function buildReportComposerPrompt(data: {
   seasonContext?: string;
   styleDNA?: StyleDNA;
   inspirationPins?: Array<{ imageUrl: string; pinLink: string; title: string | null }>;
+  aesthetics?: string[];
 }): string {
   const profile = data.styleProfile as Record<string, unknown>;
   const scores = data.computedScores as Record<string, unknown>;
@@ -867,6 +868,11 @@ export function buildReportComposerPrompt(data: {
     styleTrend && styleTrend !== "none" ? `Trend they're drawn to: ${styleTrend}` : null,
   ].filter(Boolean).join(". ");
 
+  const aestheticsRaw = data.aesthetics ?? (quiz.aesthetics as string[] | undefined) ?? [];
+  const aestheticsLabel = aestheticsRaw.length > 0
+    ? aestheticsRaw.join(", ")
+    : null;
+
   // Height → proportion context
   const heightMap: Record<string, string> = {
     "under-160": "petite (under 160 cm) — avoid cropped items that cut the leg, prefer high waist, avoid midi unless ankle-grazing, maxi dresses must be floor-length not ankle",
@@ -885,6 +891,7 @@ export function buildReportComposerPrompt(data: {
 
   const tasteContext = [
     `Style mood: ${quiz.styleMood ?? "not-sure"}`,
+    aestheticsLabel ? `Aesthetic direction (user-selected): ${aestheticsLabel}` : null,
     `Adventure level: ${quiz.adventureLevel ?? "balanced"}`,
     `Budget: ${budgetLabel}`,
     `Occasions needed: ${occasionLabel}`,
@@ -952,10 +959,43 @@ Each outfit MUST include:
 STYLE COHERENCE RULE: All items in one outfit must share the same Style DNA vocabulary.
 Do not mix: streetwear cargo pants + romantic lace blouse. That is a style clash and is forbidden.
 
-SEARCH QUERY FORMAT per item:
-"[specific category] [color name] [fabric signal] [style direction] [gender]"
-Example for streetwear woman: "wide-leg cargo trouser off-white cotton twill streetwear women"
-Example for minimalist woman: "straight-leg trouser camel wool tailored women"
+SEARCH QUERY FORMAT per item — NON-NEGOTIABLE:
+Each item's searchQuery MUST follow this exact structure:
+"[silhouette/cut] [color name] [fabric signal] [aesthetic keyword] [gender]"
+
+Rules:
+- Include the SPECIFIC CUT (wide-leg, bias-cut, oversized, fitted, midi, relaxed, straight, etc.)
+- Include the EXACT COLOR from their palette (ivory, dusty rose, camel — NOT just "beige")
+- Include a FABRIC SIGNAL (linen, satin, cashmere, crepe, cotton twill, silk, jersey, velvet, etc.)
+- Include ONE aesthetic keyword from their direction (minimal, tailored, relaxed, oversized, etc.)
+- End with gender (women/men)
+- MINIMUM 5 words. "cream top women" is REJECTED.
+
+GOOD examples:
+- "wide-leg cream linen trouser high waist minimal women"
+- "ivory draped satin blouse v-neck relaxed women"
+- "tan leather pointed-toe mule minimal women"
+- "camel oversized blazer unstructured tailored women"
+- "dusty rose bias-cut midi slip dress minimal women"
+- "dark olive wide-leg cargo trouser relaxed streetwear women"
+- "burgundy velvet midi skirt straight dark romantic women"
+
+BAD examples (will return garbage search results — never write these):
+- "cream pants women" → no fabric, no cut
+- "top women" → useless
+- "old money blazer" → no fabric/color/cut/gender
+- "dusty rose dress" → no silhouette, no fabric
+
+PINTEREST QUERY per outfit — REQUIRED:
+Each outfit MUST include "pinterestQuery" following this exact format:
+"{aesthetic} {occasion} outfit {main near-face color} editorial {gender}"
+
+Examples:
+- "old money everyday outfit ivory cream editorial women"
+- "clean girl work outfit white minimal editorial women"
+- "dark romantic evening outfit burgundy velvet editorial women"
+- "coastal weekend outfit linen natural editorial women"
+- "soft feminine brunch outfit blush draped editorial women"
 
 OUTFIT OCCASIONS RULE: Only generate outfits for the occasions listed above ("${occasionLabel}").
 Do NOT generate formal/evening outfits if the person listed "casual" only. Match their actual life.
