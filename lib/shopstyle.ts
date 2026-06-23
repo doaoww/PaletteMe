@@ -157,3 +157,36 @@ export function rankProduct(
   const b = bodyTypeScore(product, bodyType);
   return c * 0.5 + s * 0.3 + b * 0.2;
 }
+
+import { scoreShopStyleProduct } from "@/lib/product-ranker";
+
+export type EnrichedFashionProduct = {
+  title: string;
+  price: string | null;
+  imageUrl: string | null;
+  link: string | null;
+  source: "shopstyle";
+};
+
+export async function searchFashionItem(
+  query: string
+): Promise<EnrichedFashionProduct | null> {
+  const products = await searchProducts({ fts: query, limit: 20 });
+  if (products.length === 0) return null;
+
+  const scored = products
+    .map((p) => ({ raw: p, scored: scoreShopStyleProduct(p) }))
+    .filter((p) => p.scored.imageUrl !== null && p.scored.finalScore > 30)
+    .sort((a, b) => b.scored.finalScore - a.scored.finalScore);
+
+  const best = scored[0];
+  if (!best) return null;
+
+  return {
+    title: best.scored.title,
+    price: best.scored.price,
+    imageUrl: best.scored.imageUrl,
+    link: best.raw.clickUrl, // always use clickUrl (affiliate link) — never scored.link
+    source: "shopstyle",
+  };
+}

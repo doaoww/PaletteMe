@@ -8,6 +8,7 @@ import { runStructuredStyleResponse, getConfiguredStyleModel } from "@/lib/serve
 import { FullReportSchema } from "@/lib/style-analysis-schema";
 import { buildReportComposerInstructions, buildReportComposerPrompt } from "@/lib/prompts/report-composer";
 import { searchGoogleShopping } from "@/lib/serpapi";
+import { searchFashionItem } from "@/lib/shopstyle";
 import { searchPinterestPins } from "@/lib/clients/pinterest";
 import { searchUnsplashPhotos } from "@/lib/clients/unsplash";
 import { extractDominantColors, productMatchesPalette, colorDistance } from "@/lib/clients/google-vision";
@@ -191,6 +192,40 @@ function buildItemFallbackQueries(
   ];
 }
 
+// Try ShopStyle first (fashion aggregator, better image quality for clothing).
+// Falls back to SerpAPI via fetchProductWithFallback if ShopStyle returns nothing.
+async function fetchOutfitItem(
+  item: { piece?: string; searchQuery: string; colorHex?: string | null; fabric?: string | null },
+  dna: StyleDNA,
+  paletteHexes: string[],
+  gl: string,
+  hl: string,
+  siteOperators: string | undefined,
+  cache: SerpCache,
+): Promise<Awaited<ReturnType<typeof fetchProduct>>> {
+  // 1. Try ShopStyle (primary)
+  if (process.env.SHOPSTYLE_UID) {
+    const shopResult = await searchFashionItem(item.searchQuery).catch(() => null);
+    if (shopResult?.imageUrl) {
+      // tasteScore/qualityScore are not computed for ShopStyle results;
+      // cast to match fetchProduct's inferred return type (both are 0 at runtime consumers)
+      return {
+        title: shopResult.title,
+        price: shopResult.price,
+        imageUrl: shopResult.imageUrl,
+        link: shopResult.link,
+        source: shopResult.source,
+        tasteScore: 0,
+        qualityScore: 0,
+        paletteMatch: null,
+      };
+    }
+  }
+  // 2. Fall back to SerpAPI (3-query variant)
+  const queries = buildItemFallbackQueries(item, dna);
+  return fetchProductWithFallback(queries, item.colorHex ?? null, paletteHexes, gl, hl, siteOperators, cache);
+}
+
 async function enrichWithProducts<T extends { searchQuery: string }>(
   items: T[],
   paletteHexes?: string[],
@@ -330,23 +365,19 @@ export async function POST(request: Request) {
       Promise.all(
         // Cap at 8 outfits for enrichment — the AI may generate 12-15 but enriching all burns SerpAPI budget
         report.outfits.outfits.slice(0, 8).map(async (outfit) => {
-          const heroPinQuery = `${styleDNA.styleDirection} ${outfit.occasion} outfit editorial ${styleDNA.colorSeason}`;
+          // Use user's selected aesthetic for Pinterest query if available,
+          // else fall back to styleDNA.styleDirection
+          const aesthetics = (quiz as Record<string, unknown>).aesthetics as string[] | undefined;
+          const aestheticTerm = aesthetics?.[0] ?? styleDNA.styleDirection;
+          const heroPinQuery = outfit.pinterestQuery
+            ?? `${aestheticTerm} ${outfit.occasion} outfit editorial ${styleDNA.colorSeason}`;
           const heroPin = await searchPinterestPins(heroPinQuery, 1).catch(() => []);
 
           const enrichedItems = await Promise.all(
-            outfit.items.map(async (item) => {
-              const queries = buildItemFallbackQueries(item, styleDNA);
-              const product = await fetchProductWithFallback(
-                queries,
-                (item as { colorHex?: string | null }).colorHex ?? null,
-                paletteHexes,
-                serpGl,
-                hl,
-                siteOperators,
-                serpCache,
-              );
-              return { ...item, product };
-            })
+            outfit.items.map(async (item) =>
+              fetchOutfitItem(item, styleDNA, paletteHexes, serpGl, hl, siteOperators, serpCache)
+                .then((product) => ({ ...item, product }))
+            )
           );
 
           return {
