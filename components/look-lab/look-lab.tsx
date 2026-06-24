@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LookLabSeason } from "./look-lab-season";
 import { LookLabBlock } from "./look-lab-block";
 import { LookLabCard } from "./look-lab-card";
@@ -21,6 +21,28 @@ type LookLabProps = {
 
 export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
   const { faceLandmarker, ready, error } = useMediaPipe();
+
+  const [hairstyles, setHairstyles] = useState(lookLab.hairstyles);
+
+  useEffect(() => {
+    if (!unlocked || !photoDataUrl) return;
+    if (hairstyles.every(s => s.generatedImageUrl)) return; // all already generated
+
+    const abortController = new AbortController();
+    fetch("/api/look-lab/hairstyles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ photoDataUrl, hairstyles }),
+      signal: abortController.signal,
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { hairstyles: typeof hairstyles } | null) => {
+        if (data?.hairstyles) setHairstyles(data.hairstyles);
+      })
+      .catch(() => {});
+
+    return () => abortController.abort();
+  }, [unlocked, photoDataUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Memoised handler factory for makeup transforms
   const makeMakeupHandler = useCallback(
@@ -96,6 +118,7 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
           {/* Block 2 — Metals */}
           <LookLabBlock title="Metals">
             <LookLabCard
+              key={`gold-${ready}`}
               photoDataUrl={photoDataUrl}
               label={`Gold ${lookLab.metals.gold.score}%`}
               verdict={lookLab.metals.gold.score >= 60 ? "best" : "okay"}
@@ -103,6 +126,7 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
               onCanvasReady={makeMetalHandler("#D4AF37")}
             />
             <LookLabCard
+              key={`silver-${ready}`}
               photoDataUrl={photoDataUrl}
               label={`Silver ${lookLab.metals.silver.score}%`}
               verdict={lookLab.metals.silver.score >= 60 ? "okay" : "avoid"}
@@ -122,7 +146,7 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
           <LookLabBlock title="Blush">
             {lookLab.blush.map(opt => (
               <LookLabCard
-                key={opt.name}
+                key={`${opt.name}-${ready}`}
                 photoDataUrl={photoDataUrl}
                 label={opt.name}
                 verdict={opt.verdict}
@@ -135,7 +159,7 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
           <LookLabBlock title="Lips">
             {lookLab.lips.map(opt => (
               <LookLabCard
-                key={opt.name}
+                key={`${opt.name}-${ready}`}
                 photoDataUrl={photoDataUrl}
                 label={opt.name}
                 verdict={opt.verdict}
@@ -148,7 +172,7 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
           <LookLabBlock title="Eye Shadow">
             {lookLab.eyeshadow.map(opt => (
               <LookLabCard
-                key={opt.name}
+                key={`${opt.name}-${ready}`}
                 photoDataUrl={photoDataUrl}
                 label={opt.name}
                 verdict={opt.verdict}
@@ -162,7 +186,7 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
           <LookLabBlock title="Hair Colour">
             {lookLab.hairColor.map(opt => (
               <LookLabCard
-                key={opt.name}
+                key={`${opt.name}-${ready}`}
                 photoDataUrl={photoDataUrl}
                 label={opt.name}
                 verdict={opt.verdict}
@@ -174,7 +198,7 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
 
           {/* Block 6 — Hairstyles */}
           <LookLabBlock title="Hairstyles">
-            {lookLab.hairstyles.map(style => (
+            {hairstyles.map(style => (
               <div key={style.name} className="look-lab-hairstyle-card">
                 {style.generatedImageUrl ? (
                   <img

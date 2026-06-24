@@ -17,7 +17,6 @@ const RequestSchema = z.object({
     faceShapeReason: z.string(),
     verdict: z.enum(["best", "okay", "avoid"]),
   })),
-  userId: z.string(),
 });
 
 function dataUrlToBuffer(dataUrl: string): { buffer: Buffer; mimeType: string } {
@@ -62,7 +61,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const { photoDataUrl, hairstyles, userId } = parsed.data;
+  const { photoDataUrl, hairstyles } = parsed.data;
+
+  // Derive userId from the server session — never trust client-supplied userId
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id ?? null;
 
   // Generate hairstyles sequentially to avoid rate limits
   const results: (typeof hairstyles[number] & { generatedImageUrl?: string | null })[] = [];
@@ -75,14 +79,15 @@ export async function POST(req: NextRequest) {
     results.push({ ...style, generatedImageUrl: imageUrl });
   }
 
-  // Cache to Supabase so subsequent loads skip generation
-  try {
-    const supabase = await createClient();
-    await supabase
-      .from("look_lab_hairstyles")
-      .upsert({ user_id: userId, hairstyles: results }, { onConflict: "user_id" });
-  } catch {
-    // Non-fatal — client still receives results
+  // Cache to Supabase so subsequent loads skip generation (skip if unauthenticated)
+  if (userId) {
+    try {
+      await supabase
+        .from("look_lab_hairstyles")
+        .upsert({ user_id: userId, hairstyles: results }, { onConflict: "user_id" });
+    } catch {
+      // Non-fatal — client still receives results
+    }
   }
 
   return NextResponse.json({ hairstyles: results });

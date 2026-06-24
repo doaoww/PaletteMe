@@ -126,6 +126,23 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+async function resizeImageForStorage(dataUrl: string, maxDim = 800): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.82));
+    };
+    img.src = dataUrl;
+  });
+}
+
 function deriveGender(wardrobeType?: string): "man" | "woman" | "other" {
   if (wardrobeType === "menswear") return "man";
   if (wardrobeType === "womenswear") return "woman";
@@ -363,6 +380,16 @@ export function StyleSetupFlow() {
         saveQuizProfile(profile);
         saveQuizToLocalStorage(profile);
         saveQuizToSupabase(profile).catch(() => {});
+      }
+
+      // Save downscaled face photo for Look Lab
+      if (facePreview) {
+        try {
+          const small = await resizeImageForStorage(facePreview);
+          localStorage.setItem("paletteme-face-photo", small);
+        } catch {
+          // Storage quota — non-fatal
+        }
       }
 
       // Brief pause so user sees 100% before redirect

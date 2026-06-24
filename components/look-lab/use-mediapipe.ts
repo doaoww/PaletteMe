@@ -10,7 +10,7 @@ export type MediaPipeState = {
   error: string | null;
 };
 
-const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm";
+const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
 
 let globalFaceLandmarker: FaceLandmarker | null = null;
 let globalSelfieSegmenter: ImageSegmenter | null = null;

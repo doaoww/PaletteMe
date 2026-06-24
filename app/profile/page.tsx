@@ -145,6 +145,7 @@ function ProfileContent() {
   // When mini-result is present but fullReport is missing, call /api/style-analysis/full
   useEffect(() => {
     if (!styleAnalysisResult?.miniResult) return;
+    // Guard: fullReport is null until fetched, non-null after. Prevents re-fetch loop.
     if (styleAnalysisResult.fullReport !== null) return;
     if (!styleAnalysisResult.profileData) return;
 
