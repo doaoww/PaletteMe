@@ -41,7 +41,8 @@ export function applyMakeup(
   const offscreen = document.createElement("canvas");
   offscreen.width = canvas.width;
   offscreen.height = canvas.height;
-  const offCtx = offscreen.getContext("2d")!;
+  const offCtx = offscreen.getContext("2d");
+  if (!offCtx) return;
 
   offCtx.beginPath();
   offCtx.moveTo(points[0].x, points[0].y);
