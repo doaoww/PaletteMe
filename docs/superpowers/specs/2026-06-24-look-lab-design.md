@@ -24,16 +24,16 @@ Look Lab is what we sell. The report IS Look Lab.
 Multiple photos of the user's face side by side, each with a different color season draping applied via MediaPipe to the skin/collar region.
 
 Layout:
-- Main card (best season): centered, largest, confidence %, explanation in Russian
-- 2 secondary cards (close alternatives): displayed below the main card, smaller, confidence %, short note in Russian
+- Main card (best season): centered, largest, confidence %, explanation in English
+- 2 secondary cards (close alternatives): displayed below the main card, smaller, confidence %, short note in English
 
 ```
-          [Soft Summer 99%]          ← центр, крупная
-     "Пепельный пигмент поднимает кожу"
+            [Soft Summer 99%]
+   "Ashy pigment lifts your skin tone"
 
-[True Summer 68%]   [Light Summer 51%]   ← снизу, меньше
- "Чуть теплее        "Слишком светло,
-  чем твой идеал"     теряешь глубину"
+[True Summer 68%]     [Light Summer 51%]
+ "Slightly warmer       "Too light —
+  than your ideal"       you lose depth"
 ```
 
 ### Block 2 — Metals
@@ -41,9 +41,9 @@ Layout:
 Two photos side by side: gold overlay vs silver overlay near the face (collar/neck region). Percentage score derived from the warm/cool score of the color analysis.
 
 ```
-[Gold 87% ✓]                    [Silver 41% ✗]
-"Тёплый пигмент кожи            "Холодный отблеск
- усиливает золото"               гасит цвет лица"
+[Gold 87% ✓]                      [Silver 41% ✗]
+"Warm skin pigment amplifies       "Cool reflection
+ gold naturally"                    dulls your complexion"
 ```
 
 ### Block 3 — Contrast
@@ -52,7 +52,7 @@ User's face photo converted to grayscale via Canvas API. Visually shows how far 
 
 ```
 [B&W photo of user]
-"Высокий контраст — бледный макияж тебя гасит, нужны чёткие акценты."
+"High contrast — soft makeup disappears on you. Go bold or go home."
 ```
 
 Grayscale is trivial (Canvas `filter: grayscale(100%)`) — no ML needed, instant.
@@ -63,9 +63,9 @@ Three sub-blocks, each with 3 photos side by side.
 
 **Blush:**
 ```
-[peach ✓]        [pink ✗]        [coral ~]
-"Поднимает        "Гасит          "Работает,
- тепло кожи"       цвет лица"      но резко"
+[peach ✓]              [pink ✗]             [coral ~]
+"Lifts warmth          "Drains colour        "Works but
+ from your skin"        from your face"       reads harsh"
 ```
 
 **Lips:**
@@ -85,11 +85,9 @@ Each photo: MediaPipe FaceMesh landmarks → Canvas pixel transform on exact fac
 3 photos side by side, MediaPipe Selfie Segmentation isolates hair region, hue-shift applied per option.
 
 ```
-[ashy blonde ✓]    [copper ✗]    [dark chestnut ~]
-"Холодный пепел    "Слишком       "Работает, но
- балансирует        тёплый,        теряешь
- твой undertone"    перегревает    лёгкость"
-                    лицо"
+[ashy blonde ✓]       [copper ✗]           [dark chestnut ~]
+"Cool ash balances     "Too warm —           "Works but
+ your undertone"        overheats the face"   loses lightness"
 ```
 
 ### Block 6 — Hairstyles
@@ -97,9 +95,9 @@ Each photo: MediaPipe FaceMesh landmarks → Canvas pixel transform on exact fac
 2–3 AI-generated photos (fal.ai FLUX/PhotoMaker) of the user with recommended hairstyle shapes. Generated once at report unlock, cached in Supabase Storage.
 
 ```
-[user + lob ✓]         [user + long layers ✓]    [user + blunt bob ✗]
-"Мягкая линия          "Удлиняет лицо,            "Укорачивает шею,
- балансирует скулы"     добавляет движение"        усиливает квадрат"
+[user + lob ✓]            [user + long layers ✓]    [user + blunt bob ✗]
+"Soft line balances        "Elongates the face,       "Shortens the neck,
+ your cheekbones"           adds movement"             sharpens the jaw"
 ```
 
 Reference haircut recommendations come from face shape analysis in `/api/style-analysis`. fal.ai applies them to the user's actual photo.
@@ -185,7 +183,7 @@ components/look-lab/
 ## Key Decisions
 
 - Look Lab IS the paid report — not a section within it. The visual transformations are the product.
-- One explanation sentence per card maximum. No lists, no bullet points. Short, direct, personal. Always in Russian.
+- One explanation sentence per card maximum. No lists, no bullet points. Short, direct, personal. Always in English.
 - Verdicts use ✓ / ~ / ✗ not "recommended/okay/avoid" — visual not textual.
 - Hairstyle photos generated once per user at unlock, not on every view.
 - Contrast block uses B&W photo of the user's actual face — not swatches or diagrams.
