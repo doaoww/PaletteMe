@@ -5,6 +5,7 @@
 // Write queries like a fashion editor searching for specific pieces, not a tourist.
 
 import type { StyleDNA } from "@/lib/style-dna";
+import { buildLookLabInstructions } from "./look-lab-composer";
 
 export function buildReportComposerInstructions(gender: string): string {
   const genderNote =
@@ -831,6 +832,7 @@ export function buildReportComposerPrompt(data: {
   styleDNA?: StyleDNA;
   inspirationPins?: Array<{ imageUrl: string; pinLink: string; title: string | null }>;
   aesthetics?: string[];
+  lockedColorSeason?: string;
 }): string {
   const profile = data.styleProfile as Record<string, unknown>;
   const scores = data.computedScores as Record<string, unknown>;
@@ -936,8 +938,14 @@ ${data.styleDNA.paletteHexes.join(", ")}
 ${data.inspirationPins.map((p, i) => `${i + 1}. ${p.title ?? "Untitled"} — ${p.pinLink}`).join("\n")}
 ` : "";
 
+  const lockedSeasonBlock = data.lockedColorSeason ? `
+━━ COLOR SEASON — LOCKED BY PHOTO ANALYSIS ━━
+The determined color season is: ${data.lockedColorSeason}
+Your color section's "seasonName" field MUST be exactly "${data.lockedColorSeason}". Do not change this.
+` : "";
+
   return `Write the complete personalized style report for this person.
-${dnaBlock}
+${lockedSeasonBlock}${dnaBlock}
 ━━ LOCATION & SEASON (critical — products must be available and seasonally correct) ━━
 ${data.seasonContext ?? "Location: unknown. Use universal availability."}
 ${pinsBlock}
@@ -1035,5 +1043,8 @@ If something is technically correct but boring or wrong-feeling for this specifi
 
 Every section must feel written specifically for THIS person.
 Reference their actual features, scores, and quiz answers.
-No generic advice that could apply to anyone.`;
+No generic advice that could apply to anyone.
+
+${buildLookLabInstructions()}
+`;
 }
