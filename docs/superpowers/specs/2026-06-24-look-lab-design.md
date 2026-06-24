@@ -24,15 +24,16 @@ Look Lab is what we sell. The report IS Look Lab.
 Multiple photos of the user's face side by side, each with a different color season draping applied via MediaPipe to the skin/collar region.
 
 Layout:
-- Main card (best season, largest): confidence %, explanation
-- 2 secondary cards (close alternatives): smaller, confidence %, short note
+- Main card (best season): centered, largest, confidence %, explanation in Russian
+- 2 secondary cards (close alternatives): displayed below the main card, smaller, confidence %, short note in Russian
 
 ```
-[Soft Summer 99%]    [True Summer 68%]    [Light Summer 51%]
- ← большая            меньше               меньше
- "Пепельный           "Чуть теплее         "Слишком светло,
-  пигмент поднимает    чем твой             теряешь глубину"
-  кожу"                идеал"
+          [Soft Summer 99%]          ← центр, крупная
+     "Пепельный пигмент поднимает кожу"
+
+[True Summer 68%]   [Light Summer 51%]   ← снизу, меньше
+ "Чуть теплее        "Слишком светло,
+  чем твой идеал"     теряешь глубину"
 ```
 
 ### Block 2 — Metals
@@ -184,7 +185,7 @@ components/look-lab/
 ## Key Decisions
 
 - Look Lab IS the paid report — not a section within it. The visual transformations are the product.
-- One explanation sentence per card maximum. No lists, no bullet points. Short, direct, personal.
+- One explanation sentence per card maximum. No lists, no bullet points. Short, direct, personal. Always in Russian.
 - Verdicts use ✓ / ~ / ✗ not "recommended/okay/avoid" — visual not textual.
 - Hairstyle photos generated once per user at unlock, not on every view.
 - Contrast block uses B&W photo of the user's actual face — not swatches or diagrams.
