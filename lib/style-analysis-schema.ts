@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { KIBBE_TYPES } from "./style-features-schema";
+import { LookLabSchema } from "./look-lab-schema";
 
 // OpenAI Structured Outputs restrictions:
 // - No z.tuple() → use z.array()
@@ -329,6 +330,7 @@ export const FullReportSchema = z.object({
   celebrityTwins: z.array(CelebrityTwinSchema).nullish(),
   beforeAfter: BeforeAfterSchema.nullish(),
   styleRules: z.array(z.string()).nullish(),
+  lookLab: LookLabSchema.nullish(),
 });
 
 export type FullReport = z.infer<typeof FullReportSchema>;
