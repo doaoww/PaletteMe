@@ -12,11 +12,14 @@ import {
 } from "@/lib/profile-restore";
 import { getPaymentUrls, isFreeTestingMode, resolvePremiumLevel, type PremiumLevel } from "@/lib/premium";
 import { ProfileView } from "@/components/profile/profile-view";
+import { StyleReportView, type StyleAnalysisResult } from "@/components/profile/style-report-view";
 import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
 import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe-store";
 import "./profile.css";
 import "./color-insights-report.css";
 import "../app-shell.css";
+
+const STYLE_ANALYSIS_KEY = "paletteme-style-analysis";
 
 const PROFILE_PREMIUM_ENV = {
   NEXT_PUBLIC_FREE_TESTING_MODE: process.env.NEXT_PUBLIC_FREE_TESTING_MODE,
@@ -42,6 +45,8 @@ function ProfileContent() {
   const searchParams = useSearchParams();
   const authConfigured = isSupabaseAuthConfigured(AUTH_ENV);
   const freeTestingMode = isFreeTestingMode(PROFILE_PREMIUM_ENV);
+  const [styleAnalysisResult, setStyleAnalysisResult] = useState<StyleAnalysisResult | null>(null);
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [profile, setProfile] = useState<QuizProfile | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [premiumLevel, setPremiumLevel] = useState<PremiumLevel>(freeTestingMode ? "pro" : "free");
@@ -50,10 +55,32 @@ function ProfileContent() {
   const paymentUrls = getPaymentUrls(PROFILE_PREMIUM_ENV);
 
   useEffect(() => {
+    const stored = localStorage.getItem("paletteme-face-photo");
+    if (stored) setPhotoDataUrl(stored);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     setPremiumLevel(resolvePremiumLevel(searchParams, undefined, PROFILE_PREMIUM_ENV));
 
     async function restoreProfile() {
+      // Check for new AI stylist analysis first
+      try {
+        const raw = localStorage.getItem(STYLE_ANALYSIS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as StyleAnalysisResult;
+          if (parsed?.miniResult) {
+            if (!cancelled) {
+              setStyleAnalysisResult(parsed);
+              setReady(true);
+            }
+            return;
+          }
+        }
+      } catch {
+        // malformed storage — fall through to legacy profile
+      }
+
       let signedInUser: { id: string; email?: string | null } | null = null;
       let supabaseClient: Awaited<ReturnType<typeof import("@/lib/supabase")["createClient"]>> | null = null;
 
@@ -106,7 +133,7 @@ function ProfileContent() {
         return;
       }
 
-      if (!cancelled) router.replace("/quiz");
+      if (!cancelled) router.replace("/style-setup");
     }
 
     restoreProfile();
@@ -115,7 +142,69 @@ function ProfileContent() {
     };
   }, [router, searchParams, authConfigured]);
 
-  if (!ready || !profile) {
+  // When mini-result is present but fullReport is missing, call /api/style-analysis/full
+  useEffect(() => {
+    if (!styleAnalysisResult?.miniResult) return;
+    if (styleAnalysisResult.fullReport !== null) return;
+    if (!styleAnalysisResult.profileData) return;
+
+    let cancelled = false;
+
+    async function loadFullReport() {
+      if (!styleAnalysisResult?.profileData) return;
+      try {
+        const res = await fetch("/api/style-analysis/full", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileData: styleAnalysisResult.profileData,
+            quiz: styleAnalysisResult.quizData ?? {},
+            meta: {
+              skinType: styleAnalysisResult.meta.skinType,
+              skinConcerns: styleAnalysisResult.meta.skinConcerns,
+              location: styleAnalysisResult.meta.location,
+            },
+          }),
+        });
+        if (!res.ok || cancelled) return;
+        const data = await res.json() as { fullReport?: unknown };
+        if (cancelled || !data.fullReport) return;
+
+        const updated: StyleAnalysisResult = {
+          ...styleAnalysisResult,
+          fullReport: data.fullReport as StyleAnalysisResult["fullReport"],
+        };
+
+        try {
+          localStorage.setItem(STYLE_ANALYSIS_KEY, JSON.stringify(updated));
+        } catch { /* quota — non-fatal */ }
+
+        setStyleAnalysisResult(updated);
+      } catch {
+        // Full report failed — mini-result stays visible, user can try refreshing
+      }
+    }
+
+    void loadFullReport();
+    return () => { cancelled = true; };
+  }, [styleAnalysisResult?.miniResult, styleAnalysisResult?.fullReport, styleAnalysisResult?.profileData]);
+
+  if (!ready) {
+    return <ProfileLoading />;
+  }
+
+  if (styleAnalysisResult) {
+    return (
+      <StyleReportView
+        result={styleAnalysisResult}
+        lookLab={styleAnalysisResult?.fullReport?.lookLab ?? null}
+        photoDataUrl={photoDataUrl}
+        unlocked={premiumLevel !== "free"}
+      />
+    );
+  }
+
+  if (!profile) {
     return <ProfileLoading />;
   }
 

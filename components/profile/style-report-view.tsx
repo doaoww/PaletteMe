@@ -2,6 +2,8 @@
 
 import React from "react";
 import { AppChrome } from "@/components/nav/app-chrome";
+import { LookLab } from "@/components/look-lab/look-lab";
+import type { LookLabData } from "@/lib/look-lab-schema";
 import "../../app/profile/style-report.css";
 
 // ── Client-side types (mirrors lib/style-analysis-schema.ts without Zod) ──────
@@ -212,6 +214,7 @@ type FullReport = {
     patternNote: string;
   } | null;
   styleRules?: string[] | null;
+  lookLab?: import("@/lib/look-lab-schema").LookLabData | null;
 };
 
 export type StyleAnalysisResult = {
@@ -883,27 +886,33 @@ function OutfitCard({ outfit }: { outfit: EnrichedOutfit }) {
       )}
 
       <div className="sr__outfit-items">
-        {outfit.items
-          .filter((item) => item.product?.imageUrl)
-          .map((item, j) => (
-            <a
-              key={j}
-              href={item.product!.link ?? "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="sr__outfit-item"
-            >
-              <img
-                src={item.product!.imageUrl!}
-                alt={item.piece}
-                className="sr__outfit-item-img"
-              />
-              <span className="sr__outfit-item-piece">{item.piece}</span>
-              {item.product?.price && (
-                <span className="sr__outfit-item-price">{item.product.price}</span>
-              )}
-            </a>
-          ))}
+        {outfit.items.filter((item) => item.product?.imageUrl).length > 0
+          ? outfit.items
+              .filter((item) => item.product?.imageUrl)
+              .map((item, j) => (
+                <a
+                  key={j}
+                  href={item.product!.link ?? "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sr__outfit-item"
+                >
+                  <img
+                    src={item.product!.imageUrl!}
+                    alt={item.piece}
+                    className="sr__outfit-item-img"
+                  />
+                  <span className="sr__outfit-item-piece">{item.piece}</span>
+                  {item.product?.price && (
+                    <span className="sr__outfit-item-price">{item.product.price}</span>
+                  )}
+                </a>
+              ))
+          : outfit.items.map((item, j) => (
+              <div key={j} className="sr__outfit-item sr__outfit-item--text">
+                <span className="sr__outfit-item-piece">{item.piece}</span>
+              </div>
+            ))}
       </div>
     </div>
   );
@@ -1112,13 +1121,28 @@ function FullReportSkeleton() {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function StyleReportView({ result }: { result: StyleAnalysisResult }) {
+type StyleReportViewProps = {
+  result: StyleAnalysisResult;
+  lookLab?: LookLabData | null;
+  photoDataUrl?: string | null;
+  unlocked?: boolean;
+};
+
+export function StyleReportView({ result, lookLab, photoDataUrl, unlocked = false }: StyleReportViewProps) {
   const { miniResult, fullReport: r } = result;
 
   return (
     <AppChrome>
       <div className="sr">
-        <MiniResultHero mini={miniResult} seasonName={r?.color.seasonName} />
+        <MiniResultHero mini={miniResult} seasonName={r?.color.seasonName ?? result.meta?.colorSeason} />
+
+        {lookLab && photoDataUrl && (
+          <LookLab
+            lookLab={lookLab}
+            photoDataUrl={photoDataUrl}
+            unlocked={unlocked}
+          />
+        )}
 
         {r ? (
           <>
