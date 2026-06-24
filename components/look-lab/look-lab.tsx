@@ -34,6 +34,28 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
     [faceLandmarker]
   );
 
+  const makeBlushHandler = useCallback(
+    (hex: string) => (canvas: HTMLCanvasElement) => {
+      if (!faceLandmarker) return;
+      const result = faceLandmarker.detect(canvas);
+      if (!result.faceLandmarks[0]) return;
+      applyMakeup(canvas, result.faceLandmarks[0], "blush-left", hex, 0.35);
+      applyMakeup(canvas, result.faceLandmarks[0], "blush-right", hex, 0.35);
+    },
+    [faceLandmarker]
+  );
+
+  const makeEyeshadowHandler = useCallback(
+    (hex: string) => (canvas: HTMLCanvasElement) => {
+      if (!faceLandmarker) return;
+      const result = faceLandmarker.detect(canvas);
+      if (!result.faceLandmarks[0]) return;
+      applyMakeup(canvas, result.faceLandmarks[0], "eyeshadow-left", hex, 0.4);
+      applyMakeup(canvas, result.faceLandmarks[0], "eyeshadow-right", hex, 0.4);
+    },
+    [faceLandmarker]
+  );
+
   const makeHairHandler = useCallback(
     (hex: string) => (canvas: HTMLCanvasElement) => {
       applyHairColor(canvas, hex); // falls back to top-40% heuristic — accurate enough for comparisons
@@ -76,7 +98,7 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
             <LookLabCard
               photoDataUrl={photoDataUrl}
               label={`Gold ${lookLab.metals.gold.score}%`}
-              verdict="best"
+              verdict={lookLab.metals.gold.score >= 60 ? "best" : "okay"}
               explanation={lookLab.metals.gold.explanation}
               onCanvasReady={makeMetalHandler("#D4AF37")}
             />
@@ -105,13 +127,7 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
                 label={opt.name}
                 verdict={opt.verdict}
                 explanation={opt.explanation}
-                onCanvasReady={canvas => {
-                  if (!faceLandmarker) return;
-                  const result = faceLandmarker.detect(canvas);
-                  if (!result.faceLandmarks[0]) return;
-                  applyMakeup(canvas, result.faceLandmarks[0], "blush-left", opt.hex, 0.35);
-                  applyMakeup(canvas, result.faceLandmarks[0], "blush-right", opt.hex, 0.35);
-                }}
+                onCanvasReady={makeBlushHandler(opt.hex)}
               />
             ))}
           </LookLabBlock>
@@ -137,13 +153,7 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
                 label={opt.name}
                 verdict={opt.verdict}
                 explanation={opt.explanation}
-                onCanvasReady={canvas => {
-                  if (!faceLandmarker) return;
-                  const result = faceLandmarker.detect(canvas);
-                  if (!result.faceLandmarks[0]) return;
-                  applyMakeup(canvas, result.faceLandmarks[0], "eyeshadow-left", opt.hex, 0.4);
-                  applyMakeup(canvas, result.faceLandmarks[0], "eyeshadow-right", opt.hex, 0.4);
-                }}
+                onCanvasReady={makeEyeshadowHandler(opt.hex)}
               />
             ))}
           </LookLabBlock>
