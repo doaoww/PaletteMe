@@ -15,6 +15,7 @@
     "@amplitude/analytics-node": "^1.5.60",
     "@amplitude/unified": "^1.1.16",
     "@google/generative-ai": "^0.24.1",
+    "@mediapipe/tasks-vision": "^0.10.35",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.1",
     "@upstash/ratelimit": "^2.0.8",
