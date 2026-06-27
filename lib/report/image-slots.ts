@@ -1555,8 +1555,6 @@ export function buildImageSlots(report: FullReport): ImageSlot[] {
     // neutral-draping MUST be first — SeasonReveal gates on it
     { slotId: "neutral-draping", prompt: NEUTRAL_DRAPING_PROMPT, label: "Colour try-on" },
 
-    ...(contrast ? [{ slotId: "contrast-bw", prompt: buildContrastPrompt(), label: "Contrast" }] : []),
-
     ...METAL_SLOTS.map(m => ({
       slotId: m.slotId,
       prompt: buildMetalPrompt(m.metal, m.earrings, m.necklace, m.pendant),

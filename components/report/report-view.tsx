@@ -11,6 +11,7 @@ import { buildImageSlots, METAL_SLOTS } from "@/lib/report/image-slots";
 import { SeasonWheel } from "./season-wheel";
 import { ColorTryout } from "./color-tryout";
 import { MakeupSection } from "./makeup-section";
+import { ContrastSection } from "./contrast-section";
 import StyleCarousel, { type CarouselCard } from "./style-carousel";
 
 function toCard(item: LibraryItem): CarouselCard {
@@ -128,25 +129,15 @@ export function ReportView({ analysis: a, photoDataUrl, images, totalSlots }: Pr
       </div>
 
       {/* ── Contrast ── */}
-      {contrast && (
+      {contrast && photoDataUrl && (
         <div className="report-section">
-          <p className="report-section__eyebrow">contrast</p>
-          <h2 className="report-section__title">Your facial contrast</h2>
-          <div className="report-contrast">
-            <div className="report-contrast__image-wrap">
-              {img("contrast-bw") ? (
-                <img src={img("contrast-bw")!} alt="Facial contrast analysis" className="report-contrast__photo" />
-              ) : photoDataUrl ? (
-                <img src={photoDataUrl} alt="Your contrast" className="report-contrast__photo report-contrast__photo--color" />
-              ) : (
-                <div className="report-contrast__skeleton" />
-              )}
-            </div>
-            <div className="report-contrast__body">
-              <span className="report-contrast__level">{contrast.level.replace("-", "‑")}</span>
-              <p className="report-contrast__explanation">{contrast.explanation}</p>
-            </div>
-          </div>
+          <p className="report-section__eyebrow">natural contrast</p>
+          <h2 className="report-section__title">Your natural contrast</h2>
+          <ContrastSection
+            photoDataUrl={photoDataUrl}
+            level={contrast.level as "low" | "medium-low" | "medium" | "medium-high" | "high"}
+            explanation={contrast.explanation}
+          />
         </div>
       )}
 
