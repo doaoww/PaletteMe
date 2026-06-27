@@ -161,7 +161,7 @@ summary: 2-3 sentences — personal, specific to what you see in the photo. Name
 imagePrompt: editorial portrait of the person draped in 2-3 of their top season colours, confident pose. End: "High-end editorial fashion photography, natural lighting, professional."
 
 ═══════════════════════════════════════════
-PART 6 — COLOR FAMILY DIAGNOSTICS
+PART 7 — COLOR FAMILY DIAGNOSTICS
 ═══════════════════════════════════════════
 
 Produce exactly 6 color family diagnostics, one per id: "warm", "cool", "bright", "muted", "light", "deep".
@@ -175,7 +175,7 @@ Also produce:
 - neutralsComment: 2-3 personalized sentences on which neutrals (black, grey, beige, camel, white) work best and which to avoid for this specific person. Name visible reasons.
 
 ═══════════════════════════════════════════
-PART 7 — MAKEUP SHADES
+PART 8 — MAKEUP SHADES
 ═══════════════════════════════════════════
 
 Produce exactly 4 shades per category. Each shade:
