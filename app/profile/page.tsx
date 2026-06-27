@@ -1,20 +1,27 @@
-"use client";
+﻿"use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { AnalysisResult } from "@/lib/analysis";
-import { loadQuizProfile, type QuizProfile } from "@/lib/quiz";
-import { saveCompleteQuizResultToSupabase } from "@/lib/post-quiz-supabase";
+import type { AnalysisResult } from "@/lib/analysis/analysis";
+import { loadQuizProfile, type QuizProfile } from "@/lib/quiz/quiz";
+import { saveCompleteQuizResultToSupabase } from "@/lib/profile/post-quiz-supabase";
 import {
   loadLocalAnalysisResultForProfile,
   loadSupabaseQuizProfile,
   saveRestoredQuizProfileToBrowserStorage,
-} from "@/lib/profile-restore";
-import { getPaymentUrls, isFreeTestingMode, resolvePremiumLevel, type PremiumLevel } from "@/lib/premium";
+} from "@/lib/profile/profile-restore";
+import { getPaymentUrls, isFreeTestingMode, resolvePremiumLevel, type PremiumLevel } from "@/lib/billing/premium";
 import { ProfileView } from "@/components/profile/profile-view";
 import { StyleReportView, type StyleAnalysisResult } from "@/components/profile/style-report-view";
-import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
-import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe-store";
+import { ReportView } from "@/components/report/report-view";
+import { SeasonReveal } from "@/components/report/season-reveal";
+import { ColorFamilyDiagnostics } from "@/components/report/color-family-diagnostics";
+import type { AnalysisResult as NewAnalysisResult } from "@/lib/report/report-schema";
+import { generateSlot } from "@/lib/report/generate-slot";
+import { buildImageSlots } from "@/lib/report/image-slots";
+import "@/components/report/report.css";
+import { isSupabaseAuthConfigured } from "@/lib/auth/auth-flow";
+import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe/wardrobe-store";
 import "./profile.css";
 import "./color-insights-report.css";
 import "../app-shell.css";
@@ -45,6 +52,7 @@ function ProfileContent() {
   const searchParams = useSearchParams();
   const authConfigured = isSupabaseAuthConfigured(AUTH_ENV);
   const freeTestingMode = isFreeTestingMode(PROFILE_PREMIUM_ENV);
+  const [newAnalysis, setNewAnalysis] = useState<NewAnalysisResult | null>(null);
   const [styleAnalysisResult, setStyleAnalysisResult] = useState<StyleAnalysisResult | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [profile, setProfile] = useState<QuizProfile | null>(null);
@@ -54,17 +62,58 @@ function ProfileContent() {
   const [requiresAuth, setRequiresAuth] = useState(false);
   const paymentUrls = getPaymentUrls(PROFILE_PREMIUM_ENV);
 
+  type Phase = "reveal" | "diagnostics" | "report";
+  const [phase, setPhase] = useState<Phase>("reveal");
+  const [images, setImages] = useState<Record<string, string>>({});
+  const [totalSlots, setTotalSlots] = useState(0);
+  const generationStarted = useRef(false);
+
   useEffect(() => {
     const stored = localStorage.getItem("paletteme-face-photo");
     if (stored) setPhotoDataUrl(stored);
   }, []);
 
   useEffect(() => {
+    if (!newAnalysis || generationStarted.current) return;
+    generationStarted.current = true;
+
+    const hasDiagnostics = !!newAnalysis.fullReport.colorDiagnostics;
+    const diagnosticsDone = localStorage.getItem("paletteme-diagnostics-done") === "true";
+    setPhase(!hasDiagnostics || diagnosticsDone ? "report" : "reveal");
+
+    const slots = buildImageSlots(newAnalysis.fullReport);
+    setTotalSlots(slots.length);
+
+    void (async () => {
+      if (!photoDataUrl) return;
+      for (const slot of slots) {
+        const url = await generateSlot(photoDataUrl, slot.prompt, slot.slotId);
+        if (url) setImages(prev => ({ ...prev, [slot.slotId]: url }));
+      }
+    })();
+  }, [newAnalysis, photoDataUrl]);
+
+  useEffect(() => {
     let cancelled = false;
     setPremiumLevel(resolvePremiumLevel(searchParams, undefined, PROFILE_PREMIUM_ENV));
 
     async function restoreProfile() {
-      // Check for new AI stylist analysis first
+      // Check for new report analysis (photo + 1 question flow)
+      try {
+        const raw = localStorage.getItem("paletteme-analysis");
+        if (raw) {
+          const parsed = JSON.parse(raw) as NewAnalysisResult;
+          if (parsed?.miniResult && parsed?.fullReport) {
+            if (!cancelled) {
+              setNewAnalysis(parsed);
+              setReady(true);
+            }
+            return;
+          }
+        }
+      } catch { /* malformed — fall through */ }
+
+      // Check for legacy AI stylist analysis
       try {
         const raw = localStorage.getItem(STYLE_ANALYSIS_KEY);
         if (raw) {
@@ -82,11 +131,11 @@ function ProfileContent() {
       }
 
       let signedInUser: { id: string; email?: string | null } | null = null;
-      let supabaseClient: Awaited<ReturnType<typeof import("@/lib/supabase")["createClient"]>> | null = null;
+      let supabaseClient: Awaited<ReturnType<typeof import("@/lib/db/supabase")["createClient"]>> | null = null;
 
       if (authConfigured) {
         try {
-          const { createClient } = await import("@/lib/supabase");
+          const { createClient } = await import("@/lib/db/supabase");
           supabaseClient = createClient();
           const {
             data: { user },
@@ -190,8 +239,53 @@ function ProfileContent() {
     return () => { cancelled = true; };
   }, [styleAnalysisResult?.miniResult, styleAnalysisResult?.fullReport, styleAnalysisResult?.profileData]);
 
+  useEffect(() => {
+    if (requiresAuth) {
+      router.replace("/login?next=/profile");
+    }
+  }, [requiresAuth, router]);
+
   if (!ready) {
     return <ProfileLoading />;
+  }
+
+  if (newAnalysis) {
+    const { miniResult, fullReport } = newAnalysis;
+    const cd = fullReport.colorDiagnostics;
+
+    if (phase === "reveal") {
+      return (
+        <SeasonReveal
+          miniResult={miniResult}
+          seasonId={fullReport.colorAnalysis.topSeason.id}
+          nextReady={"neutral-draping" in images}
+          onNext={() => setPhase("diagnostics")}
+        />
+      );
+    }
+
+    if (phase === "diagnostics" && cd) {
+      return (
+        <ColorFamilyDiagnostics
+          neutralDrapingUrl={images["neutral-draping"] ?? ""}
+          colorDiagnostics={cd}
+          bestColors={fullReport.colorAnalysis.bestColors}
+          onComplete={() => {
+            localStorage.setItem("paletteme-diagnostics-done", "true");
+            setPhase("report");
+          }}
+        />
+      );
+    }
+
+    return (
+      <ReportView
+        analysis={newAnalysis}
+        photoDataUrl={photoDataUrl ?? ""}
+        images={images}
+        totalSlots={totalSlots}
+      />
+    );
   }
 
   if (styleAnalysisResult) {
@@ -205,12 +299,7 @@ function ProfileContent() {
     );
   }
 
-  if (!profile) {
-    return <ProfileLoading />;
-  }
-
-  if (requiresAuth) {
-    router.replace("/login?next=/profile");
+  if (!profile || requiresAuth) {
     return <ProfileLoading />;
   }
 
