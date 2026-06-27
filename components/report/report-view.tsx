@@ -3,7 +3,7 @@
 import type { AnalysisResult } from "@/lib/report/report-schema";
 import { SEASON_STYLE_DATA } from "@/lib/report/season-style-data";
 import {
-  FABRICS, PRINTS, ACCESSORIES, NAILS, AESTHETICS,
+  FABRICS, PRINTS, ACCESSORIES, NAILS,
   getOutfits, getAesthetics, deriveProfile, filterLibrary,
   type LibraryItem,
 } from "@/lib/report/style-library";
@@ -34,13 +34,11 @@ export function ReportView({ analysis: a, photoDataUrl, images, totalSlots }: Pr
 
   // Slot list used only for progress step labels
   const slots = buildImageSlots(report);
+  const labeledSlots = slots.filter(s => s.label);
   const doneCount = Object.keys(images).length;
   const generating = doneCount < totalSlots;
 
   const img = (id: string) => images[id] ?? null;
-
-  // suppress unused import warning — AESTHETICS is consumed by getAesthetics internally
-  void AESTHETICS;
 
   return (
     <div className="report">
@@ -50,12 +48,14 @@ export function ReportView({ analysis: a, photoDataUrl, images, totalSlots }: Pr
         <div className="report-progress">
           <div className="report-progress__bar" style={{ transform: `scaleX(${doneCount / totalSlots})` }} />
           <div className="report-progress__steps">
-            {slots.filter(s => s.label).map(s => {
-              const idx = slots.indexOf(s);
+            {labeledSlots.map((s, li) => {
+              const done = !!images[s.slotId];
+              const prevAllDone = labeledSlots.slice(0, li).every(ls => !!images[ls.slotId]);
+              const isActive = !done && prevAllDone;
               return (
                 <span
                   key={s.slotId}
-                  className={`report-progress__step${idx < doneCount ? " report-progress__step--done" : idx === doneCount ? " report-progress__step--active" : ""}`}
+                  className={`report-progress__step${done ? " report-progress__step--done" : isActive ? " report-progress__step--active" : ""}`}
                 >
                   {s.label}
                 </span>

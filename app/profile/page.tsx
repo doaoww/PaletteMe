@@ -63,7 +63,11 @@ function ProfileContent() {
   const paymentUrls = getPaymentUrls(PROFILE_PREMIUM_ENV);
 
   type Phase = "reveal" | "diagnostics" | "report";
-  const [phase, setPhase] = useState<Phase>("reveal");
+  const [phase, setPhase] = useState<Phase>(() =>
+    typeof window !== "undefined" && localStorage.getItem("paletteme-diagnostics-done") === "true"
+      ? "report"
+      : "reveal"
+  );
   const [images, setImages] = useState<Record<string, string>>({});
   const [totalSlots, setTotalSlots] = useState(0);
   const generationStarted = useRef(false);
@@ -75,17 +79,18 @@ function ProfileContent() {
 
   useEffect(() => {
     if (!newAnalysis || generationStarted.current) return;
-    generationStarted.current = true;
 
     const hasDiagnostics = !!newAnalysis.fullReport.colorDiagnostics;
     const diagnosticsDone = localStorage.getItem("paletteme-diagnostics-done") === "true";
-    setPhase(!hasDiagnostics || diagnosticsDone ? "report" : "reveal");
+    if (!hasDiagnostics) setPhase("report");
+    else if (!diagnosticsDone) setPhase("reveal");
 
     const slots = buildImageSlots(newAnalysis.fullReport);
     setTotalSlots(slots.length);
 
     void (async () => {
       if (!photoDataUrl) return;
+      generationStarted.current = true;
       for (const slot of slots) {
         const url = await generateSlot(photoDataUrl, slot.prompt, slot.slotId);
         if (url) setImages(prev => ({ ...prev, [slot.slotId]: url }));

@@ -74,7 +74,7 @@ export const FullReportSchema = z.object({
     alternativeSeasons: z.array(SeasonRankSchema), // 3 close alternatives
     bestColors: z.array(BestColorSchema),           // 8-12 colours
     // AI generates one neutral-draping base image; CSS handles colour overlay
-    neutralDrapingPrompt: z.string(),
+    neutralDrapingPrompt: z.string().nullish(),
   }),
   makeupComparisons: z.array(MakeupComparisonSchema), // 3-4 categories
   hairOptions: z.array(HairOptionSchema),             // 2-3 options

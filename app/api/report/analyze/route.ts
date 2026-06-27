@@ -102,7 +102,7 @@ Use real hex values from the season palette. Include a mix of wearable neutrals 
 For each colour, include an explanation: 1 sentence on how or where to wear this specific colour.
 
 ═══════════════════════════════════════════
-PART 3 — NEUTRAL DRAPING PROMPT
+PART 4 — NEUTRAL DRAPING PROMPT
 ═══════════════════════════════════════════
 
 Write an imagePrompt for gpt-image-1 images.edit() that transforms the photo into:
@@ -110,7 +110,7 @@ Person shown from shoulders up, a piece of smooth white or soft-ivory fabric dra
 End with: "Product photography lighting, professional, clean."
 
 ═══════════════════════════════════════════
-PART 4 — MAKEUP COMPARISONS
+PART 5 — MAKEUP COMPARISONS
 ═══════════════════════════════════════════
 
 Produce exactly 3 makeup comparisons: lips, blush, eyeshadow.
@@ -121,7 +121,7 @@ For each:
 - explanation: plain English, 1-2 sentences why good works and bad clashes.
 
 ═══════════════════════════════════════════
-PART 5 — HAIR OPTIONS
+PART 6 — HAIR OPTIONS
 ═══════════════════════════════════════════
 
 First assess whether the person's current hair color already suits their season.
@@ -141,7 +141,7 @@ Each option:
 - imagePrompt: keep face 100% identical — only hair colour and cut change. End with: "Face structure unchanged. High-end editorial, natural lighting, professional."
 
 ═══════════════════════════════════════════
-PART 6 — FINAL LOOK
+PART 7 — FINAL LOOK
 ═══════════════════════════════════════════
 
 Produce the final look fields:
@@ -161,7 +161,7 @@ summary: 2-3 sentences — personal, specific to what you see in the photo. Name
 imagePrompt: editorial portrait of the person draped in 2-3 of their top season colours, confident pose. End: "High-end editorial fashion photography, natural lighting, professional."
 
 ═══════════════════════════════════════════
-PART 7 — COLOR FAMILY DIAGNOSTICS
+PART 8 — COLOR FAMILY DIAGNOSTICS
 ═══════════════════════════════════════════
 
 Produce exactly 6 color family diagnostics, one per id: "warm", "cool", "bright", "muted", "light", "deep".
@@ -175,7 +175,7 @@ Also produce:
 - neutralsComment: 2-3 personalized sentences on which neutrals (black, grey, beige, camel, white) work best and which to avoid for this specific person. Name visible reasons.
 
 ═══════════════════════════════════════════
-PART 8 — MAKEUP SHADES
+PART 9 — MAKEUP SHADES
 ═══════════════════════════════════════════
 
 Produce exactly 4 shades per category. Each shade:

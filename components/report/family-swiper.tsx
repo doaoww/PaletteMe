@@ -102,12 +102,13 @@ export function FamilySwiper({ neutralDrapingUrl, families, neutralsComment, onC
       </div>
 
       {/* Dots */}
-      <div className="family-swiper__dots" role="tablist" aria-label="colour family slides">
+      <span className="family-swiper__sr-only" aria-live="polite" aria-atomic="true">
+        {`slide ${activeIdx + 1} of ${total}`}
+      </span>
+      <div className="family-swiper__dots">
         {slides.map((_, i) => (
           <span
             key={i}
-            role="tab"
-            aria-selected={i === activeIdx}
             className={`family-swiper__dot${i === activeIdx ? " family-swiper__dot--active" : ""}`}
           />
         ))}

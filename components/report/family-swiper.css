@@ -107,3 +107,12 @@
 .family-swiper__next:hover {
   background: #b8784f;
 }
+
+.family-swiper__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
