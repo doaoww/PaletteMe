@@ -6,12 +6,12 @@ import { DrapePortrait } from "./drape-portrait";
 import "./family-swiper.css";
 
 const FAMILY_META: Record<string, { label: string; paletteImage: string }> = {
-  warm:    { label: "warm tones",    paletteImage: "/palettes/warm.webp" },
-  cool:    { label: "cool tones",    paletteImage: "/palettes/cool.webp" },
-  bright:  { label: "bright tones",  paletteImage: "/palettes/bright.webp" },
-  muted:   { label: "muted tones",   paletteImage: "/palettes/muted.webp" },
-  light:   { label: "light tones",   paletteImage: "/palettes/light.webp" },
-  deep:    { label: "deep tones",    paletteImage: "/palettes/deep.webp" },
+  warm:    { label: "warm tones",    paletteImage: "/palettes/warm.png" },
+  cool:    { label: "cool tones",    paletteImage: "/palettes/cool.png" },
+  bright:  { label: "bright tones",  paletteImage: "/palettes/bright.png" },
+  muted:   { label: "muted tones",   paletteImage: "/palettes/muted.png" },
+  light:   { label: "light tones",   paletteImage: "/palettes/light.png" },
+  deep:    { label: "deep tones",    paletteImage: "/palettes/deep.png" },
 };
 
 type Slide =
