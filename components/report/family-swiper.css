@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100svh;
-  padding-bottom: 2rem;
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
 }
 
 .family-swiper__track {
@@ -35,7 +35,7 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  background: #c4896a;
+  background: #a06840;
   color: #fff;
   font-family: "DM Sans", sans-serif;
   font-size: 0.7rem;
