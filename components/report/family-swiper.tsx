@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ColorFamilyDiagnostic } from "@/lib/report/color-diagnostics-schema";
+import type { ColorFamilyDiagnostic, NeutralShade } from "@/lib/report/color-diagnostics-schema";
 import { DrapePortrait } from "./drape-portrait";
 import "./family-swiper.css";
 
@@ -16,22 +16,23 @@ const FAMILY_META: Record<string, { label: string; paletteImage: string }> = {
 
 type Slide =
   | { kind: "family"; data: ColorFamilyDiagnostic }
-  | { kind: "neutrals"; comment: string };
+  | { kind: "neutrals"; shades: NeutralShade[] };
 
 type Props = {
   neutralDrapingUrl: string;
   families: ColorFamilyDiagnostic[];
-  neutralsComment: string;
+  neutrals: NeutralShade[];
   onComplete: () => void;
 };
 
-export function FamilySwiper({ neutralDrapingUrl, families, neutralsComment, onComplete }: Props) {
+export function FamilySwiper({ neutralDrapingUrl, families, neutrals, onComplete }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
+  const [activeNeutralIdx, setActiveNeutralIdx] = useState(0);
 
   const slides: Slide[] = [
     ...families.map(f => ({ kind: "family" as const, data: f })),
-    { kind: "neutrals" as const, comment: neutralsComment },
+    { kind: "neutrals" as const, shades: neutrals },
   ];
 
   const total = slides.length;
@@ -82,19 +83,37 @@ export function FamilySwiper({ neutralDrapingUrl, families, neutralsComment, onC
               </div>
             );
           }
-          // Neutrals slide
+          // Neutrals slide — interactive circles, same drape mechanic as BestColorsSlide
+          const activeNeutral = slide.shades[activeNeutralIdx];
           return (
             <div key="neutrals" className="family-swiper__slide">
               <div className="family-swiper__portrait-wrap">
                 <DrapePortrait
                   baseImageUrl={neutralDrapingUrl}
-                  overlayImage="/palettes/neutrals.webp"
-                  alt="neutral colours"
+                  overlayColor={activeNeutral?.hex}
+                  alt="neutral colour try-on"
                 />
               </div>
               <div className="family-swiper__slide-body">
                 <p className="family-swiper__family-label">neutrals</p>
-                <p className="family-swiper__comment">{slide.comment}</p>
+                <div className="family-swiper__neutral-circles">
+                  {slide.shades.map((shade, ni) => (
+                    <button
+                      key={shade.hex}
+                      className={`family-swiper__neutral-circle${ni === activeNeutralIdx ? " family-swiper__neutral-circle--active" : ""}`}
+                      style={{ background: shade.hex }}
+                      onClick={() => setActiveNeutralIdx(ni)}
+                      aria-label={shade.name}
+                      title={shade.name}
+                    />
+                  ))}
+                </div>
+                {activeNeutral && (
+                  <div className="family-swiper__neutral-info">
+                    <p className="family-swiper__neutral-name">{activeNeutral.name}</p>
+                    <p className="family-swiper__comment">{activeNeutral.comment}</p>
+                  </div>
+                )}
               </div>
             </div>
           );

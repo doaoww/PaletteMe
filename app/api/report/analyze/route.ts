@@ -171,8 +171,10 @@ For each:
 - comment: 2-3 personalized sentences. Reference specific visible features (skin tone, hair color, eye color). Name what you actually see. Explain concretely why this family works or clashes. Example: "Your golden-olive skin absorbs warm tones naturally — they make your face look healthier and more even. Cool shades, by contrast, create a slight ashy cast that flattens your natural warmth." Never be generic.
 - isWinner: true if this family harmonizes with the person's season; false if it clashes or is less flattering. Winners should match the undertone and chroma of their top season.
 
-Also produce:
-- neutralsComment: 2-3 personalized sentences on which neutrals (black, grey, beige, camel, white) work best and which to avoid for this specific person. Name visible reasons.
+Also produce exactly 5 neutral shades. Each neutral shade:
+- hex: real hex for this neutral (e.g. black = #1A1A1A, charcoal = #4A4A4A, warm beige = #D4B896, camel = #C19A6B, soft white = #F5F0EB)
+- name: shade name (e.g. "Soft Black", "Warm Grey", "Camel", "Ivory", "Warm Beige")
+- comment: 2 sentences. Why this neutral works or clashes for this specific person. Reference visible features: skin undertone, hair contrast, eye color. Be concrete — say "flattens" or "sharpens" or "warms" rather than "suits" or "works well".
 
 ═══════════════════════════════════════════
 PART 9 — MAKEUP SHADES

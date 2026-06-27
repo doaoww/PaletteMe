@@ -25,7 +25,7 @@ export function ColorFamilyDiagnostics({ neutralDrapingUrl, colorDiagnostics, be
         <FamilySwiper
           neutralDrapingUrl={neutralDrapingUrl}
           families={colorDiagnostics.families}
-          neutralsComment={colorDiagnostics.neutralsComment}
+          neutrals={colorDiagnostics.neutrals ?? []}
           onComplete={() => setStep("best-colors")}
         />
       )}

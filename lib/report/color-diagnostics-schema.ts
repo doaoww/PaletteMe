@@ -12,9 +12,16 @@ export const MakeupShadeSchema = z.object({
   explanation: z.string(),
 });
 
+export const NeutralShadeSchema = z.object({
+  hex: z.string(),
+  name: z.string(),
+  comment: z.string(),
+});
+
 export const ColorDiagnosticsSchema = z.object({
   families: z.array(ColorFamilyDiagnosticSchema),
-  neutralsComment: z.string(),
+  neutrals: z.array(NeutralShadeSchema),
+  neutralsComment: z.string().nullish(),  // kept for backward compat with old localStorage data
   makeup: z.object({
     blush: z.array(MakeupShadeSchema),
     lips: z.array(MakeupShadeSchema),
@@ -25,4 +32,5 @@ export const ColorDiagnosticsSchema = z.object({
 
 export type ColorFamilyDiagnostic = z.infer<typeof ColorFamilyDiagnosticSchema>;
 export type MakeupShade = z.infer<typeof MakeupShadeSchema>;
+export type NeutralShade = z.infer<typeof NeutralShadeSchema>;
 export type ColorDiagnostics = z.infer<typeof ColorDiagnosticsSchema>;
