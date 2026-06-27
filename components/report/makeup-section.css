@@ -1,0 +1,79 @@
+.makeup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.makeup-section__eyes {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.makeup-section__eyes-title {
+  font-family: "DM Serif Display", serif;
+  font-weight: 400;
+  font-size: 1.1rem;
+  color: #2a1f1a;
+  margin: 0;
+}
+
+/* Shade Picker */
+.shade-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.shade-picker__label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #9c8477;
+  margin: 0;
+}
+
+.shade-picker__circles {
+  display: flex;
+  gap: 12px;
+}
+
+.shade-picker__circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+
+.shade-picker__circle--active {
+  transform: scale(1.15);
+  border-color: #2a1f1a;
+  box-shadow: 0 0 0 3px #faf8f5, 0 0 0 5px #2a1f1a;
+}
+
+.shade-picker__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 3rem;
+}
+
+.shade-picker__name {
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #2a1f1a;
+  margin: 0;
+}
+
+.shade-picker__explanation {
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: #5c4d44;
+  margin: 0;
+}
