@@ -22,7 +22,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 52%;
+  height: 60%;
   pointer-events: none;
   mix-blend-mode: multiply;
 }
@@ -35,5 +35,6 @@
 }
 
 .drape-portrait__overlay--color {
-  /* background set inline */
+  /* boost saturation before multiply so the colour reads vividly on the fabric */
+  filter: saturate(1.8) brightness(1.08);
 }
