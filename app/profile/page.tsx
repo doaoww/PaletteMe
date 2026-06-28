@@ -92,7 +92,7 @@ function ProfileContent() {
       if (!photoDataUrl) return;
       generationStarted.current = true;
       for (const slot of slots) {
-        const url = await generateSlot(photoDataUrl, slot.prompt, slot.slotId);
+        const url = await generateSlot(photoDataUrl, slot.prompt, slot.slotId, slot.promptStrength);
         if (url) setImages(prev => ({ ...prev, [slot.slotId]: url }));
       }
     })();
