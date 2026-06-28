@@ -220,18 +220,36 @@ export async function POST(request: Request) {
   }
   const [, mimeType, base64] = match;
 
-  try {
-    const result = await runStructuredStyleResponse({
-      schema: AnalysisResultSchema,
-      schemaName: "AnalysisResult",
-      instructions: INSTRUCTIONS,
-      prompt: `Wardrobe type: ${wardrobeType}. Analyse this person thoroughly and produce their complete personal colour and style report.`,
-      image: { mimeType: mimeType!, base64: base64!, detail: "high" },
-      maxOutputTokens: 6000,
-    });
+  const callArgs = {
+    schema: AnalysisResultSchema,
+    schemaName: "AnalysisResult",
+    instructions: INSTRUCTIONS,
+    prompt: `Wardrobe type: ${wardrobeType}. Analyse this person thoroughly and produce their complete personal colour and style report.`,
+    image: { mimeType: mimeType!, base64: base64!, detail: "high" as const },
+    maxOutputTokens: 16000,
+  };
 
-    return Response.json(result);
-  } catch {
-    return Response.json({ error: "Analysis failed. Please try again." }, { status: 500 });
+  // one retry on transient failures (rate limit, timeout, parse error)
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const result = await runStructuredStyleResponse(callArgs);
+      return Response.json(result);
+    } catch (err) {
+      const isLast = attempt === 2;
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[/api/report/analyze] attempt ${attempt} failed:`, message, err);
+
+      if (isLast) {
+        return Response.json(
+          { error: "Analysis failed. Please try again.", detail: message },
+          { status: 500 },
+        );
+      }
+      // brief pause before retry
+      await new Promise(r => setTimeout(r, 1500));
+    }
   }
+
+  // unreachable — loop always returns on attempt 2
+  return Response.json({ error: "Analysis failed." }, { status: 500 });
 }
