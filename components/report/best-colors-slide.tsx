@@ -9,9 +9,10 @@ type Props = {
   neutralDrapingUrl: string;
   bestColors: BestColor[];
   onComplete: () => void;
+  reportMode?: boolean;
 };
 
-export function BestColorsSlide({ neutralDrapingUrl, bestColors, onComplete }: Props) {
+export function BestColorsSlide({ neutralDrapingUrl, bestColors, onComplete, reportMode = false }: Props) {
   const [activeHex, setActiveHex] = useState<string>(bestColors[0]?.hex ?? "");
   const activeColor = bestColors.find(c => c.hex === activeHex);
 
@@ -56,11 +57,13 @@ export function BestColorsSlide({ neutralDrapingUrl, bestColors, onComplete }: P
         </div>
       )}
 
-      <div className="best-colors-slide__footer">
-        <button className="best-colors-slide__next" onClick={onComplete}>
-          view full report →
-        </button>
-      </div>
+      {!reportMode && (
+        <div className="best-colors-slide__footer">
+          <button className="best-colors-slide__next" onClick={onComplete}>
+            view full report →
+          </button>
+        </div>
+      )}
     </div>
   );
 }

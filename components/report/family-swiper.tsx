@@ -23,9 +23,10 @@ type Props = {
   families: ColorFamilyDiagnostic[];
   neutrals: NeutralShade[];
   onComplete: () => void;
+  reportMode?: boolean;
 };
 
-export function FamilySwiper({ neutralDrapingUrl, families, neutrals, onComplete }: Props) {
+export function FamilySwiper({ neutralDrapingUrl, families, neutrals, onComplete, reportMode = false }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
   const [activeNeutralIdx, setActiveNeutralIdx] = useState(0);
@@ -133,8 +134,8 @@ export function FamilySwiper({ neutralDrapingUrl, families, neutrals, onComplete
         ))}
       </div>
 
-      {/* Next button — only shown on last slide */}
-      {isLast && (
+      {/* Next button — hidden in report mode */}
+      {isLast && !reportMode && (
         <div className="family-swiper__footer">
           <button className="family-swiper__next" onClick={onComplete}>
             see your best colours →

@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import type { AnalysisResult } from "@/lib/report/report-schema";
-import type { NeutralShade } from "@/lib/report/color-diagnostics-schema";
 import { SEASON_STYLE_DATA } from "@/lib/report/season-style-data";
 import {
   FABRICS, PRINTS, ACCESSORIES, NAILS,
@@ -12,6 +10,8 @@ import {
 import { buildImageSlots, METAL_SLOTS } from "@/lib/report/image-slots";
 import { SeasonWheel } from "./season-wheel";
 import { ColorTryout } from "./color-tryout";
+import { FamilySwiper } from "./family-swiper";
+import { BestColorsSlide } from "./best-colors-slide";
 import { MakeupSection } from "./makeup-section";
 import { ContrastSection } from "./contrast-section";
 import StyleCarousel, { type CarouselCard } from "./style-carousel";
@@ -20,41 +20,6 @@ function toCard(item: LibraryItem): CarouselCard {
   return { id: item.id, name: item.name, image: item.image, sentence: item.sentence };
 }
 
-const FAMILY_LABELS: Record<string, string> = {
-  warm:   "warm tones",
-  cool:   "cool tones",
-  bright: "bright tones",
-  muted:  "muted tones",
-  light:  "light tones",
-  deep:   "deep tones",
-};
-
-function ReportNeutrals({ neutrals }: { neutrals: NeutralShade[] }) {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const active = neutrals[activeIdx];
-  return (
-    <div className="report-neutrals">
-      <div className="report-neutrals__circles">
-        {neutrals.map((n, i) => (
-          <button
-            key={n.hex}
-            className={`report-neutrals__circle${i === activeIdx ? " report-neutrals__circle--active" : ""}`}
-            style={{ background: n.hex }}
-            onClick={() => setActiveIdx(i)}
-            aria-label={n.name}
-            title={n.name}
-          />
-        ))}
-      </div>
-      {active && (
-        <div className="report-neutrals__info">
-          <p className="report-neutrals__name">{active.name}</p>
-          <p className="report-neutrals__comment">{active.comment}</p>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -166,38 +131,28 @@ export function ReportView({ analysis: a, photoDataUrl, images, totalSlots }: Pr
         />
       </div>
 
-      {/* ── Colour families ── */}
-      {report.colorDiagnostics?.families && report.colorDiagnostics.families.length > 0 && (
-        <div className="report-section">
-          <p className="report-section__eyebrow">colour families</p>
-          <h2 className="report-section__title">How colour groups work on you</h2>
-          <div className="report-families">
-            {report.colorDiagnostics.families.map(f => (
-              <div key={f.id} className={`report-family${f.isWinner ? " report-family--winner" : ""}`}>
-                <div className="report-family__header">
-                  <img
-                    src={`/palettes/${f.id}.png`}
-                    alt={FAMILY_LABELS[f.id] ?? f.id}
-                    className="report-family__palette"
-                  />
-                  <div className="report-family__meta">
-                    <span className="report-family__name">{FAMILY_LABELS[f.id] ?? f.id}</span>
-                    {f.isWinner && <span className="report-family__badge">suits you</span>}
-                  </div>
-                </div>
-                <p className="report-family__comment">{f.comment}</p>
-              </div>
-            ))}
-          </div>
+      {/* ── Colour families + neutrals (same as diagnostics phase) ── */}
+      {report.colorDiagnostics && img("neutral-draping") && (
+        <div className="report-section report-section--flush">
+          <FamilySwiper
+            neutralDrapingUrl={img("neutral-draping")!}
+            families={report.colorDiagnostics.families}
+            neutrals={report.colorDiagnostics.neutrals ?? []}
+            onComplete={() => {}}
+            reportMode
+          />
         </div>
       )}
 
-      {/* ── Neutrals ── */}
-      {report.colorDiagnostics?.neutrals && report.colorDiagnostics.neutrals.length > 0 && (
-        <div className="report-section">
-          <p className="report-section__eyebrow">neutrals</p>
-          <h2 className="report-section__title">Your wardrobe neutrals</h2>
-          <ReportNeutrals neutrals={report.colorDiagnostics.neutrals} />
+      {/* ── Best colours (same as diagnostics phase) ── */}
+      {img("neutral-draping") && (
+        <div className="report-section report-section--flush">
+          <BestColorsSlide
+            neutralDrapingUrl={img("neutral-draping")!}
+            bestColors={colorAnalysis.bestColors}
+            onComplete={() => {}}
+            reportMode
+          />
         </div>
       )}
 

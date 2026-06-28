@@ -437,6 +437,10 @@
   margin-top: 0.75rem;
 }
 
+.report-section--flush {
+  padding: 0;
+}
+
 .report-section__eyebrow {
   font-family: var(--font-sans, "DM Sans", sans-serif);
   font-size: 0.72rem;
