@@ -1,123 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  buildQuizProfile,
-  deriveBodyType,
-  deriveStyleVectorFromAnswers,
-  loadQuizProfile,
-  saveQuizProfile,
-  saveQuizToLocalStorage,
-  saveQuizToSupabase,
-} from "@/lib/quiz";
-import {
-  AESTHETIC_OPTIONS,
-  BUDGET_PREF_OPTIONS,
-  MAKEUP_PREF_OPTIONS,
-  OCCASION_OPTIONS,
-  STYLE_CHALLENGE_OPTIONS,
-  STYLE_DIRECTION_OPTIONS,
-  STYLE_MOOD_OPTIONS,
-  WARDROBE_TYPE_SIMPLE_OPTIONS,
-  type Aesthetic,
-  type OccasionPref,
-  type QuizAnswers,
-  type StyleDirection,
-  type StyleMood,
-  type WardrobeType,
-} from "@/lib/quiz-data";
-import { getBodyShapeScreenOptions } from "@/components/quiz/body-shape-silhouettes";
-import {
-  BodyShapeCard,
-  QuizCardButton,
-  QuizCardList,
-  QuizChip,
-  QuizFooter,
-  QuizRadioCard,
-  QuizRadioList,
-  QuizStepHead,
-  WeatherStatCards,
-} from "@/components/quiz/quiz-picker";
-import {
-  detectCityAndWeather,
-  fetchWeatherForCity,
-  type LocationWeather,
-} from "@/lib/quiz-location";
 import { SelfieCapture } from "@/components/selfie/selfie-capture";
+import { PostQuizAuthScreen } from "@/components/auth/post-quiz-auth-screen";
 
-// ── Step definitions ───────────────────────────────────────────────────────────
-
-type StyleStep =
-  // Photo steps (before the quiz — not counted in 10-question limit)
-  | "face-photo"
-  | "body-photo"
-  // Quiz questions 1–10
-  | "wardrobe-type"
-  | "style-challenge"
-  | "measurements"
-  | "body-shape"
-  | "style-direction"
-  | "occasions"
-  | "makeup"
-  | "budget"
-  | "style-mood"
-  | "location"
-  // Post-quiz aesthetic selection (not counted in 10-question limit)
-  | "aesthetic";
-
-const PHOTO_STEPS: StyleStep[] = ["face-photo", "body-photo"];
-
-const QUIZ_STEPS: StyleStep[] = [
-  "wardrobe-type",
-  "style-challenge",
-  "measurements",
-  "body-shape",
-  "style-direction",
-  "occasions",
-  "makeup",
-  "budget",
-  "style-mood",
-  "location",
-];
-
-const STYLE_STEPS: StyleStep[] = [...PHOTO_STEPS, ...QUIZ_STEPS, "aesthetic"];
-
-function stepProgress(step: StyleStep): number {
-  const idx = QUIZ_STEPS.indexOf(step);
-  if (idx < 0) return 0;
-  return Math.round((idx / (QUIZ_STEPS.length - 1)) * 100);
-}
-
-function stepKicker(step: StyleStep): string {
-  if (step === "face-photo") return "photo 1/2";
-  if (step === "body-photo") return "photo 2/2";
-  if (step === "aesthetic") return "your style";
-  const idx = QUIZ_STEPS.indexOf(step);
-  return `step ${String(idx + 1).padStart(2, "0")}`;
-}
-
-function toggleStyleDirection(current: StyleDirection[], id: StyleDirection): StyleDirection[] {
-  if (current.includes(id)) return current.filter((s) => s !== id);
-  const next = [...current, id];
-  return next.length > 3 ? next.slice(next.length - 3) : next;
-}
-
-// ── Analysis messages — cycle during the loading screen ───────────────────────
-
-const ANALYSIS_MESSAGES = [
-  "reading your face shape and features",
-  "analyzing your undertone and coloring",
-  "mapping you to the kibbe typology",
-  "crafting your personalized color palette",
-  "finding silhouettes that work for your body",
-  "almost there — picking pieces that reveal your best features",
-  "putting the final touches on your style map",
-] as const;
-
-// ── Photo storage helpers ──────────────────────────────────────────────────────
-
-function fileToBase64(file: File): Promise<string> {
+function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
@@ -126,799 +15,569 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-async function resizeImageForStorage(dataUrl: string, maxDim = 800): Promise<string> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-      const w = Math.round(img.width * scale);
-      const h = Math.round(img.height * scale);
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/jpeg", 0.82));
-    };
-    img.src = dataUrl;
-  });
+type WardrobeType   = "woman" | "man" | "other";
+type Occasion       = "everyday" | "work" | "events" | "everything";
+type StyleConcern   = "buy-wrong" | "cant-combine" | "want-refresh" | "understand-colors";
+type ReportSection  = "colors" | "hair" | "makeup" | "glasses" | "outfits";
+
+const ALL_SECTIONS: ReportSection[] = ["colors", "hair", "makeup", "glasses", "outfits"];
+
+type Step = "photo" | "wardrobe" | "occasion" | "concern" | "sections" | "auth" | "analyzing" | "season-reveal";
+
+const TOTAL_STEPS = 5;
+
+const STEP_INDEX: Record<Step, number> = {
+  photo:           1,
+  wardrobe:        2,
+  occasion:        3,
+  concern:         4,
+  sections:        5,
+  auth:            5,
+  analyzing:       5,
+  "season-reveal": 5,
+};
+
+type SeasonPreview = { id: string; name: string; palette: string[] };
+
+const SEASON_CELEBS: Record<string, string[]> = {
+  "light-spring":  ["Reese Witherspoon", "Cameron Diaz", "Emma Stone"],
+  "true-spring":   ["Kate Middleton", "Julianne Hough", "Gisele Bündchen"],
+  "bright-spring": ["Mila Kunis", "Olivia Wilde", "Jennifer Lopez"],
+  "light-summer":  ["Gwyneth Paltrow", "Sienna Miller", "Kirsten Dunst"],
+  "true-summer":   ["Blake Lively", "Jessica Alba", "Margot Robbie"],
+  "soft-summer":   ["Katie Holmes", "Keira Knightley", "Natalie Portman"],
+  "soft-autumn":   ["Jennifer Aniston", "Jessica Biel", "Minka Kelly"],
+  "true-autumn":   ["Julia Roberts", "Emma Stone", "Jennifer Lawrence"],
+  "dark-autumn":   ["Monica Bellucci", "Penélope Cruz", "Angelina Jolie"],
+  "dark-winter":   ["Kim Kardashian", "Priyanka Chopra", "Selena Gomez"],
+  "true-winter":   ["Zendaya", "Liv Tyler", "Sandra Oh"],
+  "bright-winter": ["Megan Fox", "Lucy Liu", "Meghan Markle"],
+};
+
+const WARDROBE_OPTIONS: { value: WardrobeType; label: string; sub: string; emoji: string }[] = [
+  { value: "woman",  label: "woman",       sub: "womenswear & accessories",  emoji: "👗" },
+  { value: "man",    label: "man",          sub: "menswear & accessories",    emoji: "🧥" },
+  { value: "other",  label: "both / other", sub: "unisex recommendations",    emoji: "✦" },
+];
+
+const OCCASION_OPTIONS: { value: Occasion; label: string; sub: string }[] = [
+  { value: "everyday",    label: "everyday life",       sub: "casual, errands, weekends" },
+  { value: "work",        label: "work & professional", sub: "office, meetings, business" },
+  { value: "events",      label: "events & going out",  sub: "dates, parties, dinners" },
+  { value: "everything",  label: "all of the above",    sub: "I need a look for everything" },
+];
+
+const CONCERN_OPTIONS: { value: StyleConcern; label: string; sub: string }[] = [
+  { value: "buy-wrong",        label: "I keep buying the wrong things", sub: "I shop but nothing feels right" },
+  { value: "cant-combine",     label: "I can't put outfits together",   sub: "I have pieces but can't make them work" },
+  { value: "want-refresh",     label: "I want a full style refresh",    sub: "I'm ready to change my whole look" },
+  { value: "understand-colors",label: "I want to understand my colors", sub: "I want to know what actually flatters me" },
+];
+
+const SECTIONS_OPTIONS: { value: ReportSection; label: string; sub: string }[] = [
+  { value: "colors",   label: "Colours",         sub: "your palette, what to wear and avoid" },
+  { value: "hair",     label: "Hair",             sub: "colour and cut direction for your face" },
+  { value: "makeup",   label: "Makeup",           sub: "shades and styles that suit your features" },
+  { value: "glasses",  label: "Glasses",          sub: "frame shapes for your face structure" },
+  { value: "outfits",  label: "Style & outfits",  sub: "looks, aesthetics, and shopping direction" },
+];
+
+const LOADING_MESSAGES = [
+  "analysing your features…",
+  "reading your colour season…",
+  "mapping your best tones…",
+  "building your style profile…",
+  "crafting your personal report…",
+];
+
+function CelebPhoto({ seasonId, index, name }: { seasonId: string; index: number; name: string }) {
+  const src = `/celebs/${seasonId}${index + 1}.jpg`;
+  const firstName = name.split(" ")[0];
+  return (
+    <div className="ss-celeb-card">
+      <div className="ss-celeb-card__avatar">
+        <img src={src} alt={name} className="ss-celeb-card__img" />
+      </div>
+      <p className="ss-celeb-card__name">{firstName}</p>
+    </div>
+  );
 }
 
-function deriveGender(wardrobeType?: string): "man" | "woman" | "other" {
-  if (wardrobeType === "menswear") return "man";
-  if (wardrobeType === "womenswear") return "woman";
-  return "other";
+function BackIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M19 12H5M12 5l-7 7 7 7" />
+    </svg>
+  );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
+function CheckIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+const STEP_BACK: Partial<Record<Step, Step>> = {
+  wardrobe: "photo",
+  occasion: "wardrobe",
+  concern:  "occasion",
+  sections: "concern",
+};
 
 export function StyleSetupFlow() {
   const router = useRouter();
-  const [step, setStep] = useState<StyleStep>("face-photo");
-  const [answers, setAnswers] = useState<QuizAnswers>({ styleDirections: [], occasions: [] });
-  const [pendingChallenge, setPendingChallenge] = useState<QuizAnswers["styleChallenge"]>();
-  const [saving, setSaving] = useState(false);
+  const [step, setStep]                         = useState<Step>("photo");
+  const [photoDataUrl, setPhotoDataUrl]         = useState<string | null>(null);
+  const [wardrobeType, setWardrobeType]         = useState<WardrobeType | null>(null);
+  const [occasion, setOccasion]                 = useState<Occasion | null>(null);
+  const [styleConcern, setStyleConcern]         = useState<StyleConcern | null>(null);
+  const [reportSections, setReportSections]     = useState<ReportSection[]>(ALL_SECTIONS);
+  const [error, setError]                 = useState<string | null>(null);
+  const [msgIdx, setMsgIdx]               = useState(0);
+  const [seasonPreview, setSeasonPreview] = useState<SeasonPreview | null>(null);
+  const [reportReady, setReportReady]     = useState(false);
+  const [authChecked, setAuthChecked]     = useState(false);
+  const timerRef                          = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resumeAttempted                   = useRef(false);
 
-  // Photo state
-  const [faceFile, setFaceFile] = useState<File | null>(null);
-  const [facePreview, setFacePreview] = useState<string | null>(null);
-  const [bodyFile, setBodyFile] = useState<File | null>(null);
-  const [bodyPreview, setBodyPreview] = useState<string | null>(null);
-
-  // Analysis loading state
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analyzeProgress, setAnalyzeProgress] = useState(0);
-  const [analyzeMessageIdx, setAnalyzeMessageIdx] = useState(0);
-  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
-  const analyzeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const messageCycleRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastAnswersRef = useRef<QuizAnswers | null>(null);
-
-  // Location state
-  const [cityInput, setCityInput] = useState("");
-  const [weather, setWeather] = useState<LocationWeather | null>(null);
-  const [weatherLoading, setWeatherLoading] = useState(false);
-  const [geoFailed, setGeoFailed] = useState(false);
-  const geoAttempted = useRef(false);
-
-  const [selectedAesthetics, setSelectedAesthetics] = useState<Aesthetic[]>([]);
-
-  function toggleAesthetic(id: Aesthetic) {
-    setSelectedAesthetics((prev) => {
-      if (prev.includes(id)) return prev.filter((a) => a !== id);
-      if (prev.length >= 2) return [...prev.slice(1), id];
-      return [...prev, id];
-    });
-  }
-
-  const existingProfile = loadQuizProfile();
-  const wardrobeType = existingProfile?.answers.wardrobeType;
-
-  // Auto-detect city when reaching location step
+  // On mount: check for an existing Supabase session. If one exists and there's a
+  // pending submission left over from before an OAuth redirect, auto-resume it
+  // instead of making the user redo the quiz. Guarded by `resumeAttempted` so a
+  // React StrictMode dev double-invoke (or any other re-run of this effect) can't
+  // fire the paid analyze call twice.
   useEffect(() => {
-    if (step !== "location" || geoAttempted.current) return;
-    geoAttempted.current = true;
-    setWeatherLoading(true);
-    detectCityAndWeather()
-      .then((loc) => {
-        if (loc) {
-          setWeather(loc);
-          setCityInput(loc.city);
-        } else {
-          setGeoFailed(true);
+    (async () => {
+      try {
+        const { createClient } = await import("@/lib/db/supabase");
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        setAuthChecked(true);
+        if (user) {
+          const pendingRaw = localStorage.getItem("paletteme-pending-submission");
+          if (pendingRaw && step === "photo" && !resumeAttempted.current) {
+            resumeAttempted.current = true;
+            try {
+              const pending = JSON.parse(pendingRaw) as {
+                photoDataUrl: string; wardrobeType: WardrobeType; occasion: Occasion;
+                styleConcern: StyleConcern; reportSections: ReportSection[];
+              };
+              setPhotoDataUrl(pending.photoDataUrl);
+              setWardrobeType(pending.wardrobeType);
+              setOccasion(pending.occasion);
+              setStyleConcern(pending.styleConcern);
+              setReportSections(pending.reportSections);
+              localStorage.removeItem("paletteme-pending-submission");
+              void handleSubmitWithAnswers(pending.photoDataUrl, pending.wardrobeType, pending.occasion, pending.styleConcern, pending.reportSections);
+            } catch { /* malformed, ignore and let the user redo the flow */ }
+          }
         }
-      })
-      .catch(() => setGeoFailed(true))
-      .finally(() => setWeatherLoading(false));
-  }, [step]);
-
-  const handleCityChange = useCallback((value: string) => {
-    setCityInput(value);
-    if (!value.trim()) return;
-    const timer = setTimeout(() => {
-      fetchWeatherForCity(value.trim())
-        .then((loc) => loc && setWeather(loc))
-        .catch(() => {});
-    }, 700);
-    return () => clearTimeout(timer);
+      } catch {
+        setAuthChecked(true);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Photo handlers ───────────────────────────────────────────────────────────
-
-  const handleFacePhoto = (file: File) => {
-    setFaceFile(file);
-    const url = URL.createObjectURL(file);
-    setFacePreview(url);
-  };
-
-  const handleBodyPhoto = (file: File) => {
-    setBodyFile(file);
-    const url = URL.createObjectURL(file);
-    setBodyPreview(url);
-  };
-
-  // ── Navigation ───────────────────────────────────────────────────────────────
-
-  const advance = (next: StyleStep | null) => {
-    if (next) setStep(next);
-  };
-
-  const continueFooter = async () => {
-    const idx = STYLE_STEPS.indexOf(step);
-    const next = STYLE_STEPS[idx + 1] as StyleStep | undefined;
-
-    if (step === "style-challenge" && pendingChallenge) {
-      setAnswers((a) => ({ ...a, styleChallenge: pendingChallenge }));
-      advance(next ?? null);
-      return;
-    }
-
-    if (step === "location") {
-      const trimmed = cityInput.trim();
-      const merged: QuizAnswers = {
-        ...answers,
-        city: trimmed || weather?.city || undefined,
-        countryCode: weather?.countryCode || undefined,
-        locationSkipped: !trimmed && !weather?.city,
-        weatherTemp: weather?.temperature,
-        weatherHumidity: weather?.humidity,
-        weatherUv: weather?.uvIndex,
-      };
-      setAnswers(merged);
-      setStep("aesthetic");
-      return;
-    }
-
-    if (step === "aesthetic") {
-      const updatedAnswers = { ...answers, aesthetics: selectedAesthetics };
-      await finishSetup(updatedAnswers);
-      return;
-    }
-
-    advance(next ?? null);
-  };
-
-  const skipBodyPhoto = () => {
-    setBodyFile(null);
-    setBodyPreview(null);
-    const idx = STYLE_STEPS.indexOf("body-photo");
-    const next = STYLE_STEPS[idx + 1] as StyleStep | undefined;
-    advance(next ?? null);
-  };
-
-  // ── Finish — triggers the AI analysis ───────────────────────────────────────
-
-  const finishSetup = async (finalAnswers: QuizAnswers) => {
-    if (!faceFile) return;
-    lastAnswersRef.current = finalAnswers;
-    setAnalyzing(true);
-    setAnalyzeProgress(0);
-    setAnalyzeMessageIdx(0);
-    setAnalyzeError(null);
-
-    // Fake progress: reaches ~92% over 80 seconds, caps until API responds
-    analyzeTimerRef.current = setInterval(() => {
-      setAnalyzeProgress((prev) => {
-        if (prev >= 92) return prev;
-        // Decelerates as it approaches 92
-        const increment = Math.max(0.3, (92 - prev) * 0.025);
-        return Math.min(92, prev + increment);
-      });
-    }, 600);
-
-    // Cycle messages every 9 seconds
-    messageCycleRef.current = setInterval(() => {
-      setAnalyzeMessageIdx((i) => (i + 1) % ANALYSIS_MESSAGES.length);
-    }, 9000);
-
-    try {
-      // Build quiz profile first (for saving)
-      const existing = loadQuizProfile();
-      const mergedAnswers: QuizAnswers = existing
-        ? { ...existing.answers, ...finalAnswers }
-        : finalAnswers;
-
-      const gender = deriveGender(mergedAnswers.wardrobeType);
-
-      // Build FormData for the style analysis API
-      const formData = new FormData();
-      formData.append("facePhoto", faceFile);
-      if (bodyFile) formData.append("bodyPhoto", bodyFile);
-      formData.append("quiz", JSON.stringify(mergedAnswers));
-      formData.append("gender", gender);
-
-      // Stage 1: fast mini call (~15-20 sec) — mini-result + profileData for stage 2
-      const res = await fetch("/api/style-analysis/mini", {
-        method: "POST",
-        body: formData,
-      });
-
-      // Snap to 100%
-      clearInterval(analyzeTimerRef.current!);
-      clearInterval(messageCycleRef.current!);
-      setAnalyzeProgress(100);
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(err.error ?? "Analysis failed. Please try again.");
-      }
-
-      const miniData = await res.json() as {
-        miniResult: unknown;
-        profileData: unknown;
-        meta: unknown;
-        retakeSuggestion?: string | null;
-      };
-
-      // Stage 2 (full report) fires from profile/page.tsx after redirect.
-      const result = {
-        miniResult: miniData.miniResult,
-        fullReport: null,
-        profileData: miniData.profileData,
-        quizData: mergedAnswers,
-        meta: miniData.meta,
-        retakeSuggestion: miniData.retakeSuggestion ?? null,
-      };
-
-      // Persist for profile page
-      try {
-        localStorage.setItem("paletteme-style-analysis", JSON.stringify(result));
-      } catch {
-        // Storage quota — non-fatal
-      }
-
-      // Save quiz profile (legacy compatibility)
-      if (existing) {
-        const profile = buildQuizProfile(mergedAnswers, existing.scores, {
-          seasonId: existing.seasonId,
-          seasonName: existing.seasonName,
-          undertoneHint: existing.undertoneHint,
-          subSeason: existing.subSeason,
-          faceShape: existing.faceShape,
-          bodyType: deriveBodyType(mergedAnswers),
-          styleVector: deriveStyleVectorFromAnswers(mergedAnswers),
-        });
-        saveQuizProfile(profile);
-        saveQuizToLocalStorage(profile);
-        saveQuizToSupabase(profile).catch(() => {});
-      }
-
-      // Save downscaled face photo for Look Lab
-      if (facePreview) {
-        try {
-          const small = await resizeImageForStorage(facePreview);
-          localStorage.setItem("paletteme-face-photo", small);
-        } catch {
-          // Storage quota — non-fatal
-        }
-      }
-
-      // Brief pause so user sees 100% before redirect
-      await new Promise((r) => setTimeout(r, 700));
-      router.push("/profile");
-    } catch (err) {
-      clearInterval(analyzeTimerRef.current!);
-      clearInterval(messageCycleRef.current!);
-      setAnalyzeError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
-      setAnalyzeProgress(0);
-      // Keep analyzing=true so the error renders inside the analyzing screen
-    }
-  };
-
-  const retryAnalysis = () => {
-    if (lastAnswersRef.current) {
-      setAnalyzeError(null);
-      void finishSetup(lastAnswersRef.current);
-    }
-  };
-
-  // ── Footer state ─────────────────────────────────────────────────────────────
-
-  const footerDisabled =
-    (step === "face-photo" && !faceFile) ||
-    (step === "wardrobe-type" && !answers.wardrobeType) ||
-    (step === "style-challenge" && !pendingChallenge) ||
-    (step === "measurements" && !answers.heightCm) ||
-    (step === "body-shape" && !answers.bodyShape) ||
-    (step === "style-direction" && (answers.styleDirections?.length ?? 0) < 1) ||
-    (step === "occasions" && (answers.occasions?.length ?? 0) < 1) ||
-    (step === "makeup" && !answers.makeupPref) ||
-    (step === "budget" && !answers.budgetPref) ||
-    (step === "style-mood" && (answers.styleMoods?.length ?? 0) < 1);
-
-  const footerHint =
-    step === "face-photo"
-      ? "Natural light · no filters · face clearly visible"
-      : step === "body-photo"
-        ? "Optional — helps us suggest the right silhouettes"
-        : step === "body-shape"
-          ? "We focus only on what works beautifully for your shape"
-          : step === "style-direction"
-            ? "Pick up to 3 — we'll drop the oldest if you pick more"
-            : step === "location"
-              ? "Used only for outfit and weather suggestions"
-              : undefined;
-
-  const footerLabel =
-    step === "aesthetic"
-      ? selectedAesthetics.length > 0 ? "see my results →" : "skip →"
-      : step === "location"
-        ? saving ? "saving…" : "finish setup"
-        : step === "face-photo"
-          ? "continue with this photo"
-          : step === "body-photo"
-            ? "continue"
-            : undefined;
-
-  const screenPanel = "quiz-page__panel quiz-page__panel--screen on";
-
-  // ── Render ───────────────────────────────────────────────────────────────────
-
-  // Full-screen analysis loading state — replaces quiz UI entirely
-  if (analyzing) {
-    return (
-      <div className="analyzing-screen">
-        <div className="analyzing-screen__inner">
-
-          {/* Face photo pulse */}
-          {facePreview && (
-            <div className="analyzing-screen__photo-ring">
-              <img src={facePreview} alt="" className="analyzing-screen__photo" />
-            </div>
-          )}
-
-          <h1 className="analyzing-screen__title">building your style map</h1>
-
-          {/* Animated message */}
-          <p className="analyzing-screen__message" key={analyzeMessageIdx}>
-            {ANALYSIS_MESSAGES[analyzeMessageIdx]}
-          </p>
-
-          {/* Progress bar */}
-          <div className="analyzing-screen__track">
-            <span
-              className="analyzing-screen__fill"
-              style={{ transform: `scaleX(${analyzeProgress / 100})` }}
-            />
-          </div>
-
-          <p className="analyzing-screen__sub">
-            {analyzeProgress < 40
-              ? "this takes about a minute — we're being thorough"
-              : analyzeProgress < 75
-                ? "halfway there — building your full style map"
-                : "almost done — final touches on your report"}
-          </p>
-
-          {analyzeError && (
-            <div className="analyzing-screen__error">
-              <p>{analyzeError}</p>
-              <button
-                className="analyzing-screen__retry"
-                onClick={retryAnalysis}
-              >
-                try again
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  async function handleFile(file: File) {
+    const dataUrl = await fileToDataUrl(file);
+    setPhotoDataUrl(dataUrl);
+    try { localStorage.setItem("paletteme-face-photo", dataUrl); } catch { /* quota */ }
+    setStep("wardrobe");
   }
 
+  async function handleSubmitWithAnswers(
+    photo: string,
+    wardrobe: WardrobeType,
+    occ: Occasion,
+    concern: StyleConcern,
+    sections: ReportSection[],
+  ) {
+    setStep("analyzing");
+    setError(null);
+    setReportReady(false);
+    setSeasonPreview(null);
+    timerRef.current = setInterval(() => {
+      setMsgIdx(i => (i + 1) % LOADING_MESSAGES.length);
+    }, 3500);
+
+    try { localStorage.setItem("paletteme-report-sections", JSON.stringify(sections)); } catch { /* quota */ }
+    const body    = JSON.stringify({ photoDataUrl: photo, wardrobeType: wardrobe, quizAnswers: { occasion: occ, styleConcern: concern, reportSections: sections } });
+    const headers = { "Content-Type": "application/json" };
+
+    async function callAnalyze(attempt: number): Promise<Response> {
+      const res = await fetch("/api/report/analyze", { method: "POST", headers, body });
+      if (res.status === 409 && attempt < 3) {
+        await new Promise(r => setTimeout(r, 5000));
+        return callAnalyze(attempt + 1);
+      }
+      if (!res.ok && res.status !== 422 && res.status !== 409 && attempt < 2) {
+        await new Promise(r => setTimeout(r, 2000));
+        return callAnalyze(attempt + 1);
+      }
+      return res;
+    }
+
+    try {
+      const res = await callAnalyze(1);
+
+      if (res.status === 422) {
+        clearInterval(timerRef.current!);
+        const data = await res.json() as { detail?: string };
+        throw new Error(data.detail ?? "photo quality too low — please use a clear, well-lit selfie.");
+      }
+      if (res.status === 409) {
+        clearInterval(timerRef.current!);
+        throw new Error("your report is taking a little longer than usual — please try again in a moment.");
+      }
+      if (!res.ok) {
+        clearInterval(timerRef.current!);
+        throw new Error("analysis failed. please try again.");
+      }
+
+      // Read streaming NDJSON response line by line
+      if (!res.body) throw new Error("no response body");
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer    = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const chunk = JSON.parse(line) as {
+            type: "season" | "report" | "error";
+            seasonId?: string; seasonName?: string; palette?: string[];
+            data?: unknown;
+            message?: string;
+          };
+
+          if (chunk.type === "season") {
+            clearInterval(timerRef.current!);
+            setSeasonPreview({ id: chunk.seasonId!, name: chunk.seasonName!, palette: chunk.palette ?? [] });
+            setStep("season-reveal");
+          } else if (chunk.type === "report") {
+            try { localStorage.setItem("paletteme-analysis", JSON.stringify(chunk.data)); } catch { /* quota */ }
+            try { localStorage.setItem("paletteme-wardrobe-type", wardrobe); } catch { /* quota */ }
+            try { localStorage.removeItem("paletteme-report-images"); } catch { /* quota */ }
+            setReportReady(true);
+            setTimeout(() => router.push("/profile"), 2200);
+          } else if (chunk.type === "error") {
+            throw new Error(chunk.message ?? "analysis failed. please try again.");
+          }
+        }
+      }
+    } catch (err) {
+      clearInterval(timerRef.current!);
+      setError(err instanceof Error ? err.message : "something went wrong.");
+      setStep("photo");
+    }
+  }
+
+  function handleSubmit() {
+    if (!photoDataUrl || !wardrobeType || !occasion || !styleConcern) return;
+    const sections = reportSections.length > 0 ? reportSections : ALL_SECTIONS;
+    try {
+      localStorage.setItem("paletteme-pending-submission", JSON.stringify({
+        photoDataUrl, wardrobeType, occasion, styleConcern, reportSections: sections,
+      }));
+    } catch { /* quota — the in-memory state below still lets email auth work */ }
+    setStep("auth");
+  }
+
+  const progress = STEP_INDEX[step] / TOTAL_STEPS;
+  const backStep = STEP_BACK[step];
+
   return (
-    <div className="quiz-page">
-      {/* Progress bar — only shown during quiz steps */}
-      <div className="quiz-page__bar">
-        <span className="quiz-page__bar-title">your style</span>
-        <span
-          className="quiz-page__bar-progress"
-          style={{ transform: `scaleX(${stepProgress(step) / 100})` }}
-        />
-      </div>
-
-      <div className="quiz-page__panels">
-
-        {/* ── FACE PHOTO ──────────────────────────────────────────────────────── */}
-        {step === "face-photo" && (
-          <div className={screenPanel}>
-            <QuizStepHead
-              kicker="photo 1/2"
-              title="Let's start with your face"
-              helper="We'll read your face shape, features, and coloring to build your full style map"
-            />
-
-            {facePreview ? (
-              <div className="style-setup__photo-preview">
-                <img
-                  src={facePreview}
-                  alt="Your face photo"
-                  className="style-setup__photo-preview-img"
-                />
-                <button
-                  className="style-setup__photo-retake"
-                  onClick={() => { setFaceFile(null); setFacePreview(null); }}
-                >
-                  use a different photo
-                </button>
-              </div>
-            ) : (
-              <SelfieCapture
-                onFile={handleFacePhoto}
-                title="Upload your face photo"
-                detail="Natural light · no heavy filters · face fully visible"
-                captureLabel="take selfie"
-                capturedFilePrefix="paletteme-face"
-              />
-            )}
-          </div>
-        )}
-
-        {/* ── BODY PHOTO ──────────────────────────────────────────────────────── */}
-        {step === "body-photo" && (
-          <div className={screenPanel}>
-            <QuizStepHead
-              kicker="photo 2/2"
-              title="Add a body photo for better silhouette advice"
-              helper="Optional — standing, full body, relaxed pose. Helps us suggest proportions that work"
-            />
-
-            {bodyPreview ? (
-              <div className="style-setup__photo-preview">
-                <img
-                  src={bodyPreview}
-                  alt="Your body photo"
-                  className="style-setup__photo-preview-img"
-                />
-                <button
-                  className="style-setup__photo-retake"
-                  onClick={() => { setBodyFile(null); setBodyPreview(null); }}
-                >
-                  use a different photo
-                </button>
-              </div>
-            ) : (
-              <SelfieCapture
-                onFile={handleBodyPhoto}
-                title="Upload a full-body photo"
-                detail="Standing · relaxed pose · natural light"
-                captureLabel="take photo"
-                capturedFilePrefix="paletteme-body"
-                cameraFacingMode="environment"
-              />
-            )}
-
-            <button
-              className="style-setup__skip-link"
-              onClick={skipBodyPhoto}
-            >
-              skip — I'll describe my body type instead
-            </button>
-          </div>
-        )}
-
-        {/* ── QUIZ Q1: Wardrobe type ──────────────────────────────────────────── */}
-        {step === "wardrobe-type" && (
-          <div className={screenPanel}>
-            <QuizStepHead
-              kicker={stepKicker(step)}
-              title="What do you shop for?"
-            />
-            <QuizRadioList>
-              {WARDROBE_TYPE_SIMPLE_OPTIONS.map((opt) => (
-                <QuizRadioCard
-                  key={opt.id}
-                  title={opt.label}
-                  sub={opt.sub}
-                  selected={answers.wardrobeType === opt.id}
-                  onClick={() => setAnswers((a) => ({ ...a, wardrobeType: opt.id as WardrobeType }))}
-                />
-              ))}
-            </QuizRadioList>
-          </div>
-        )}
-
-        {/* ── QUIZ Q2: Style challenge ─────────────────────────────────────────── */}
-        {step === "style-challenge" && (
-          <div className={screenPanel}>
-            <QuizStepHead
-              kicker={stepKicker(step)}
-              title="What's your biggest style challenge right now?"
-              helper="Be honest — this shapes everything we tell you"
-            />
-            <QuizRadioList>
-              {STYLE_CHALLENGE_OPTIONS.map((opt) => (
-                <QuizRadioCard
-                  key={opt.id}
-                  title={opt.label}
-                  sub={opt.sub}
-                  selected={pendingChallenge === opt.id}
-                  onClick={() => setPendingChallenge(opt.id)}
-                />
-              ))}
-            </QuizRadioList>
-          </div>
-        )}
-
-        {/* ── QUIZ Q3: Measurements ────────────────────────────────────────────── */}
-        {step === "measurements" && (
-          <div className={screenPanel}>
-            <QuizStepHead
-              kicker={stepKicker(step)}
-              title="Your measurements"
-              helper="Stays private — used only for proportions and outfit length"
-            />
-            <div className="quiz-page__measurements">
-              <div className="quiz-page__measure-field">
-                <label className="quiz-page__measure-label">height</label>
-                <div className="quiz-page__measure-input-row">
-                  <input
-                    type="number"
-                    className="quiz-page__measure-input"
-                    placeholder="e.g. 165"
-                    min={100}
-                    max={220}
-                    value={answers.heightCm ?? ""}
-                    onChange={(e) => setAnswers((a) => ({ ...a, heightCm: e.target.value }))}
-                  />
-                  <span className="quiz-page__measure-unit">cm</span>
-                </div>
-              </div>
-              <div className="quiz-page__measure-field">
-                <label className="quiz-page__measure-label">weight <span style={{ opacity: 0.5, fontWeight: 400 }}>(optional)</span></label>
-                <div className="quiz-page__measure-input-row">
-                  <input
-                    type="number"
-                    className="quiz-page__measure-input"
-                    placeholder="e.g. 60"
-                    min={30}
-                    max={250}
-                    value={answers.weightKg ?? ""}
-                    onChange={(e) => setAnswers((a) => ({ ...a, weightKg: e.target.value }))}
-                  />
-                  <span className="quiz-page__measure-unit">kg</span>
-                </div>
-              </div>
+    <div className="ss-page">
+      {/* ── Analyzing overlay ───────────────────────────────────────────────── */}
+      {step === "analyzing" && (
+        <div className="ss-analyzing" role="status" aria-live="polite" aria-label="Analysing your style">
+          <div
+            className={`ss-analyzing__bg${!photoDataUrl ? " ss-analyzing__bg--fallback" : ""}`}
+            style={photoDataUrl ? { backgroundImage: `url(${photoDataUrl})` } : undefined}
+          />
+          <div className="ss-analyzing__overlay" />
+          <div className="ss-analyzing__content">
+            <div className="ss-analyzing__orb" aria-hidden>
+              <span className="ss-analyzing__ring" />
+              <span className="ss-analyzing__ring" />
+              <span className="ss-analyzing__ring" />
+              <span className="ss-analyzing__spinner-dot" />
             </div>
-          </div>
-        )}
-
-        {/* ── QUIZ Q3: Body shape ──────────────────────────────────────────────── */}
-        {step === "body-shape" && (
-          <div className={`${screenPanel} quiz-page__panel--body-scroll`}>
-            <QuizStepHead
-              kicker={stepKicker(step)}
-              title="Which silhouette is closest to yours?"
-              helper="This stays completely private and only affects outfit suggestions"
-            />
-            <div className={`quiz-body-grid${wardrobeType === "menswear" ? " quiz-body-grid--men" : ""}`}>
-              {getBodyShapeScreenOptions(wardrobeType).map((opt, index, list) => (
-                <BodyShapeCard
-                  key={opt.id}
-                  label={opt.label}
-                  shape={opt.id}
-                  wardrobeType={wardrobeType}
-                  selected={answers.bodyShape === opt.id}
-                  solo={list.length % 2 === 1 && index === list.length - 1}
-                  onClick={() => setAnswers((a) => ({ ...a, bodyShape: opt.id }))}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── QUIZ Q4: Style direction ─────────────────────────────────────────── */}
-        {step === "style-direction" && (
-          <div className={screenPanel}>
-            <QuizStepHead
-              kicker={stepKicker(step)}
-              title="Pick the styles that feel like you"
-            />
-            <QuizCardList stack>
-              {STYLE_DIRECTION_OPTIONS.map((opt) => (
-                <QuizCardButton
-                  key={opt.id}
-                  title={opt.label}
-                  sub={opt.sub}
-                  selected={answers.styleDirections?.includes(opt.id)}
-                  onClick={() =>
-                    setAnswers((a) => ({
-                      ...a,
-                      styleDirections: toggleStyleDirection(a.styleDirections ?? [], opt.id),
-                    }))
-                  }
-                />
-              ))}
-            </QuizCardList>
-          </div>
-        )}
-
-        {/* ── QUIZ Q5: Occasions ───────────────────────────────────────────────── */}
-        {step === "occasions" && (
-          <div className={screenPanel}>
-            <QuizStepHead
-              kicker={stepKicker(step)}
-              title="What do you dress for most?"
-              helper="Select all that apply"
-            />
-            <div className="quiz-page__tags">
-              {OCCASION_OPTIONS.map((opt) => (
-                <QuizChip
-                  key={opt.id}
-                  label={opt.label}
-                  selected={answers.occasions?.includes(opt.id as OccasionPref) ?? false}
-                  onClick={() =>
-                    setAnswers((a) => {
-                      const current = a.occasions ?? [];
-                      const id = opt.id as OccasionPref;
-                      const next = current.includes(id)
-                        ? current.filter((o) => o !== id)
-                        : [...current, id];
-                      return { ...a, occasions: next };
-                    })
-                  }
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── QUIZ Q6: Makeup ──────────────────────────────────────────────────── */}
-        {step === "makeup" && (
-          <div className={screenPanel}>
-            <QuizStepHead
-              kicker={stepKicker(step)}
-              title="Do you want makeup included in your recommendations?"
-            />
-            <QuizRadioList>
-              {MAKEUP_PREF_OPTIONS.map((opt) => (
-                <QuizRadioCard
-                  key={opt.id}
-                  title={opt.label}
-                  sub={opt.sub}
-                  selected={answers.makeupPref === opt.id}
-                  onClick={() => setAnswers((a) => ({ ...a, makeupPref: opt.id }))}
-                />
-              ))}
-            </QuizRadioList>
-          </div>
-        )}
-
-        {/* ── QUIZ Q7: Budget ──────────────────────────────────────────────────── */}
-        {step === "budget" && (
-          <div className={screenPanel}>
-            <QuizStepHead kicker={stepKicker(step)} title="Your general shopping budget" />
-            <QuizRadioList>
-              {BUDGET_PREF_OPTIONS.map((opt) => (
-                <QuizRadioCard
-                  key={opt.id}
-                  title={opt.label}
-                  sub={opt.sub}
-                  selected={answers.budgetPref === opt.id}
-                  onClick={() => setAnswers((a) => ({ ...a, budgetPref: opt.id }))}
-                />
-              ))}
-            </QuizRadioList>
-          </div>
-        )}
-
-        {/* ── QUIZ Q8: Style mood ──────────────────────────────────────────────── */}
-        {step === "style-mood" && (
-          <div className={screenPanel}>
-            <QuizStepHead
-              kicker={stepKicker(step)}
-              title="Pick your vibe"
-              helper="Choose up to 2 — or pick the last one if you're not sure yet"
-            />
-            <QuizCardList stack>
-              {STYLE_MOOD_OPTIONS.map((opt) => {
-                const moods = answers.styleMoods ?? [];
-                const isSelected = moods.includes(opt.id as StyleMood);
-                const isNotSure = opt.id === "not-sure";
-                const notSureActive = moods.includes("not-sure" as StyleMood);
-                return (
-                  <QuizCardButton
-                    key={opt.id}
-                    title={opt.label}
-                    sub={opt.sub}
-                    selected={isSelected}
-                    onClick={() =>
-                      setAnswers((a) => {
-                        const prev = a.styleMoods ?? [];
-                        if (isNotSure) {
-                          return { ...a, styleMoods: isSelected ? [] : ["not-sure" as StyleMood], styleMood: "not-sure" as StyleMood };
-                        }
-                        if (notSureActive) {
-                          return { ...a, styleMoods: [opt.id as StyleMood], styleMood: opt.id as StyleMood };
-                        }
-                        const next = isSelected
-                          ? prev.filter((m) => m !== opt.id)
-                          : prev.length < 2
-                            ? [...prev, opt.id as StyleMood]
-                            : prev;
-                        return { ...a, styleMoods: next, styleMood: next[0] as StyleMood };
-                      })
-                    }
-                  />
-                );
-              })}
-            </QuizCardList>
-          </div>
-        )}
-
-        {/* ── QUIZ Q10: Location ───────────────────────────────────────────────── */}
-        {step === "location" && (
-          <div className={screenPanel}>
-            <QuizStepHead
-              kicker={stepKicker(step)}
-              title="Where are you based?"
-              helper="We use this to match outfits to your local weather and season"
-            />
-            <input
-              type="text"
-              className="quiz-page__field"
-              placeholder={
-                weatherLoading
-                  ? "Detecting your city…"
-                  : geoFailed
-                    ? "Enter your city"
-                    : "Your city"
-              }
-              value={cityInput}
-              onChange={(e) => handleCityChange(e.target.value)}
-              autoComplete="address-level2"
-              aria-label="City"
-            />
-            {geoFailed && !cityInput && (
-              <p className="quiz-page__inline-error" style={{ color: "var(--ink-soft)", fontStyle: "normal" }}>
-                Location access was denied — type your city above to continue.
+            <div className="ss-analyzing__msg-wrap">
+              <p className="ss-analyzing__msg" key={msgIdx}>
+                {LOADING_MESSAGES[msgIdx]}
               </p>
-            )}
-            <WeatherStatCards
-              temperature={weather?.temperature}
-              humidity={weather?.humidity}
-              uvIndex={weather?.uvIndex}
-              loading={weatherLoading}
-            />
+            </div>
+            <p className="ss-analyzing__sub">this takes about 20 seconds</p>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ── AESTHETIC SELECTION (post-quiz, not counted in 10-step limit) ────── */}
-        {step === "aesthetic" && (
-          <div className={screenPanel}>
-            <QuizStepHead
-              kicker="your style"
-              title="what's your aesthetic?"
-              helper="pick 1 or 2 — we'll build your capsule around these"
-            />
-            <div className="quiz-aesthetic-grid">
-              {AESTHETIC_OPTIONS.map((opt) => {
-                const selected = selectedAesthetics.includes(opt.id);
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    className={`quiz-aesthetic-card${selected ? " quiz-aesthetic-card--selected" : ""}`}
-                    onClick={() => toggleAesthetic(opt.id)}
-                    aria-pressed={selected}
-                  >
-                    <span className="quiz-aesthetic-emoji">{opt.emoji}</span>
-                    <span className="quiz-aesthetic-label">{opt.label}</span>
-                    <span className="quiz-aesthetic-sub">{opt.sub}</span>
-                  </button>
-                );
-              })}
+      {/* ── Season reveal overlay ───────────────────────────────────────────── */}
+      {step === "season-reveal" && seasonPreview && (
+        <div className="ss-season-reveal" role="status" aria-live="polite">
+          <div
+            className={`ss-analyzing__bg${!photoDataUrl ? " ss-analyzing__bg--fallback" : ""}`}
+            style={photoDataUrl ? { backgroundImage: `url(${photoDataUrl})` } : undefined}
+          />
+          <div className="ss-analyzing__overlay" />
+          <div className="ss-season-reveal__content">
+            {/* Palette swatches */}
+            <div className="ss-season-reveal__palette" aria-hidden>
+              {seasonPreview.palette.map((hex, i) => (
+                <span key={i} className="ss-season-reveal__swatch" style={{ background: hex }} />
+              ))}
+            </div>
+
+            {/* Season name */}
+            <div className="ss-season-reveal__heading-wrap">
+              <p className="ss-season-reveal__eyebrow">your colour season</p>
+              <h1 className="ss-season-reveal__name">{seasonPreview.name}</h1>
+            </div>
+
+            {/* Celebrities */}
+            {(SEASON_CELEBS[seasonPreview.id] ?? []).length > 0 && (
+              <div className="ss-season-reveal__celebs">
+                <p className="ss-season-reveal__celebs-label">style icons with your season</p>
+                <div className="ss-season-reveal__celebs-list">
+                  {(SEASON_CELEBS[seasonPreview.id] ?? []).map((name, i) => (
+                    <CelebPhoto key={name} seasonId={seasonPreview.id} index={i} name={name} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Status / CTA */}
+            <div className="ss-season-reveal__cta-area">
+              {reportReady ? (
+                <button
+                  className="ss-season-reveal__cta-btn"
+                  onClick={() => router.push("/profile")}
+                >
+                  see your full results
+                </button>
+              ) : (
+                <div className="ss-season-reveal__building">
+                  <span className="ss-season-reveal__dot" />
+                  <span className="ss-season-reveal__dot" />
+                  <span className="ss-season-reveal__dot" />
+                  <span className="ss-season-reveal__building-text">building your full report</span>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-      </div>
+      {/* ── Auth gate (sign in before we call the paid analyze route) ──────── */}
+      {step === "auth" && photoDataUrl && wardrobeType && occasion && styleConcern && (
+        <PostQuizAuthScreen
+          redirectPath="/style-setup"
+          onAuthed={() => {
+            try { localStorage.removeItem("paletteme-pending-submission"); } catch { /* quota */ }
+            const sections = reportSections.length > 0 ? reportSections : ALL_SECTIONS;
+            void handleSubmitWithAnswers(photoDataUrl, wardrobeType, occasion, styleConcern, sections);
+          }}
+        />
+      )}
 
-      <QuizFooter
-        disabled={footerDisabled || saving}
-        hint={footerHint}
-        onContinue={() => void continueFooter()}
-        label={footerLabel}
-      />
+      {/* ── Sticky progress header ──────────────────────────────────────────── */}
+      {step !== "analyzing" && step !== "season-reveal" && step !== "auth" && (
+        <header className="ss-header" role="banner">
+          <div className="ss-header__bar">
+            <button
+              className={`ss-header__back${!backStep ? " ss-header__back--hidden" : ""}`}
+              onClick={() => backStep && setStep(backStep)}
+              aria-label="go back"
+              tabIndex={!backStep ? -1 : 0}
+            >
+              <BackIcon />
+            </button>
+            <Link href="/" className="ss-header__logo">paletteme</Link>
+            <p className="ss-header__step">{STEP_INDEX[step]} / {TOTAL_STEPS}</p>
+          </div>
+          <div className="ss-header__progress" aria-hidden>
+            <span
+              className="ss-header__progress-fill"
+              style={{ transform: `scaleX(${progress})` }}
+            />
+          </div>
+        </header>
+      )}
+
+      {/* ── Step body ───────────────────────────────────────────────────────── */}
+      {step !== "analyzing" && step !== "season-reveal" && step !== "auth" && (
+        <main className="ss-body">
+
+          {/* Step 1 — photo */}
+          {step === "photo" && (
+            <div className="ss-step" key="photo">
+              <p className="ss-photo__kicker">your style, personalised</p>
+              <h1 className="ss-photo__title">upload your<br />face photo</h1>
+              <p className="ss-photo__sub">
+                Clear face, natural light, no filters. We&apos;ll read your features, colour season, and undertone.
+              </p>
+              {error && <p className="ss-photo__error" role="alert">{error}</p>}
+              <SelfieCapture
+                onFile={handleFile}
+                title="drop your selfie here"
+                detail="JPG, PNG or WebP · max 10 MB · good light, no filters"
+                captureLabel="capture selfie"
+              />
+            </div>
+          )}
+
+          {/* Step 2 — wardrobe type */}
+          {step === "wardrobe" && (
+            <div className="ss-step" key="wardrobe">
+              <div className="ss-wardrobe__confirm">
+                {photoDataUrl
+                  ? <img src={photoDataUrl} alt="your uploaded photo" className="ss-wardrobe__thumb" />
+                  : <span className="ss-wardrobe__thumb-placeholder" aria-hidden />
+                }
+                <span className="ss-wardrobe__confirm-text">
+                  <CheckIcon />
+                  photo received
+                </span>
+              </div>
+              <h2 className="ss-wardrobe__title">i dress as</h2>
+              <p className="ss-wardrobe__sub">We&apos;ll tailor every recommendation to your wardrobe.</p>
+              <div className="ss-wardrobe__options" role="radiogroup" aria-label="wardrobe preference">
+                {WARDROBE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    role="radio"
+                    aria-checked={wardrobeType === opt.value}
+                    className={`ss-option${wardrobeType === opt.value ? " ss-option--selected" : ""}`}
+                    onClick={() => setWardrobeType(opt.value)}
+                  >
+                    <span className="ss-option__icon" aria-hidden>{opt.emoji}</span>
+                    <span className="ss-option__text">
+                      <span className="ss-option__label">{opt.label}</span>
+                      <span className="ss-option__sub">{opt.sub}</span>
+                    </span>
+                    <span className="ss-option__check" aria-hidden><span className="ss-option__check-dot" /></span>
+                  </button>
+                ))}
+              </div>
+              <div className="ss-footer">
+                <button className="ss-cta" onClick={() => wardrobeType && setStep("occasion")} disabled={!wardrobeType}>
+                  next →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3 — occasion */}
+          {step === "occasion" && (
+            <div className="ss-step" key="occasion">
+              <h2 className="ss-wardrobe__title">i mostly dress for</h2>
+              <p className="ss-wardrobe__sub">This helps us focus your style recommendations.</p>
+              <div className="ss-wardrobe__options" role="radiogroup" aria-label="occasion">
+                {OCCASION_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    role="radio"
+                    aria-checked={occasion === opt.value}
+                    className={`ss-option${occasion === opt.value ? " ss-option--selected" : ""}`}
+                    onClick={() => setOccasion(opt.value)}
+                  >
+                    <span className="ss-option__text">
+                      <span className="ss-option__label">{opt.label}</span>
+                      <span className="ss-option__sub">{opt.sub}</span>
+                    </span>
+                    <span className="ss-option__check" aria-hidden><span className="ss-option__check-dot" /></span>
+                  </button>
+                ))}
+              </div>
+              <div className="ss-footer">
+                <button className="ss-cta" onClick={() => occasion && setStep("concern")} disabled={!occasion}>
+                  next →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4 — style concern */}
+          {step === "concern" && (
+            <div className="ss-step" key="concern">
+              <h2 className="ss-wardrobe__title">my biggest style challenge</h2>
+              <p className="ss-wardrobe__sub">We&apos;ll make sure your report addresses this directly.</p>
+              <div className="ss-wardrobe__options" role="radiogroup" aria-label="style challenge">
+                {CONCERN_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    role="radio"
+                    aria-checked={styleConcern === opt.value}
+                    className={`ss-option${styleConcern === opt.value ? " ss-option--selected" : ""}`}
+                    onClick={() => setStyleConcern(opt.value)}
+                  >
+                    <span className="ss-option__text">
+                      <span className="ss-option__label">{opt.label}</span>
+                      <span className="ss-option__sub">{opt.sub}</span>
+                    </span>
+                    <span className="ss-option__check" aria-hidden><span className="ss-option__check-dot" /></span>
+                  </button>
+                ))}
+              </div>
+              <div className="ss-footer">
+                <button className="ss-cta" onClick={() => styleConcern && setStep("sections")} disabled={!styleConcern}>
+                  next →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5 — report sections */}
+          {step === "sections" && (
+            <div className="ss-step" key="sections">
+              <h2 className="ss-wardrobe__title">what should your report include?</h2>
+              <p className="ss-wardrobe__sub">All selected by default — tap to remove anything you don&apos;t need.</p>
+              <div className="ss-wardrobe__options" role="group" aria-label="report sections">
+                {SECTIONS_OPTIONS.map(opt => {
+                  const selected = reportSections.includes(opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      role="checkbox"
+                      aria-checked={selected}
+                      className={`ss-option${selected ? " ss-option--selected" : ""}`}
+                      onClick={() => setReportSections(prev =>
+                        prev.includes(opt.value)
+                          ? prev.filter(s => s !== opt.value)
+                          : [...prev, opt.value]
+                      )}
+                    >
+                      <span className="ss-option__text">
+                        <span className="ss-option__label">{opt.label}</span>
+                        <span className="ss-option__sub">{opt.sub}</span>
+                      </span>
+                      <span className="ss-option__check" aria-hidden><span className="ss-option__check-dot" /></span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="ss-footer">
+                <button className="ss-cta" onClick={handleSubmit}>
+                  create my report →
+                </button>
+                <button className="ss-back-link" onClick={() => setStep("photo")}>
+                  ← retake photo
+                </button>
+              </div>
+            </div>
+          )}
+
+        </main>
+      )}
     </div>
   );
 }
