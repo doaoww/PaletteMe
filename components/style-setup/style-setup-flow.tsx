@@ -39,6 +39,12 @@ const STEP_INDEX: Record<Step, number> = {
 
 type SeasonPreview = { id: string; name: string; palette: string[] };
 
+// Round-tripped verbatim from /api/report/analyze so /api/report/full can rebuild the
+// report prompt without re-running trait extraction when the user unlocks.
+type Traits = Record<string, unknown>;
+type ScoredSeason = { subSeason: string; seasonId: string; likelihood: number; reason: string };
+type MiniData = { traits: Traits; scoredTop3: [ScoredSeason, ScoredSeason, ScoredSeason] };
+
 const SEASON_CELEBS: Record<string, string[]> = {
   "light-spring":  ["Reese Witherspoon", "Cameron Diaz", "Emma Stone"],
   "true-spring":   ["Kate Middleton", "Julianne Hough", "Gisele Bündchen"],
@@ -137,7 +143,8 @@ export function StyleSetupFlow() {
   const [error, setError]                 = useState<string | null>(null);
   const [msgIdx, setMsgIdx]               = useState(0);
   const [seasonPreview, setSeasonPreview] = useState<SeasonPreview | null>(null);
-  const [reportReady, setReportReady]     = useState(false);
+  const [miniData, setMiniData]           = useState<MiniData | null>(null);
+  const [unlocking, setUnlocking]         = useState(false);
   const [authChecked, setAuthChecked]     = useState(false);
   const timerRef                          = useRef<ReturnType<typeof setInterval> | null>(null);
   const resumeAttempted                   = useRef(false);
@@ -169,7 +176,7 @@ export function StyleSetupFlow() {
               setStyleConcern(pending.styleConcern);
               setReportSections(pending.reportSections);
               localStorage.removeItem("paletteme-pending-submission");
-              void handleSubmitWithAnswers(pending.photoDataUrl, pending.wardrobeType, pending.occasion, pending.styleConcern, pending.reportSections);
+              void handleSubmitWithAnswers(pending.photoDataUrl, pending.wardrobeType, pending.reportSections);
             } catch { /* malformed, ignore and let the user redo the flow */ }
           }
         }
@@ -187,32 +194,29 @@ export function StyleSetupFlow() {
     setStep("wardrobe");
   }
 
+  // Free mini phase: trait extraction + season scoring only. Never calls the paid
+  // full-report route — that only fires from handleUnlock(), after an explicit click.
   async function handleSubmitWithAnswers(
     photo: string,
     wardrobe: WardrobeType,
-    occ: Occasion,
-    concern: StyleConcern,
     sections: ReportSection[],
   ) {
     setStep("analyzing");
     setError(null);
-    setReportReady(false);
     setSeasonPreview(null);
+    setMiniData(null);
     timerRef.current = setInterval(() => {
       setMsgIdx(i => (i + 1) % LOADING_MESSAGES.length);
     }, 3500);
 
     try { localStorage.setItem("paletteme-report-sections", JSON.stringify(sections)); } catch { /* quota */ }
-    const body    = JSON.stringify({ photoDataUrl: photo, wardrobeType: wardrobe, quizAnswers: { occasion: occ, styleConcern: concern, reportSections: sections } });
+    try { localStorage.setItem("paletteme-wardrobe-type", wardrobe); } catch { /* quota */ }
+    const body    = JSON.stringify({ photoDataUrl: photo });
     const headers = { "Content-Type": "application/json" };
 
     async function callAnalyze(attempt: number): Promise<Response> {
       const res = await fetch("/api/report/analyze", { method: "POST", headers, body });
-      if (res.status === 409 && attempt < 3) {
-        await new Promise(r => setTimeout(r, 5000));
-        return callAnalyze(attempt + 1);
-      }
-      if (!res.ok && res.status !== 422 && res.status !== 409 && attempt < 2) {
+      if (!res.ok && res.status !== 422 && attempt < 2) {
         await new Promise(r => setTimeout(r, 2000));
         return callAnalyze(attempt + 1);
       }
@@ -221,62 +225,89 @@ export function StyleSetupFlow() {
 
     try {
       const res = await callAnalyze(1);
+      clearInterval(timerRef.current!);
 
       if (res.status === 422) {
-        clearInterval(timerRef.current!);
         const data = await res.json() as { detail?: string };
         throw new Error(data.detail ?? "photo quality too low — please use a clear, well-lit selfie.");
       }
-      if (res.status === 409) {
-        clearInterval(timerRef.current!);
-        throw new Error("your report is taking a little longer than usual — please try again in a moment.");
-      }
       if (!res.ok) {
-        clearInterval(timerRef.current!);
         throw new Error("analysis failed. please try again.");
       }
 
-      // Read streaming NDJSON response line by line
-      if (!res.body) throw new Error("no response body");
-      const reader  = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer    = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          const chunk = JSON.parse(line) as {
-            type: "season" | "report" | "error";
-            seasonId?: string; seasonName?: string; palette?: string[];
-            data?: unknown;
-            message?: string;
-          };
-
-          if (chunk.type === "season") {
-            clearInterval(timerRef.current!);
-            setSeasonPreview({ id: chunk.seasonId!, name: chunk.seasonName!, palette: chunk.palette ?? [] });
-            setStep("season-reveal");
-          } else if (chunk.type === "report") {
-            try { localStorage.setItem("paletteme-analysis", JSON.stringify(chunk.data)); } catch { /* quota */ }
-            try { localStorage.setItem("paletteme-wardrobe-type", wardrobe); } catch { /* quota */ }
-            try { localStorage.removeItem("paletteme-report-images"); } catch { /* quota */ }
-            setReportReady(true);
-            setTimeout(() => router.push("/profile"), 2200);
-          } else if (chunk.type === "error") {
-            throw new Error(chunk.message ?? "analysis failed. please try again.");
-          }
-        }
-      }
+      const data = await res.json() as {
+        seasonId: string; seasonName: string; palette: string[];
+        traits: Traits; scoredTop3: [ScoredSeason, ScoredSeason, ScoredSeason];
+      };
+      setSeasonPreview({ id: data.seasonId, name: data.seasonName, palette: data.palette });
+      setMiniData({ traits: data.traits, scoredTop3: data.scoredTop3 });
+      setStep("season-reveal");
     } catch (err) {
       clearInterval(timerRef.current!);
       setError(err instanceof Error ? err.message : "something went wrong.");
       setStep("photo");
+    }
+  }
+
+  // Paid full phase: only reachable from the season-reveal screen's explicit
+  // "unlock" click. Reuses the traits/season data the mini phase already computed —
+  // never re-runs trait extraction, so this is pure incremental cost on unlock only.
+  async function handleUnlock() {
+    if (!photoDataUrl || !wardrobeType || !miniData) return;
+    setUnlocking(true);
+    setError(null);
+
+    const sections = reportSections.length > 0 ? reportSections : ALL_SECTIONS;
+
+    let premiumLevel: "free" | "report" | "pro" = "free";
+    try {
+      const { resolvePremiumLevel } = await import("@/lib/billing/premium");
+      premiumLevel = resolvePremiumLevel({ get: () => null });
+    } catch { /* default "free" — server still allows this during free-testing-mode */ }
+
+    const body = JSON.stringify({
+      photoDataUrl,
+      wardrobeType,
+      quizAnswers: { occasion, styleConcern, reportSections: sections },
+      traits: miniData.traits,
+      scoredTop3: miniData.scoredTop3,
+      premiumLevel,
+    });
+    const headers = { "Content-Type": "application/json" };
+
+    async function callFull(attempt: number): Promise<Response> {
+      const res = await fetch("/api/report/full", { method: "POST", headers, body });
+      if (res.status === 409 && attempt < 3) {
+        await new Promise(r => setTimeout(r, 5000));
+        return callFull(attempt + 1);
+      }
+      if (!res.ok && res.status !== 402 && res.status !== 409 && attempt < 2) {
+        await new Promise(r => setTimeout(r, 2000));
+        return callFull(attempt + 1);
+      }
+      return res;
+    }
+
+    try {
+      const res = await callFull(1);
+
+      if (res.status === 402) {
+        throw new Error("payment required to unlock your full report.");
+      }
+      if (res.status === 409) {
+        throw new Error("your report is taking a little longer than usual — please try again in a moment.");
+      }
+      if (!res.ok) {
+        throw new Error("report generation failed. please try again.");
+      }
+
+      const { data } = await res.json() as { data: unknown };
+      try { localStorage.setItem("paletteme-analysis", JSON.stringify(data)); } catch { /* quota */ }
+      try { localStorage.removeItem("paletteme-report-images"); } catch { /* quota */ }
+      router.push("/profile");
+    } catch (err) {
+      setUnlocking(false);
+      setError(err instanceof Error ? err.message : "something went wrong.");
     }
   }
 
@@ -355,22 +386,29 @@ export function StyleSetupFlow() {
               </div>
             )}
 
-            {/* Status / CTA */}
+            {/* Paywall: full report + photos are never generated until this is clicked */}
             <div className="ss-season-reveal__cta-area">
-              {reportReady ? (
-                <button
-                  className="ss-season-reveal__cta-btn"
-                  onClick={() => router.push("/profile")}
-                >
-                  see your full results
-                </button>
-              ) : (
+              {unlocking ? (
                 <div className="ss-season-reveal__building">
                   <span className="ss-season-reveal__dot" />
                   <span className="ss-season-reveal__dot" />
                   <span className="ss-season-reveal__dot" />
-                  <span className="ss-season-reveal__building-text">building your full report</span>
+                  <span className="ss-season-reveal__building-text">unlocking your full report</span>
                 </div>
+              ) : (
+                <>
+                  <p className="ss-season-reveal__locked-note">
+                    full report unlocks: {SECTIONS_OPTIONS.map(s => s.label).join(" · ")}
+                  </p>
+                  {error && <p className="ss-photo__error" role="alert">{error}</p>}
+                  <button
+                    className="ss-season-reveal__cta-btn"
+                    onClick={handleUnlock}
+                    disabled={!miniData}
+                  >
+                    unlock my full report →
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -384,7 +422,7 @@ export function StyleSetupFlow() {
           onAuthed={() => {
             try { localStorage.removeItem("paletteme-pending-submission"); } catch { /* quota */ }
             const sections = reportSections.length > 0 ? reportSections : ALL_SECTIONS;
-            void handleSubmitWithAnswers(photoDataUrl, wardrobeType, occasion, styleConcern, sections);
+            void handleSubmitWithAnswers(photoDataUrl, wardrobeType, sections);
           }}
         />
       )}
