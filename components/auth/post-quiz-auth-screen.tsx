@@ -13,7 +13,7 @@ import {
 
 type Props = {
   onAuthed: (user: { id: string; email?: string | null }) => void;
-  googleRedirectPath: string;
+  redirectPath: string;
 };
 
 type Mode = "choice" | "email" | "loading" | "check-email";
@@ -23,7 +23,7 @@ const SUPABASE_AUTH_ENV = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 };
 
-export function PostQuizAuthScreen({ onAuthed, googleRedirectPath }: Props) {
+export function PostQuizAuthScreen({ onAuthed, redirectPath }: Props) {
   const [mode, setMode] = useState<Mode>("choice");
   const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState("");
@@ -43,7 +43,7 @@ export function PostQuizAuthScreen({ onAuthed, googleRedirectPath }: Props) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: buildAuthCallbackUrl(window.location.origin, googleRedirectPath),
+        redirectTo: buildAuthCallbackUrl(window.location.origin, redirectPath),
       },
     });
 
@@ -70,7 +70,7 @@ export function PostQuizAuthScreen({ onAuthed, googleRedirectPath }: Props) {
         email,
         password,
         options: {
-          emailRedirectTo: buildAuthCallbackUrl(window.location.origin, "/profile"),
+          emailRedirectTo: buildAuthCallbackUrl(window.location.origin, redirectPath),
         },
       });
 
