@@ -13,6 +13,7 @@ Use these in order:
 5. `docs/PRODUCT-SPEC.md` - current product spec.
 6. `docs/systems/free-testing-mode/README.md` - current unlocked testing mode.
 7. `design/PaletteMe-style-guide.md` - UI style guide.
+8. `docs/report-writing-spec.md` - **read before any work on the AI report prompt or report UI**. Single source of truth for how every section must be written.
 
 If docs disagree, update the stale doc before implementing.
 
@@ -22,46 +23,46 @@ If docs disagree, update the stale doc before implementing.
 
 ### What Is PaletteMe?
 
-PaletteMe is a personal style assistant. It helps users discover their seasonal color direction, then decide which makeup, outfits, wardrobe items, and products actually suit them.
+PaletteMe is an AI personal stylist. It analyzes your face, body, and style preferences, then delivers a complete personalized style map: face typology, haircut direction, color palette, body recommendations, ready-to-wear outfits, and a shopping list — all in one report built specifically for you.
+
+Color analysis was the original entry point. The durable product is the full AI stylist: face-first analysis, 9-section paid report, and a living subscription stylist.
 
 ### Problem
 
-Users buy colors that clash with their undertone, contrast, and personal style. Professional color analysis is expensive and slow. Free online quizzes are fun but shallow, and they do not help users make real shopping decisions.
+Nobody tells people what actually works for their specific face and body. Professional image consulting costs hundreds of dollars. Free quizzes give generic advice. Users keep buying clothes that look wrong and can't explain why.
 
 ### Solution
 
-Free testing mode gives users full access while the product validates AI accuracy. The long-term product is recurring outfit, wardrobe, product, and makeup checks.
+Upload a face photo, answer 10 quick questions, get a free mini-preview that feels real, then unlock a full personalized style map. The mini-result creates desire; the full report delivers concrete action. The subscription keeps the stylist active.
 
 ### Business Goals
 
-- Validate AI accuracy and user trust before re-testing payments.
-- Reach `1000+ MRR` through paid report and Pro subscription.
-- Use affiliate links as secondary revenue once approvals arrive.
-- Establish PaletteMe as a practical "before you wear or buy it" styling assistant.
+- Prove that AI face + body analysis is accurate enough to feel personal and specific.
+- Reach `1000+ MRR` through paid one-time reports (4.99–9.99) and Pro subscription (9.99/mo).
+- Use affiliate links in the shopping list as secondary revenue once approvals arrive.
+- Establish PaletteMe as the AI personal stylist people trust before buying or wearing anything.
 
 ### Revenue Model
 
 Free:
 
-- Quiz-first result.
-- Optional selfie accuracy boost.
-- Full report while testing.
-- Clothing, outfit, product, and makeup scan access while testing.
-- Early wardrobe matching while testing.
+- Face photo upload + quick quiz.
+- Free mini-result: face typology, 2 strengths, 2 mistakes, "how people read you", 1 hair hint, 1 color family, 1–2 silhouettes.
+- Locked section titles visible (creates desire to unlock).
 
-Paid report:
+Paid report (one-time):
 
-- Launch price: `2.99` to `4.99`.
-- Exact sub-season, full palette, avoid colors, makeup, jewelry, hair, and shopping guidance.
+- Launch price: `4.99` to `9.99`.
+- Full 9-section style map: appearance, hair, color, body, style direction, clothing with images, style mistakes, ready outfits (lookbooks), shopping list with links.
 
-Pro:
+Pro subscription:
 
 - Launch price: `9.99/mo`.
-- Future recurring value: outfit scanner, before-you-buy product scanner, makeup scanner, wardrobe matchmaker, saved profile, saved products, and higher usage limits.
+- Monthly style refresh, new outfit ideas, item scan ("buy or skip"), outfit scan, weekly outfit picks, monthly capsule wardrobe, new photo analysis anytime.
 
 Affiliate:
 
-- Product links should be affiliate-ready but must work without affiliate env vars.
+- Product links in shopping list must be affiliate-ready but work without affiliate env vars.
 
 ---
 
@@ -71,49 +72,61 @@ Affiliate:
 
 ```text
 Landing
-  -> Mobile-first quiz
-  -> Fast result
-  -> Optional selfie accuracy boost
-  -> Scan clothing/outfit/makeup/product
-  -> Save scan history
-  -> Add owned wardrobe items
-  -> Build outfits and buy-with-my-closet verdicts
+  -> Register (Google or email) — required before analysis
+  -> Upload face photo
+  -> Upload body photo (optional) OR select body type from visual cards
+  -> Quick quiz (10 tap-select questions, < 2 min)
+  -> Free mini-result (strong preview with hooks)
+  -> Paywall: "Your full style map is ready"
+  -> Pay -> Full 9-section report with images
+  -> Scan items / subscription
 ```
 
 ### Pages
 
 | Page | Path | Purpose |
 | --- | --- | --- |
-| Landing | `/` | Explain value, start quiz, collect interest |
-| Quiz | `/quiz` | Onboarding and selfie/color flow |
-| Profile | `/profile` | Free result, paid report, Pro upsell |
-| Feed | `/feed` | Product recommendations |
-| Saved | `/saved` | Saved products |
-| Login/Auth | `/login` | Account recovery and saved profile |
+| Landing | `/` | Promise, how it works, CTA |
+| Login / Register | `/login` | Google or email auth |
+| Style Setup | `/style-setup` | Face photo + body + 10-question quiz |
+| Profile / Report | `/profile` | Mini-result + paywall + full 9-section report |
+| Feed | `/feed` | Personalized product recommendations |
+| Saved | `/saved` | Saved products and scan history |
 | Auth redirect | `/auth` | Legacy redirect to `/login` |
-| Dashboard | `/dashboard` | Legacy URL that redirects to `/quiz` |
+| Dashboard | `/dashboard` | Legacy redirect to `/style-setup` |
+| Quiz | `/quiz` | Legacy color quiz — secondary entry, redirect to `/style-setup` |
 
-### MVP Features
+Future:
 
-- Selfie upload or live camera capture with client-side resize.
-- Color analysis through server-side AI routes.
-- Free testing result.
-- Full report while testing.
-- Clothing, outfit, makeup, and product scanner direction.
-- Early wardrobe matchmaker direction.
-- Affiliate-ready product links.
-- Waitlist and Telegram notification.
+| Page | Path | Purpose |
+| --- | --- | --- |
+| Wardrobe | `/wardrobe` | Owned items with editable AI labels |
+| Scans | `/scans` | Scan history |
+| Outfit Builder | `/outfits` | Build outfits from wardrobe |
 
-### Post-MVP Features
+### Phase 1 MVP Features (Rebrand Core)
 
-- Stripe webhooks.
-- Supabase entitlement table.
-- PDF report generation.
-- Email lifecycle flows.
-- Affiliate feed ingestion.
-- Admin product dashboard.
-- Full wardrobe catalog and outfit builder.
+- Registration required before face photo upload.
+- Face photo upload in `/style-setup` with good/bad photo example.
+- Body photo upload (optional) OR visual body type selector.
+- 10-question quick quiz, all tap-select, < 2 min total.
+- AI analysis route `/api/style-analysis`: face + body + quiz → mini-result + full report (one call, two output tiers).
+- Free mini-result: typology, 2 strengths, 2 mistakes, "how people read you", 1 hair hint, 1 color, 1–2 silhouettes.
+- Paywall after mini-result with visible locked section titles.
+- Paid full report (9 sections, with images for clothing and outfits).
+- Updated landing page: new promise, new flow explanation.
+
+### Post-Phase-1 Features
+
+- Stripe webhooks + Supabase entitlement table.
+- Scan Anything (item, outfit, makeup, product screenshot).
+- Wardrobe matchmaker (5–10 owned items, AI labels, user corrections, outfit builder).
 - Buy-with-my-closet scanner.
+- Makeup scanner.
+- Monthly subscription refresh jobs.
+- PDF report generation.
+- Email lifecycle automation.
+- Affiliate feed ingestion.
 
 ### Seasons
 
@@ -220,7 +233,7 @@ Update `docs/TRACKER.yaml` when plan/task state changes.
 
 Current active plan:
 
-- `docs/plans/2026-06-13-monetization-affiliate-launch/`
+- `docs/plans/2026-06-20-ai-stylist-rebrand/`
 
 ---
 
@@ -349,6 +362,38 @@ Context: Deployment testing showed the team wants signed-in accounts attached to
 Decision: `components/quiz/quiz-flow.tsx` renders `PostQuizAuthScreen` with no `onSkip` once the quiz finishes, so users must sign in or create an account before being routed to `/profile`. The deterministic quiz prior (and the optional pre-result selfie analysis) still run and save to `localStorage` before this screen renders, so analysis itself stays login-free; only navigating to the results page requires auth.
 Consequences: This supersedes the "see results before signing in" framing in ADR-009/ADR-013. Do not add a skip option back without an explicit product decision, since the two ADRs above no longer reflect the live quiz-completion flow.
 
+### ADR-015 - AI Stylist Rebrand: face-first analysis with 9-section paid report
+
+Date: 2026-06-20
+Status: accepted
+Context: Color season analysis alone is too narrow. Users want to know what works for their face and body, not just their undertone. A full AI stylist product with face photo analysis, concrete hair/silhouette/outfit recommendations, and a clear paywall after a strong free preview has higher trust and conversion potential than the current quiz-only color result.
+Decision: Rebuild the core product around face photo analysis. New route `/style-setup` replaces `/quiz` as the primary onboarding. New AI route `/api/style-analysis` produces a mini-result (free) and a 9-section full report (paid) from one structured AI call. The `/profile` page shows mini-result, then paywall, then full report. The old `/quiz` color analysis is preserved as a secondary entry point and feeds into report section 3 (Color).
+Consequences: `/style-setup` is the new canonical onboarding. `/quiz` and `/dashboard` redirect there. The AI prompt and Zod schema for `style-analysis` must cover all 9 report sections. Images in the clothing and outfit sections require product/lookbook images (via search or curated). Do not bypass the mini-result paywall gate.
+
+### ADR-016 - Face photo required, body photo optional
+
+Date: 2026-06-20
+Status: accepted
+Context: Face photo is the foundation of the AI analysis (typology, features, hair direction, color reading). Body photo improves silhouette accuracy but creates friction for users who are not comfortable showing their body.
+Decision: Face photo upload is required before the quiz. Body photo is optional — the alternative is a visual body type selector (silhouette cards). Both paths produce valid analysis; body photo path has higher silhouette accuracy. The UI must treat both as equal and not shame users who skip the body photo.
+Consequences: `/api/style-analysis` must handle missing body photo gracefully and rely on quiz self-report (height, body area goals, body type selection) instead. Do not block analysis when body photo is absent.
+
+### ADR-017 - Short quiz as the only pre-analysis questionnaire
+
+Date: 2026-06-20
+Status: accepted
+Context: Long quizzes lose users midway. The previous color quiz had 12+ questions including self-diagnosis questions (undertone, contrast) that users cannot reliably answer. The new quiz must be short enough that users can complete it in under 2 minutes, with every question answerable in 3 seconds.
+Decision: The new `/style-setup` quiz has exactly 10 tap-select questions. No dropdowns. No long text. One question per screen with a progress bar. No self-diagnosis questions — only observable facts and stated preferences. See `docs/PRODUCT-SPEC.md` for the full question list.
+Consequences: The 10-question limit is a hard cap. If new data is needed, replace an existing question rather than adding one. Observable color facts (skin tone, hair color, eye color) are collected from the face photo analysis, not the quiz.
+
+### ADR-018 - Auth-gated, DB-locked report and image generation
+
+Date: 2026-07-01
+Status: accepted
+Context: `/api/report/analyze` and `/api/report/generate-visual` had no authentication, no persistence, and no concurrency control — anyone could call them directly, unlimited times, for free OpenAI/Replicate spend, and the generated report only lived in `localStorage`, so clearing storage silently re-triggered full regeneration.
+Decision: Both routes now require a Supabase session (401 otherwise) and use an atomic claim/lock (`lib/server/generation-lock.ts`) against two new tables, `style_reports` (one row per user, MVP-intentional) and `report_visuals` (one row per user+slot), before calling OpenAI or Replicate. A completed row is always served from cache; a `generating` row blocks duplicate calls; a `failed` or stale (>15 min) row can be safely reclaimed, capped at 5 attempts. Image prompts are rebuilt server-side from the stored report — the client sends only a `slotId`, never a prompt string. `/style-setup` gates the "create my report" action behind sign-in (reusing the same no-skip pattern as ADR-014). `/profile` reads `style_reports` as source of truth; `localStorage` is a paint cache only.
+Consequences: No endpoint that calls a paid AI provider should ever skip the auth check or the claim/lock pattern going forward — new AI routes must reuse `lib/server/generation-lock.ts` rather than inventing a new caching scheme. Multi-report-per-user support requires a schema migration (see the comment in `supabase/migrations/20260701120000_create_style_reports.sql`), not just new application code.
+
 ---
 
 ## Feature Changelog
@@ -405,6 +450,14 @@ Added wardrobe type, style challenge, skin tone, detailed eye/hair answers, dete
 
 Turned on `NEXT_PUBLIC_SCAN_FEATURE_ENABLED` and fixed the actual bug blocking every scan: `lib/server/openai.ts` sent an explicit `temperature: 0` to the OpenAI Responses API, which `gpt-5.5` (and `gpt-5.4`, the analyze-route default) rejects outright. This also meant `/api/analyze` had been silently falling back to the legacy GPT-4o path on every request instead of using the ADR-011 hybrid evidence scorer. Also fixed `lib/quiz.ts`'s `mapAxesToSeason`: warm+deep evidence was labeled "Deep Autumn", a name that does not exist in `lib/season-palettes.ts`'s 12-season database (breaking palette lookups for those users); it now always resolves to the real "Dark Autumn" entry. Cool+deep+high-contrast+bright evidence now resolves to "Bright Winter" instead of "True Winter" to match the database and existing tests. Added a registration-before-results decision record as ADR-014.
 
+### 2026-06-20 - AI Stylist Rebrand (product direction reset)
+
+Rewrote product direction: PaletteMe is now an AI personal stylist, not a color analysis quiz. New flow: register → face photo → body photo (optional) / body type selector → 10-question quiz → free mini-result → paywall → full 9-section paid report. New AI route `/api/style-analysis` produces both mini-result and full report from one structured call. New page `/style-setup` owns the onboarding. Color analysis is preserved as a sub-component of report section 3 (Color). Updated `docs/PRODUCT-NORTH-STAR.md`, `docs/PRODUCT-SPEC.md`, `AGENTS.md`. Added ADR-015, ADR-016, ADR-017.
+
+### 2026-07-01 - Money-leak protection for report/image generation
+
+Closed an unauthenticated-abuse hole where `/api/report/analyze` and `/api/report/generate-visual` could be called directly, unlimited times, with no auth and no persistence. Added `style_reports` and `report_visuals` Supabase tables with RLS, a shared atomic claim/lock module (`lib/server/generation-lock.ts`), auth requirements on both routes, server-side prompt reconstruction for image generation (client sends only `slotId`), a sign-in gate in `/style-setup` before report generation, and made `/profile` read Supabase as the source of truth instead of `localStorage`. See ADR-018.
+
 ---
 
 ## Gotchas
@@ -437,9 +490,9 @@ If the uploaded image is not a usable human selfie, ask for a retake. Do not pro
 
 Dark hair plus high contrast is not enough for Winter. Golden/olive skin, warm brown or olive eyes, chocolate hair, and earthy/smoky evidence should push toward Dark Autumn / Deep Autumn.
 
-### `/quiz` owns selfie analysis
+### `/style-setup` owns the onboarding analysis
 
-Do not rebuild `/dashboard` as an analysis UI. Use `components/selfie/selfie-capture.tsx` for upload/camera capture and keep `/dashboard` as a redirect.
+As of the 2026-06-20 rebrand, `/style-setup` is the canonical onboarding: face photo → body → quiz. `/quiz` and `/dashboard` redirect there. Do not add new face/body upload surfaces outside of `/style-setup`. Use `components/selfie/selfie-capture.tsx` for all photo upload/camera capture.
 
 ### Take photo is not upload
 
@@ -448,3 +501,19 @@ The `take photo` action must not click a hidden file input on desktop. Use `navi
 ### Camera preview must not be clipped
 
 When the live webcam preview is active, the selfie capture card must grow with its content. Do not wrap the preview and capture buttons in the upload card's fixed `4/5` aspect-ratio box with hidden overflow, because short mobile viewports will hide the bottom action buttons.
+
+### Mini-result must appear before the paywall, never after
+
+The free mini-result is the conversion hook. It must be shown in full before the paywall. The paywall appears below the mini-result, with visible locked section titles. Never show an empty or loading profile to the user before showing the mini-result.
+
+### Body photo is optional — never block analysis on it
+
+If the user skips the body photo, use quiz self-report (body type selection, height, body area goals) for the body analysis section. Do not show an error or incomplete state because body photo is missing.
+
+### Full report is generated on demand, not on registration
+
+Do not generate the full 9-section report during onboarding. Generate and cache it when the user first unlocks it (post-payment). The mini-result is generated during onboarding.
+
+### Quiz is 10 questions maximum
+
+Do not add questions to the `/style-setup` quiz. The 10-question cap is a conversion-critical constraint. If new data is needed, derive it from the face photo analysis or replace an existing question.
