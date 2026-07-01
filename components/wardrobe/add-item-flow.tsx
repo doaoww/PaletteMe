@@ -1,19 +1,19 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SelfieCapture } from "@/components/selfie/selfie-capture";
 import { QuizStepHead } from "@/components/quiz/quiz-picker";
-import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
-import { validateOutfitImage } from "@/lib/outfit-scan";
-import { createClient } from "@/lib/supabase";
+import { isSupabaseAuthConfigured } from "@/lib/auth/auth-flow";
+import { prepareImageForUpload } from "@/lib/shared/resize-image";
+import { createClient } from "@/lib/db/supabase";
 import {
   fileToDataUrl,
   postWardrobeItemToApi,
   saveWardrobeItemForCurrentUser,
   type WardrobeItem,
-} from "@/lib/wardrobe-store";
+} from "@/lib/wardrobe/wardrobe-store";
 
 type Step = "upload" | "review";
 
@@ -32,13 +32,15 @@ export function AddItemFlow() {
   const [error, setError] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
-    const validation = validateOutfitImage(file);
-    if (validation) {
-      setError(validation);
+    let prepared: File;
+    try {
+      prepared = await prepareImageForUpload(file, 800, 0.80);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not prepare your photo. Please try a different image.");
       return;
     }
     setError(null);
-    const dataUrl = await fileToDataUrl(file);
+    const dataUrl = await fileToDataUrl(prepared);
     setImageDataUrl(dataUrl);
     setStep("review");
   };

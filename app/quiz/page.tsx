@@ -1,12 +1,9 @@
-import { QuizAuthGate } from "@/components/quiz/quiz-flow";
-import "./quiz.css";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Style Quiz — PaletteMe",
-  description:
-    "Find your color type, body silhouette, and style direction — then optionally confirm with a selfie.",
 };
 
 export default function QuizPage() {
-  return <QuizAuthGate />;
+  redirect("/style-setup");
 }

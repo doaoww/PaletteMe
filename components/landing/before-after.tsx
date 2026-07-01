@@ -1,13 +1,19 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useCallback, useRef, useState } from "react";
-import { IMAGES } from "@/lib/demo-images";
-import { SEASONS } from "@/lib/landing-data";
+import { IMAGES } from "@/lib/shared/demo-images";
+import { SEASONS } from "@/lib/shared/landing-data";
 
 const PALETTE = SEASONS[0].palette;
 
-export function BeforeAfter() {
+export function BeforeAfter({
+  compact = false,
+  polaroid = false,
+}: {
+  compact?: boolean;
+  polaroid?: boolean;
+}) {
   const [pos, setPos] = useState(52);
   const dragging = useRef(false);
   const baRef = useRef<HTMLDivElement>(null);
@@ -39,7 +45,7 @@ export function BeforeAfter() {
       {/* TODO(asset-replace): selfie/outfit demo photos are women-only stock — swap for inclusive portraits. */}
       <div
         ref={baRef}
-        className="ba"
+        className={`ba${compact ? " ba--stack" : ""}${polaroid ? " ba--polaroid" : ""}`}
         style={{ "--pos": `${pos}%` } as React.CSSProperties}
       >
         <div className="ba__layer ba__before">
@@ -88,6 +94,7 @@ export function BeforeAfter() {
         </div>
       </div>
 
+      {!compact && (
       <div className="outfit-ex">
         <figure className="wrong">
           <div className="of">
@@ -126,6 +133,7 @@ export function BeforeAfter() {
           </figcaption>
         </figure>
       </div>
+      )}
     </div>
   );
 }

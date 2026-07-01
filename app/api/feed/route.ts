@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
-import { SEASONS } from "@/lib/landing-data";
-import { searchProducts, rankProduct } from "@/lib/shopstyle";
-import { buildAffiliateUrl } from "@/lib/affiliate";
-import { rankShoppingIntents, toFeedShoppingProduct } from "@/lib/shopping-matcher";
-import { rankCuratedProducts, toFeedCuratedProduct } from "@/lib/curated-product-matcher";
-import { buildShoppingQuery, searchGoogleShopping, toFeedSerpProducts } from "@/lib/serpapi";
-import { buildStyleDNA } from "@/lib/style-dna";
-import type { StyleDNA } from "@/lib/style-dna";
+﻿import { NextResponse } from "next/server";
+import { SEASONS } from "@/lib/shared/landing-data";
+import { searchProducts, rankProduct } from "@/lib/feed/shopstyle";
+import { buildAffiliateUrl } from "@/lib/feed/affiliate";
+import { rankShoppingIntents, toFeedShoppingProduct } from "@/lib/feed/shopping-matcher";
+import { rankCuratedProducts, toFeedCuratedProduct } from "@/lib/feed/curated-product-matcher";
+import { buildShoppingQuery, searchGoogleShopping, toFeedSerpProducts } from "@/lib/feed/serpapi";
+import { buildStyleDNA } from "@/lib/feed/style-dna";
+import type { StyleDNA } from "@/lib/feed/style-dna";
 import type {
   BudgetPref,
   ClimatePref,
@@ -17,7 +17,7 @@ import type {
   StyleTrend,
   WardrobeType,
   WeightRange,
-} from "@/lib/quiz-data";
+} from "@/lib/quiz/quiz-data";
 
 function buildPicksQueries(dna: StyleDNA): string[] {
   const gender = dna.gender === "man" ? "men" : "women";
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
   const trends = searchParams.get("trends")?.split(",").filter(Boolean) as StyleTrend[];
   const offset = Math.max(0, parseInt(searchParams.get("offset") ?? "0", 10) || 0);
 
-  // Use Serpapi Google Shopping if key is configured
+  // Use Serpapi Google Shopping if key is configured — fall through on quota/error
   if (process.env.SERPAPI_KEY) {
     const countryCode = searchParams.get("countryCode") ?? "us";
     const query = buildShoppingQuery({
@@ -61,10 +61,15 @@ export async function GET(request: Request) {
       offset,
     });
 
-    const results = await searchGoogleShopping({ query, num: 40, start: offset, gl: countryCode });
-    const products = toFeedSerpProducts(results, query, offset).slice(0, 20);
-
-    return NextResponse.json({ ok: true, products, source: "serpapi" });
+    try {
+      const results = await searchGoogleShopping({ query, num: 40, start: offset, gl: countryCode });
+      if (results.length > 0) {
+        const products = toFeedSerpProducts(results, query, offset).slice(0, 20);
+        return NextResponse.json({ ok: true, products, source: "serpapi" });
+      }
+    } catch {
+      // quota exhausted or network error — fall through to curated products
+    }
   }
 
   // Use ShopStyle if UID is configured
@@ -177,19 +182,23 @@ export async function POST(request: Request) {
     ];
   }
 
-  if (!process.env.SERPAPI_KEY) {
-    return NextResponse.json({ ok: true, products: [], queries: searchQueries, source: "dna-queries" });
+  if (process.env.SERPAPI_KEY) {
+    try {
+      const countryCode = (body?.countryCode as string | undefined) ?? "us";
+      const allResults = await Promise.all(
+        searchQueries.slice(0, 4).map((q) =>
+          searchGoogleShopping({ query: q, num: 10, start: 0, gl: countryCode })
+        )
+      );
+      const merged = allResults.flat();
+      if (merged.length > 0) {
+        const products = toFeedSerpProducts(merged, searchQueries[0], 0).slice(0, 20);
+        return NextResponse.json({ ok: true, products, queries: searchQueries, source: "serpapi-dna" });
+      }
+    } catch {
+      // quota exhausted — fall through to empty
+    }
   }
 
-  // Run first 4 queries in parallel — enough for a full feed without excessive latency
-  const countryCode = (body?.countryCode as string | undefined) ?? "us";
-  const allResults = await Promise.all(
-    searchQueries.slice(0, 4).map((q) =>
-      searchGoogleShopping({ query: q, num: 10, start: 0, gl: countryCode })
-    )
-  );
-  const merged = allResults.flat();
-  const products = toFeedSerpProducts(merged, searchQueries[0], 0).slice(0, 20);
-
-  return NextResponse.json({ ok: true, products, queries: searchQueries, source: "serpapi-dna" });
+  return NextResponse.json({ ok: true, products: [], queries: searchQueries, source: "dna-queries" });
 }

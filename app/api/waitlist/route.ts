@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { sendTelegramMessage } from "@/lib/telegram";
+﻿import { NextResponse } from "next/server";
+import { sendTelegramMessage } from "@/lib/shared/telegram";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     // Best-effort DB save — never blocks the response
     if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      import("@/lib/supabase-db").then(({ addToWaitlistDb }) => {
+      import("@/lib/db/supabase-db").then(({ addToWaitlistDb }) => {
         addToWaitlistDb(email, "waitlist").catch((e) =>
           console.error("[waitlist] db save failed:", e)
         );

@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CreditPill } from "@/components/nav/credit-pill";
-import { LS_USER_ID, type QuizProfile } from "@/lib/quiz";
-import type { Season } from "@/lib/landing-data";
-import type { ColorIntelligenceReport } from "@/lib/color-intelligence";
+import { LS_USER_ID, type QuizProfile } from "@/lib/quiz/quiz";
+import type { Season } from "@/lib/shared/landing-data";
+import type { ColorIntelligenceReport } from "@/lib/analysis/color-intelligence";
 import {
   buildResultOnboardingCopy,
   hasSeenResultOnboarding,
   markResultOnboardingSeen,
   type ResultOnboardingCopy,
-} from "@/lib/result-onboarding";
+} from "@/lib/profile/result-onboarding";
 import {
   buildPreviewColors,
   buildSeasonAvoidSwatches,
@@ -19,14 +19,14 @@ import {
   buildSeasonNeutralSwatches,
   buildSeasonPaletteSwatches,
   type ResultSwatch,
-} from "@/lib/result-palette";
-import { buildResultSwatchStyle } from "@/lib/result-swatch-style";
-import { findSeasonPalette } from "@/lib/season-palettes";
+} from "@/lib/analysis/result-palette";
+import { buildResultSwatchStyle } from "@/lib/profile/result-swatch-style";
+import { findSeasonPalette } from "@/lib/analysis/season-palettes";
 import {
   DEFAULT_WEEKLY_SCAN_CREDITS,
   getBrowserScanCreditState,
   type ScanCreditState,
-} from "@/lib/scan-credits";
+} from "@/lib/scan/scan-credits";
 import { ColorInsightsReport } from "@/components/profile/color-insights-report";
 
 const SLIDE_COUNT = 5;
@@ -401,7 +401,7 @@ function LabTopbar({
         x
       </Link>
       <div className="rc-lab-topbar__center">
-        <span className="rc-lab-wordmark">paletteme</span>
+        <Link href="/" className="rc-lab-wordmark">paletteme</Link>
         <CreditPill />
       </div>
       <button

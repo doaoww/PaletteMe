@@ -1,12 +1,11 @@
-"use client";
+﻿"use client";
 
-import * as amplitude from "@amplitude/unified";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppChrome } from "@/components/nav/app-chrome";
 import { ScanPaywallModal } from "@/components/billing/scan-paywall-modal";
-import { loadQuizProfile, type QuizProfile } from "@/lib/quiz";
+import { loadQuizProfile, type QuizProfile } from "@/lib/quiz/quiz";
 import {
   adaptAiScanResultToOutfitScanResult,
   buildOutfitScanFormData,
@@ -15,19 +14,19 @@ import {
   type OutfitScanResult,
   type ScanRequestType,
   validateOutfitImage,
-} from "@/lib/outfit-scan";
+} from "@/lib/scan/outfit-scan";
 import {
   loadSupabaseQuizProfile,
   saveRestoredQuizProfileToBrowserStorage,
   loadLocalAnalysisResultForProfile,
-} from "@/lib/profile-restore";
-import type { AnalysisResult } from "@/lib/analysis";
-import { createClient } from "@/lib/supabase";
+} from "@/lib/profile/profile-restore";
+import type { AnalysisResult } from "@/lib/analysis/analysis";
+import { createClient } from "@/lib/db/supabase";
 import {
   addWardrobeItem,
   fileToDataUrl,
   scanScoreToMatch,
-} from "@/lib/wardrobe-store";
+} from "@/lib/wardrobe/wardrobe-store";
 import {
   DEFAULT_WEEKLY_SCAN_CREDITS,
   consumeBrowserScanCredits,
@@ -35,8 +34,9 @@ import {
   getScanCreditCost,
   refundBrowserScanCredits,
   type ScanCreditState,
-} from "@/lib/scan-credits";
-import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan-feature";
+} from "@/lib/scan/scan-credits";
+import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan/scan-feature";
+import { prepareImageForUpload } from "@/lib/shared/resize-image";
 
 const SCAN_TYPES: { id: ScanRequestType; title: string; sub: string; tip: string }[] = [
   {
@@ -106,7 +106,6 @@ export function ScanFlow() {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<OutfitScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isSignedIn, setIsSignedIn] = useState(false);
   const [displayName, setDisplayName] = useState("there");
   const [dragOver, setDragOver] = useState(false);
   const [processingMsg, setProcessingMsg] = useState(PROCESSING_MSGS[0]);
@@ -154,7 +153,6 @@ export function ScanFlow() {
           const {
             data: { user },
           } = await supabase.auth.getUser();
-          if (!cancelled) setIsSignedIn(Boolean(user));
           if (!cancelled && user?.email) {
             const local = user.email.split("@")[0]?.trim();
             setDisplayName(
@@ -170,11 +168,8 @@ export function ScanFlow() {
             }
           }
         } catch {
-          if (!cancelled) setIsSignedIn(false);
           nextProfile = null;
         }
-      } else if (!cancelled) {
-        setIsSignedIn(false);
       }
 
       nextProfile ??= loadQuizProfile();
@@ -204,7 +199,15 @@ export function ScanFlow() {
   const selectedType = SCAN_TYPES.find((t) => t.id === scanType) ?? SCAN_TYPES[0];
 
   const handleFile = async (next: File) => {
-    const validation = validateOutfitImage(next);
+    let prepared: File;
+    try {
+      prepared = await prepareImageForUpload(next, 1600, 0.85);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not prepare your photo. Please try a different image.");
+      return;
+    }
+
+    const validation = validateOutfitImage(prepared);
     if (validation) {
       setError(validation);
       return;
@@ -213,15 +216,14 @@ export function ScanFlow() {
     const creditAttempt = consumeBrowserScanCredits(scanType);
     setCreditState(creditAttempt);
     if (!creditAttempt.ok) {
-      amplitude.track("Paywall Opened", { trigger: "scan_credit_exhausted", scan_type: scanType });
       setPaywallOpen(true);
       return;
     }
 
-    setFile(next);
+    setFile(prepared);
     setError(null);
     setStep("processing");
-    await runScan(next);
+    await runScan(prepared);
   };
 
   const runScan = async (image: File) => {
@@ -243,16 +245,10 @@ export function ScanFlow() {
       if (thumbnailUrl) formData.append("imageUrl", thumbnailUrl);
       const data = await requestAiScanResult(formData);
       const scanResult = adaptAiScanResultToOutfitScanResult(data);
-      amplitude.track("Item Scanned", {
-        scan_type: scanType,
-        verdict: scanResult.score >= 70 ? "yes" : "skip",
-        match_score: Math.round(scanResult.score),
-      });
       setResult(scanResult);
       setStep("result");
     } catch (err) {
       console.error("[scan] Scan flow failed", err);
-      amplitude.track("Scan Failed", { scan_type: scanType, error_message: err instanceof Error ? err.message : "unknown" });
       setCreditState(refundBrowserScanCredits(scanType));
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setStep("upload");
@@ -320,13 +316,18 @@ export function ScanFlow() {
                 ready to scan, {displayName.toLowerCase()} <span aria-hidden>✦</span>
               </p>
               <h1 className="scan-page__title">
-                Scan an <span className="scan-page__title-script">item</span>
+                Scan an item
               </h1>
               <p className="scan-page__subtitle">{scanSubtitle}</p>
             </div>
-            <p className="scan-page__credits-pill" aria-live="polite">
+            <button
+              type="button"
+              className="scan-page__credits-pill"
+              aria-live="polite"
+              onClick={() => setPaywallOpen(true)}
+            >
               <span aria-hidden>✦</span> {remaining} scans left
-            </p>
+            </button>
           </header>
 
           <section className="scan-page__type-panel" aria-label="Scan type">
@@ -472,7 +473,6 @@ export function ScanFlow() {
                 ref={inputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                capture="environment"
                 hidden
                 onChange={(e) => {
                   const next = e.target.files?.[0];
@@ -609,7 +609,6 @@ function ReferenceScanResult({
       paletteMatch: scanScoreToMatch(result.score),
       imageDataUrl,
     });
-    amplitude.track("Wardrobe Item Saved", { scan_type: scanType, color_label: parsedColor.name, match_score: Math.round(result.score) });
     setSaved(true);
   };
 

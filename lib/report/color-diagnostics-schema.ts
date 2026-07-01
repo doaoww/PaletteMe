@@ -16,6 +16,7 @@ export const NeutralShadeSchema = z.object({
   hex: z.string(),
   name: z.string(),
   comment: z.string(),
+  verdict: z.enum(["best", "okay", "avoid"]).default("okay"),
 });
 
 export const ColorDiagnosticsSchema = z.object({
@@ -27,7 +28,7 @@ export const ColorDiagnosticsSchema = z.object({
     lips: z.array(MakeupShadeSchema),
     eyeshadowDay: z.array(MakeupShadeSchema),
     eyeshadowEvening: z.array(MakeupShadeSchema),
-  }),
+  }).nullish(),
 });
 
 export type ColorFamilyDiagnostic = z.infer<typeof ColorFamilyDiagnosticSchema>;

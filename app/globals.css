@@ -2,41 +2,40 @@
 
 /* Stitch Editorial Pink — design tokens (Tailwind v4 + legacy var names) */
 @theme {
-  --color-surface: #fff8f8;
+  --color-surface: #fff4f7;
   --color-surface-container: #f6ece0;
   --color-surface-container-high: #f1e7da;
   --color-surface-container-highest: #ebe1d4;
   --color-surface-container-low: #fcf2e5;
   --color-surface-dim: #e2d9cc;
-  --color-cream: #fff8f2;
+  --color-cream: #ffeef4;
   --color-cream-2: #fff5f8;
   --color-cream-3: #fff0f5;
-  --color-cream-alt: #fff8f2;
-  --color-ink: #1f1b13;
-  --color-ink-soft: #6a5560;
+  --color-cream-alt: #ffeef4;
+  --color-ink: #17121a;
+  --color-ink-soft: #5c4f56;
   --color-on-surface: #1f1b13;
   --color-on-surface-variant: #5b3f45;
   --color-outline: #8f6f75;
   --color-outline-variant: #e3bdc4;
-  --color-accent: #ff2e7e;
+  --color-accent: #e8176a;
   --color-primary: #b70054;
-  --color-pink: #ff2e7e;
-  --color-pink-deep: #db276c;
+  --color-pink: #e8176a;
+  --color-pink-deep: #c9145c;
   --color-berry: #75153a;
-  --color-blush: #fff5f8;
+  --color-blush: #ffeef4;
   --color-lilac: #c9b6e4;
-  --color-background: #fff5f8;
-  --color-foreground: #1f1b13;
+  --color-background: #ffeef4;
+  --color-foreground: #17121a;
   --color-muted: #f4e5d2;
   --color-muted-foreground: #6a5560;
-  --font-serif: "DM Serif Display", Georgia, serif;
+  --font-serif: "PP Editorial New", Georgia, serif;
   --font-sans: "DM Sans", system-ui, sans-serif;
-  --font-script: "Allura", cursive;
 }
 
 @layer base {
   :root {
-    --surface: #fff8f8;
+    --surface: #fff4f7;
     --surface-wash: #fff5f8;
     --surface-peach: #fdf0e8;
     --surface-container: #f6ece0;
@@ -44,22 +43,22 @@
     --surface-container-highest: #ebe1d4;
     --surface-container-low: #fcf2e5;
     --surface-dim: #e2d9cc;
-    --cream: #fff8f2;
+    --cream: #ffeef4;
     --cream-2: #fff5f8;
-    --cream-alt: #fff8f2;
+    --cream-alt: #ffeef4;
     --cream-3: #fff0f5;
-    --ink: #1f1b13;
-    --ink-soft: #6a5560;
-    --on-surface: #1f1b13;
+    --ink: #17121a;
+    --ink-soft: #5c4f56;
+    --on-surface: #17121a;
     --on-surface-variant: #5b3f45;
     --outline: #8f6f75;
     --outline-variant: #e3bdc4;
-    --accent: #ff2e7e;
+    --accent: #e8176a;
     --primary: #b70054;
-    --pink: #ff2e7e;
-    --pink-deep: #db276c;
+    --pink: #e8176a;
+    --pink-deep: #c9145c;
     --berry: #75153a;
-    --blush: #fff5f8;
+    --blush: #ffeef4;
     --lilac: #c9b6e4;
     --accent-ink: #fff;
     --line: rgba(23, 18, 26, 0.16);
@@ -68,11 +67,10 @@
     --pad: clamp(20px, 5vw, 76px);
     --ease: cubic-bezier(0.7, 0, 0.2, 1);
     --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
-    --serif: "DM Serif Display", Georgia, serif;
-    --script: "Allura", cursive;
+    --serif: "PP Editorial New", Georgia, serif;
     --sans: "DM Sans", system-ui, sans-serif;
-    --background: #fff5f8;
-    --foreground: #1f1b13;
+    --background: #ffeef4;
+    --foreground: #17121a;
     --muted: #f4e5d2;
     --muted-foreground: #6a5560;
   }
@@ -91,12 +89,12 @@
   body {
     margin: 0;
     font-family: var(--sans);
-    background-color: #fff5f8;
+    background-color: #ffeef4;
     background:
       radial-gradient(ellipse 110% 72% at 50% -10%, #ffd6e8 0%, transparent 56%),
-      radial-gradient(ellipse 90% 58% at 100% 18%, color-mix(in srgb, var(--lilac) 48%, #fff5f8) 0%, transparent 50%),
+      radial-gradient(ellipse 90% 58% at 100% 18%, color-mix(in srgb, var(--lilac) 40%, #ffeef4) 0%, transparent 50%),
       radial-gradient(ellipse 80% 52% at 0% 82%, #fce8ef 0%, transparent 46%),
-      linear-gradient(180deg, #fff5f8 0%, #fff8f8 48%, #fff5f8 100%);
+      linear-gradient(180deg, #ffeef4 0%, #fff8f8 48%, #ffeef4 100%);
     overflow-x: hidden;
     color: var(--on-surface);
     font-size: 17px;
@@ -138,12 +136,12 @@
 
 @layer components {
   .stitch-dreamy-bg {
-    background-color: #fff5f8;
+    background-color: #ffeef4;
     background:
       radial-gradient(ellipse 110% 72% at 50% -10%, #ffd6e8 0%, transparent 56%),
-      radial-gradient(ellipse 90% 58% at 100% 18%, color-mix(in srgb, var(--lilac) 48%, #fff5f8) 0%, transparent 50%),
+      radial-gradient(ellipse 90% 58% at 100% 18%, color-mix(in srgb, var(--lilac) 40%, #ffeef4) 0%, transparent 50%),
       radial-gradient(ellipse 80% 52% at 0% 82%, #fce8ef 0%, transparent 46%),
-      linear-gradient(180deg, #fff5f8 0%, #fff8f8 48%, #fff5f8 100%);
+      linear-gradient(180deg, #ffeef4 0%, #fff8f8 48%, #ffeef4 100%);
   }
 
   .stitch-dreamy-bg::after {
@@ -151,14 +149,14 @@
     position: fixed;
     inset: 0;
     pointer-events: none;
-    opacity: 0.45;
+    opacity: 0.28;
     mix-blend-mode: soft-light;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.86' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
     z-index: 0;
   }
 
   .glass-nav {
-    background: rgba(255, 245, 248, 0.88);
+    background: color-mix(in srgb, var(--cream) 92%, transparent);
     backdrop-filter: blur(12px) saturate(150%);
     -webkit-backdrop-filter: blur(12px) saturate(150%);
     border-bottom: 1px solid var(--outline-variant);
@@ -168,23 +166,11 @@
     font-family: var(--serif);
   }
 
-  .script {
-    font-family: var(--script);
-  }
-
   .kicker {
-    font: 700 0.66rem var(--sans);
-    letter-spacing: 0.28em;
+    font: 600 0.75rem var(--sans);
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--pink);
-  }
-
-  .kicker::before {
-    content: "[ ";
-  }
-
-  .kicker::after {
-    content: " ]";
   }
 
   .eyebrow {
@@ -197,28 +183,6 @@
 
   .eyebrow .kicker {
     color: var(--pink);
-  }
-
-  .scr {
-    font-family: var(--script);
-    color: var(--pink);
-    font-size: 1.5em;
-    line-height: 0.8;
-    display: inline-block;
-    transform: translateY(0.08em);
-  }
-
-  h1 .scr,
-  h2 .scr,
-  h3 .scr {
-    font-weight: 400;
-    font-style: normal;
-    padding: 0;
-    margin: 0;
-    display: inline;
-    line-height: inherit;
-    vertical-align: -0.08em;
-    transform: none;
   }
 
   .wordmark {

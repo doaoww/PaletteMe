@@ -8,8 +8,10 @@ export function MobileActionBar() {
 
   useEffect(() => {
     const onScroll = () => {
-      const hero = document.querySelector<HTMLElement>(".hero");
+      const hero = document.querySelector<HTMLElement>(".modern-hero, .hero");
       const waitlist = document.getElementById("waitlist");
+      const pricing = document.getElementById("pricing");
+      const reportPreview = document.getElementById("report-preview");
       if (!hero) return;
 
       const heroBottom = hero.getBoundingClientRect().bottom;
@@ -21,7 +23,19 @@ export function MobileActionBar() {
         nearWaitlist = wTop < window.innerHeight * 0.92;
       }
 
-      setShow(pastHero && !nearWaitlist);
+      let nearPricing = false;
+      if (pricing) {
+        const pRect = pricing.getBoundingClientRect();
+        nearPricing = pRect.top < window.innerHeight * 0.88 && pRect.bottom > window.innerHeight * 0.18;
+      }
+
+      let nearReportPreview = false;
+      if (reportPreview) {
+        const rRect = reportPreview.getBoundingClientRect();
+        nearReportPreview = rRect.top < window.innerHeight * 0.88 && rRect.bottom > window.innerHeight * 0.18;
+      }
+
+      setShow(pastHero && !nearWaitlist && !nearPricing && !nearReportPreview);
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -31,11 +45,11 @@ export function MobileActionBar() {
 
   return (
     <div className={`mob-bar${show ? " mob-bar--show" : ""}`} aria-hidden={!show}>
-      <Link href="/quiz" className="mob-bar__btn mob-bar__btn--primary">
-        let&apos;s start
+      <Link href="/style-setup" className="mob-bar__btn mob-bar__btn--primary">
+        upload photo
       </Link>
-      <a href="#waitlist" className="mob-bar__btn mob-bar__btn--ghost">
-        join waitlist
+      <a href="#report-preview" className="mob-bar__btn mob-bar__btn--ghost">
+        report preview
       </a>
     </div>
   );

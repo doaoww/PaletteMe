@@ -1,7 +1,7 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
-import { IMAGES } from "@/lib/demo-images";
-import { SEASONS } from "@/lib/landing-data";
+import { IMAGES } from "@/lib/shared/demo-images";
+import { SEASONS } from "@/lib/shared/landing-data";
 
 const STEPS = [
   // TODO(asset-replace): step photos (selfie, selfieAlt, outfitRight) are women-only stock.
@@ -40,8 +40,7 @@ export function WhatWeDo() {
             <span className="kicker">what paletteme does</span>
           </div>
           <h2>
-            Your selfie in.{" "}
-            <span className="scr">Your palette</span> out.
+            Your selfie in. Your palette out.
           </h2>
           <p className="what__lead">
             PaletteMe is an AI color analysis tool. You upload a photo of your

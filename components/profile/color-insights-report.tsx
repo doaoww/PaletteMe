@@ -1,20 +1,22 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { forwardRef, useEffect, useMemo, useState } from "react";
-import type { Season } from "@/lib/landing-data";
-import type { ColorIntelligenceReport } from "@/lib/color-intelligence";
-import type { QuizProfile } from "@/lib/quiz";
+import type { Season } from "@/lib/shared/landing-data";
+import type { ColorIntelligenceReport } from "@/lib/analysis/color-intelligence";
+import type { QuizProfile } from "@/lib/quiz/quiz";
 import {
   buildMakeupColumnsFromSeasonPalette,
   buildSeasonAvoidSwatches,
   buildSeasonMetalSwatches,
   buildSeasonNeutralSwatches,
   buildSeasonPaletteSwatches,
+  buildTieredPaletteSwatches,
   type ResultSwatch,
-} from "@/lib/result-palette";
-import { findSeasonPalette } from "@/lib/season-palettes";
-import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan-feature";
+} from "@/lib/analysis/result-palette";
+import { findSeasonPalette } from "@/lib/analysis/season-palettes";
+import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan/scan-feature";
+import { getSilhouetteGuide, getFaceShapeGuide } from "@/lib/quiz/body-silhouette-guide";
 
 type Props = {
   profile: QuizProfile;
@@ -195,9 +197,12 @@ export const ColorInsightsReport = forwardRef<HTMLDivElement, Props>(function Co
   const displaySeason = subSeason || season.name;
   const [seasonLead, seasonScript] = splitSeasonName(displaySeason);
   const palette = buildSeasonPaletteSwatches(season, subSeason);
-  const wearList = palette.slice(0, 6);
   const avoidList = buildSeasonAvoidSwatches(season, undefined, 4, subSeason);
   const neutrals = buildSeasonNeutralSwatches(season, report, subSeason);
+  const tiered = buildTieredPaletteSwatches(season, subSeason);
+  // Direction 3: foundations first — base tier, then power, then accent
+  const tieredPalette: ResultSwatch[] = [...tiered.base, ...tiered.power, ...tiered.accent];
+  const wearList = tieredPalette.slice(0, 6);
   const metals = buildSeasonMetalSwatches(season, report, subSeason);
   const makeup = buildMakeupColumnsFromSeasonPalette(season, report, subSeason);
   const makeupCards = [
@@ -214,6 +219,8 @@ export const ColorInsightsReport = forwardRef<HTMLDivElement, Props>(function Co
   );
   const scanEnabled = isScanFeatureEnabled();
   const scanCopy = getScanComingSoonCopy();
+  const silhouetteGuide = getSilhouetteGuide(profile.bodyType);
+  const faceShapeGuide = getFaceShapeGuide(profile.faceShape);
   const familyLabel = `${season.name.toLowerCase()} family`;
   const makeupLead =
     season.id === "autumn" || season.id === "spring"
@@ -256,7 +263,7 @@ export const ColorInsightsReport = forwardRef<HTMLDivElement, Props>(function Co
                   <span className="cir-meter__value">{animatedMatch}%</span>
                 </div>
                 <div className="cir-meter__track">
-                  <div className="cir-meter__fill" style={{ width: `${animatedMatch}%` }} />
+                  <div className="cir-meter__fill" style={{ transform: `scaleX(${animatedMatch / 100})` }} />
                 </div>
               </div>
             ) : null}
@@ -273,7 +280,7 @@ export const ColorInsightsReport = forwardRef<HTMLDivElement, Props>(function Co
 
           <div className="cir-hero-palette">
             <div className="cir-hero-palette__grid">
-              {palette.slice(0, 5).map((swatch) => (
+              {tieredPalette.slice(0, 5).map((swatch) => (
                 <div key={swatch.name}>
                   <div
                     className="cir-hero-palette__swatch"
@@ -287,6 +294,21 @@ export const ColorInsightsReport = forwardRef<HTMLDivElement, Props>(function Co
             <span className="cir-hero-palette__badge">your palette</span>
           </div>
         </section>
+
+        {!profile.bodyType && (
+          <section className="cir-style-unlock">
+            <div className="cir-style-unlock__text">
+              <p className="cir-style-unlock__kicker">unlock more</p>
+              <h3 className="cir-style-unlock__title">Your silhouette guide + outfit formulas</h3>
+              <p className="cir-style-unlock__body">
+                Add your body type and style to get cut recommendations, neckline advice, and outfit formulas built around your colour type.
+              </p>
+            </div>
+            <Link href="/style-setup" className="cir-style-unlock__btn">
+              complete style profile →
+            </Link>
+          </section>
+        )}
 
         <section className="cir-duo">
           <article className="cir-panel">
@@ -332,29 +354,6 @@ export const ColorInsightsReport = forwardRef<HTMLDivElement, Props>(function Co
           </article>
         </section>
 
-        <section>
-          <div className="cir-section-head">
-            <div>
-              <SectionLabel>Your full palette</SectionLabel>
-              <h2 className="cir-title cir-title--large">All {palette.length} colors that work</h2>
-            </div>
-            <p className="cir-section-head__aside">
-              Mix and match freely — every shade here harmonizes with your natural coloring.
-            </p>
-          </div>
-          <div className="cir-palette-grid">
-            {palette.map((swatch) => (
-              <div key={swatch.name} className="cir-palette-grid__item">
-                <div className="cir-palette-grid__swatch" style={{ background: swatch.hex }} />
-                <div className="cir-palette-grid__meta">
-                  <span className="cir-palette-grid__name">{swatch.name}</span>
-                  <code className="cir-palette-grid__hex">{swatch.hex}</code>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
         <section className="cir-panel">
           <div className="cir-section-head">
             <div>
@@ -373,6 +372,63 @@ export const ColorInsightsReport = forwardRef<HTMLDivElement, Props>(function Co
                 <code className="cir-neutral-grid__hex">{swatch.hex}</code>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section>
+          <div className="cir-section-head">
+            <div>
+              <SectionLabel>Your full palette</SectionLabel>
+              <h2 className="cir-title cir-title--large">All {tieredPalette.length} colors, foundations first</h2>
+            </div>
+            <p className="cir-section-head__aside">
+              Mix and match freely — every shade harmonizes with your coloring.
+            </p>
+          </div>
+          <div className="cir-palette-tier">
+            <h3 className="cir-palette-tier__label">Wardrobe foundation</h3>
+            <p className="cir-palette-tier__note">Build coats, trousers, and everyday layers around these</p>
+            <div className="cir-palette-grid">
+              {tiered.base.map((swatch) => (
+                <div key={swatch.name} className="cir-palette-grid__item">
+                  <div className="cir-palette-grid__swatch" style={{ background: swatch.hex }} />
+                  <div className="cir-palette-grid__meta">
+                    <span className="cir-palette-grid__name">{swatch.name}</span>
+                    <code className="cir-palette-grid__hex">{swatch.hex}</code>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="cir-palette-tier">
+            <h3 className="cir-palette-tier__label">Wear near your face</h3>
+            <p className="cir-palette-tier__note">Tops, dresses, and scarves — most flattering beside your skin</p>
+            <div className="cir-palette-grid">
+              {tiered.power.map((swatch) => (
+                <div key={swatch.name} className="cir-palette-grid__item">
+                  <div className="cir-palette-grid__swatch" style={{ background: swatch.hex }} />
+                  <div className="cir-palette-grid__meta">
+                    <span className="cir-palette-grid__name">{swatch.name}</span>
+                    <code className="cir-palette-grid__hex">{swatch.hex}</code>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="cir-palette-tier">
+            <h3 className="cir-palette-tier__label">Accent and accessory</h3>
+            <p className="cir-palette-tier__note">Bags, shoes, jewelry, and statement pops</p>
+            <div className="cir-palette-grid">
+              {tiered.accent.map((swatch) => (
+                <div key={swatch.name} className="cir-palette-grid__item">
+                  <div className="cir-palette-grid__swatch" style={{ background: swatch.hex }} />
+                  <div className="cir-palette-grid__meta">
+                    <span className="cir-palette-grid__name">{swatch.name}</span>
+                    <code className="cir-palette-grid__hex">{swatch.hex}</code>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -450,6 +506,76 @@ export const ColorInsightsReport = forwardRef<HTMLDivElement, Props>(function Co
             ))}
           </div>
         </section>
+
+        {(silhouetteGuide ?? faceShapeGuide) ? (
+          <section>
+            <div className="cir-section-head">
+              <div>
+                <SectionLabel>Your silhouette guide</SectionLabel>
+                <h2 className="cir-title cir-title--large">
+                  {silhouetteGuide?.label ?? "Your shape"}
+                </h2>
+              </div>
+              {silhouetteGuide ? (
+                <p className="cir-section-head__aside">{silhouetteGuide.principle}</p>
+              ) : null}
+            </div>
+
+            {silhouetteGuide ? (
+              <div className="cir-silhouette">
+                <div className="cir-silhouette__grid">
+                  <div className="cir-silhouette__col">
+                    <h3 className="cir-silhouette__col-label">Best cuts</h3>
+                    <ul className="cir-silhouette__list">
+                      {silhouetteGuide.bestCuts.map((cut) => (
+                        <li key={cut}>{cut}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="cir-silhouette__col">
+                    <h3 className="cir-silhouette__col-label">Best necklines</h3>
+                    <ul className="cir-silhouette__list">
+                      {silhouetteGuide.necklines.map((n) => (
+                        <li key={n}>{n}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="cir-silhouette__col">
+                    <h3 className="cir-silhouette__col-label cir-silhouette__col-label--avoid">Avoid</h3>
+                    <ul className="cir-silhouette__list cir-silhouette__list--avoid">
+                      {silhouetteGuide.avoid.map((a) => (
+                        <li key={a}>{a}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                <div className="cir-silhouette__tip">
+                  <span className="cir-silhouette__tip-icon" aria-hidden>✦</span>
+                  <p>{silhouetteGuide.outfitTip}</p>
+                </div>
+              </div>
+            ) : null}
+
+            {faceShapeGuide ? (
+              <div className="cir-face-shape">
+                <h3 className="cir-face-shape__title">
+                  Face shape: <span className="cir-script">{faceShapeGuide.label}</span>
+                </h3>
+                <p className="cir-face-shape__tip">{faceShapeGuide.tip}</p>
+                <div className="cir-face-shape__rows">
+                  <div className="cir-face-shape__row">
+                    <span className="cir-face-shape__row-label">Necklines</span>
+                    <span className="cir-face-shape__row-value">{faceShapeGuide.necklines.join(" · ")}</span>
+                  </div>
+                  <div className="cir-face-shape__row">
+                    <span className="cir-face-shape__row-label">Eyewear</span>
+                    <span className="cir-face-shape__row-value">{faceShapeGuide.eyewear}</span>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
 
         <section className="cir-energy">
           <SectionLabel>Your style energy</SectionLabel>

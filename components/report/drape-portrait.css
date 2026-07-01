@@ -22,9 +22,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60%;
+  height: 40%;
   pointer-events: none;
-  mix-blend-mode: multiply;
 }
 
 .drape-portrait__overlay--palette {
@@ -35,6 +34,5 @@
 }
 
 .drape-portrait__overlay--color {
-  /* boost saturation before multiply so the colour reads vividly on the fabric */
-  filter: saturate(1.8) brightness(1.08);
+  /* fully opaque solid colour drape — no blend mode */
 }

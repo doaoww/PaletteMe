@@ -1,0 +1,208 @@
+.sc-root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sc-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted, #8a7f72);
+  padding: 0 20px;
+  margin: 0;
+}
+
+.sc-label--avoid {
+  color: var(--color-avoid, #b07060);
+  margin-top: 16px;
+}
+
+/* ── Track ─────────────────────────────────────────────────────────────────── */
+
+.sc-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 4px 20px 16px;
+  /* peek: last card bleeds off-screen */
+}
+
+.sc-track::-webkit-scrollbar {
+  display: none;
+}
+
+.sc-track--sm .sc-card  { width: 120px; flex-shrink: 0; }
+.sc-track--md .sc-card  { width: 160px; flex-shrink: 0; }
+.sc-track--lg .sc-card  { width: 220px; flex-shrink: 0; }
+
+/* Outfit cards are wider */
+.sc-track--lg .sc-card--outfit { width: 260px; }
+
+.sc-track--avoid {
+  opacity: 0.75;
+}
+
+/* ── Card ──────────────────────────────────────────────────────────────────── */
+
+.sc-card {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: default;
+}
+
+/* ── Image wrapper ─────────────────────────────────────────────────────────── */
+
+.sc-img-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--color-surface-raised, #f5f0ea);
+}
+
+/* aspect ratios */
+.sc-img-wrap--square    { aspect-ratio: 1 / 1; }
+.sc-img-wrap--portrait  { aspect-ratio: 3 / 4; }
+.sc-img-wrap--landscape { aspect-ratio: 4 / 3; }
+.sc-img-wrap--fabric    { aspect-ratio: 4 / 3; }
+
+.sc-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.35s ease;
+}
+
+.sc-card:hover .sc-img {
+  transform: scale(1.04);
+}
+
+/* missing image fallback */
+.sc-img-wrap--missing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    rgba(0,0,0,0.04) 6px,
+    rgba(0,0,0,0.04) 12px
+  );
+}
+
+/* ── Badges ────────────────────────────────────────────────────────────────── */
+
+.sc-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: var(--color-ink, #1a1510);
+  color: var(--color-bg, #faf7f4);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 4px;
+}
+
+.sc-avoid-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(176, 112, 96, 0.9);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 4px;
+}
+
+/* ── Card info ─────────────────────────────────────────────────────────────── */
+
+.sc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 2px;
+}
+
+.sc-name {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink, #1a1510);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.sc-sentence {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--color-ink-muted, #8a7f72);
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* outfit item list */
+.sc-outfit-items {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sc-outfit-items li {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--color-ink-muted, #8a7f72);
+  padding-left: 10px;
+  position: relative;
+}
+
+.sc-outfit-items li::before {
+  content: "–";
+  position: absolute;
+  left: 0;
+  color: var(--color-ink-faint, #c4b8a8);
+}
+
+/* ── Avoid card overlay tint ───────────────────────────────────────────────── */
+
+.sc-card--avoid .sc-img-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(176, 112, 96, 0.08);
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.sc-card--avoid .sc-name {
+  color: var(--color-avoid, #b07060);
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-img { transition: none; }
+}

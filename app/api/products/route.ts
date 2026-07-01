@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import {
   queryProducts,
   isSupabaseConfigured,
   type ScoredProduct,
-} from "@/lib/supabase-db";
-import { buildAffiliateUrl } from "@/lib/affiliate";
-import { SEASON_PRODUCTS } from "@/lib/landing-data";
-import type { StylingGoal, StyleVibe } from "@/lib/quiz-data";
+} from "@/lib/db/supabase-db";
+import { buildAffiliateUrl } from "@/lib/feed/affiliate";
+import { SEASON_PRODUCTS } from "@/lib/shared/landing-data";
+import type { StylingGoal, StyleVibe } from "@/lib/quiz/quiz-data";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;

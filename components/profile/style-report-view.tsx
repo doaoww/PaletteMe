@@ -1,9 +1,8 @@
-"use client";
+﻿"use client";
 
-import React from "react";
 import { AppChrome } from "@/components/nav/app-chrome";
 import { LookLab } from "@/components/look-lab/look-lab";
-import type { LookLabData } from "@/lib/look-lab-schema";
+import type { LookLabData } from "@/lib/look-lab/look-lab-schema";
 import "../../app/profile/style-report.css";
 
 // ── Client-side types (mirrors lib/style-analysis-schema.ts without Zod) ──────
@@ -214,7 +213,7 @@ type FullReport = {
     patternNote: string;
   } | null;
   styleRules?: string[] | null;
-  lookLab?: import("@/lib/look-lab-schema").LookLabData | null;
+  lookLab?: import("@/lib/look-lab/look-lab-schema").LookLabData | null;
 };
 
 export type StyleAnalysisResult = {
@@ -261,18 +260,6 @@ function ChapterHead({ num, title }: { num: string; title: string }) {
   );
 }
 
-function SwatchRow({ colors }: { colors: { name: string; hex: string }[] }) {
-  return (
-    <div className="sr__swatch-row">
-      {colors.map((c, i) => (
-        <div key={i} className="sr__swatch-pill">
-          <span className="sr__swatch-dot" style={{ background: c.hex }} />
-          <span className="sr__swatch-label">{c.name}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function Tag({ children }: { children: React.ReactNode }) {
   return <span className="sr__tag">{children}</span>;
@@ -322,43 +309,6 @@ function ProductCard({ product, category, name, why, priceRange, appearsUnlocks 
   return <div className="sr__product-card">{inner}</div>;
 }
 
-function ShopCard({ product, category, name, why, priceRange }: {
-  product?: EnrichedProduct;
-  category: string;
-  name: string;
-  why?: string;
-  priceRange?: string;
-}) {
-  const inner = (
-    <>
-      {product?.imageUrl ? (
-        <img src={product.imageUrl} alt={product.title} className="sr__shop-img" />
-      ) : (
-        <div className="sr__shop-placeholder">
-          <span className="sr__shop-placeholder-text">{name}</span>
-        </div>
-      )}
-      <div className="sr__shop-meta">
-        <span className="sr__shop-source">{product?.source || category}</span>
-        <span className="sr__shop-name">{product?.title || name}</span>
-        {why && <span className="sr__shop-why">{why}</span>}
-        {(product?.price || priceRange) && (
-          <span className="sr__shop-price">{product?.price ?? priceRange}</span>
-        )}
-      </div>
-      {product?.link && <span className="sr__shop-btn">shop →</span>}
-    </>
-  );
-
-  if (product?.link) {
-    return (
-      <a href={product.link} target="_blank" rel="noopener noreferrer" className="sr__shop-card">
-        {inner}
-      </a>
-    );
-  }
-  return <div className="sr__shop-card">{inner}</div>;
-}
 
 // ── Hero — color season + stat chips ─────────────────────────────────────────
 
@@ -836,259 +786,6 @@ function BeforeAfterChapter({ data }: { data: NonNullable<FullReport["beforeAfte
   );
 }
 
-// ── Chapter 09: Outfits by occasion ──────────────────────────────────────────
-
-type EnrichedOutfit = {
-  name: string;
-  occasion: string;
-  items: Array<{
-    piece: string;
-    searchQuery: string;
-    colorHex?: string | null;
-    fabric?: string | null;
-    product?: { imageUrl: string | null; price: string | null; link: string | null } | null;
-  }>;
-  why: string;
-  colorLogic: string;
-  lookEffect: string;
-  heroPiece: string;
-  searchQuery: string;
-  stylistNote?: string | null;
-  heroImage?: { imageUrl: string; pinLink: string; title: string | null } | null;
-};
-
-function OutfitCard({ outfit }: { outfit: EnrichedOutfit }) {
-  return (
-    <div className="sr__outfit-card">
-      {outfit.heroImage?.imageUrl && (
-        <a
-          href={outfit.heroImage.pinLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="sr__outfit-hero"
-        >
-          <img
-            src={outfit.heroImage.imageUrl}
-            alt={outfit.heroImage.title ?? outfit.name}
-            className="sr__outfit-hero-img"
-          />
-          <span className="sr__outfit-pinterest-attr">via Pinterest</span>
-        </a>
-      )}
-
-      <div className="sr__outfit-header">
-        <span className="sr__outfit-name">{outfit.name}</span>
-        <span className="sr__outfit-occasion-chip">{outfit.occasion}</span>
-      </div>
-
-      {outfit.stylistNote && (
-        <p className="sr__outfit-stylist-note">{outfit.stylistNote}</p>
-      )}
-
-      <div className="sr__outfit-items">
-        {outfit.items.filter((item) => item.product?.imageUrl).length > 0
-          ? outfit.items
-              .filter((item) => item.product?.imageUrl)
-              .map((item, j) => (
-                <a
-                  key={j}
-                  href={item.product!.link ?? "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="sr__outfit-item"
-                >
-                  <img
-                    src={item.product!.imageUrl!}
-                    alt={item.piece}
-                    className="sr__outfit-item-img"
-                  />
-                  <span className="sr__outfit-item-piece">{item.piece}</span>
-                  {item.product?.price && (
-                    <span className="sr__outfit-item-price">{item.product.price}</span>
-                  )}
-                </a>
-              ))
-          : outfit.items.map((item, j) => (
-              <div key={j} className="sr__outfit-item sr__outfit-item--text">
-                <span className="sr__outfit-item-piece">{item.piece}</span>
-              </div>
-            ))}
-      </div>
-    </div>
-  );
-}
-
-function OutfitsChapter({ data }: { data: FullReport["outfits"] }) {
-  const outfits = data.outfits as EnrichedOutfit[];
-  const occasions = ["all", ...Array.from(new Set(outfits.map((o) => o.occasion)))];
-  const [activeOccasion, setActiveOccasion] = React.useState("all");
-
-  const filtered =
-    activeOccasion === "all"
-      ? outfits
-      : outfits.filter((o) => o.occasion === activeOccasion);
-
-  return (
-    <div className="sr__section">
-      <ChapterHead num="09" title="outfits by occasion" />
-
-      <div className="sr__occasion-tabs">
-        {occasions.map((occ) => (
-          <button
-            key={occ}
-            className={`sr__occasion-tab${activeOccasion === occ ? " sr__occasion-tab--active" : ""}`}
-            onClick={() => setActiveOccasion(occ)}
-          >
-            {occ}
-          </button>
-        ))}
-      </div>
-
-      <div className="sr__outfits-feed">
-        {filtered.map((outfit, i) => (
-          <OutfitCard key={i} outfit={outfit} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Chapter 10: Capsule wardrobe ──────────────────────────────────────────────
-
-function CapsuleChapter({ data }: { data: FullReport["clothing"] }) {
-  const count = data.items.length;
-
-  return (
-    <div className="sr__section">
-      <ChapterHead num="10" title={`${count}-piece capsule`} />
-
-      <p className="sr__capsule-principle">{data.buildingPrinciple}</p>
-
-      {data.capsuleRules && data.capsuleRules.length > 0 && (
-        <div className="sr__capsule-rules">
-          <p className="sr__capsule-rules-label">combination rules</p>
-          <ul className="sr__list">
-            {data.capsuleRules.map((rule, i) => <li key={i}><BoldLead text={rule} /></li>)}
-          </ul>
-        </div>
-      )}
-
-      <div className="sr__capsule-list">
-        {data.items.map((item, i) => (
-          <div key={i} className="sr__capsule-item">
-            <div className="sr__capsule-num">{String(i + 1).padStart(2, "0")}</div>
-            {item.product?.imageUrl ? (
-              <a
-                href={item.product.link ?? "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="sr__capsule-img-wrap"
-              >
-                <img src={item.product.imageUrl} alt={item.name} className="sr__capsule-img" />
-              </a>
-            ) : (
-              <div className="sr__capsule-img-placeholder" />
-            )}
-            <div className="sr__capsule-info">
-              <p className="sr__capsule-name">{item.name}</p>
-              <p className="sr__capsule-why">{item.appearsUnlocks || item.why}</p>
-              {(item.product?.price || item.priceRange) && (
-                <p className="sr__capsule-price">{item.product?.price ?? item.priceRange}</p>
-              )}
-              {(item.pairsWith ?? []).length > 0 && (
-                <p className="sr__capsule-pairs">
-                  pairs with: {(item.pairsWith ?? []).slice(0, 3).map((j) => data.items[j]?.name).filter(Boolean).join(", ")}
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {data.fabricManifesto && (
-        <p className="sr__section-body" style={{ marginTop: 20, fontStyle: "italic" }}>
-          {data.fabricManifesto}
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ── Chapter 11: Style rules ───────────────────────────────────────────────────
-
-function StyleRulesChapter({ rules }: { rules: string[] }) {
-  return (
-    <div className="sr__section">
-      <ChapterHead num="11" title="your personal style rules" />
-      <div className="sr__rules-list">
-        {rules.map((rule, i) => (
-          <div key={i} className="sr__rule-item">
-            <span className="sr__rule-num">{String(i + 1).padStart(2, "0")}</span>
-            <p className="sr__rule-text">{rule}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Shopping list ─────────────────────────────────────────────────────────────
-
-function ShoppingListSection({ data }: { data: FullReport["shoppingList"] }) {
-  return (
-    <div className="sr__section">
-      <div className="sr__chapter-head">
-        <span className="sr__chapter-num">Shopping</span>
-        <h2 className="sr__chapter-title">buy first</h2>
-      </div>
-
-      <div className="sr__shop-grid" style={{ marginBottom: 24 }}>
-        {data.buyFirst.map((item, i) => (
-          <ShopCard
-            key={i}
-            product={item.product}
-            category="priority buy"
-            name={item.item}
-            why={item.impact}
-            priceRange={item.priceRange}
-          />
-        ))}
-      </div>
-
-      {data.dontSpendHere.length > 0 && (
-        <>
-          <p className="sr__section-kicker" style={{ marginBottom: 8 }}>don&apos;t spend here</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {data.dontSpendHere.map((d, i) => (
-              <div key={i} className="sr__avoid-item">
-                <strong>{d.category}</strong> — {d.reason}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {data.totalEstimate && (
-        <p className="sr__section-body" style={{ marginTop: 20, textAlign: "center", fontWeight: 600 }}>
-          estimated total: {data.totalEstimate}
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ── CTA buttons ───────────────────────────────────────────────────────────────
-
-function ReportCTAs() {
-  return (
-    <div className="sr__cta-row">
-      <button className="sr__cta-btn">Create share card ↗</button>
-      <button className="sr__cta-btn sr__cta-btn--outline">Shop my capsule ↗</button>
-      <button className="sr__cta-btn sr__cta-btn--outline">Makeup products ↗</button>
-    </div>
-  );
-}
-
 // ── Full report skeleton ──────────────────────────────────────────────────────
 
 function FullReportSkeleton() {
@@ -1101,7 +798,7 @@ function FullReportSkeleton() {
           </svg>
         </div>
         <p className="sr__full-loading-label">building your full report</p>
-        <p className="sr__full-loading-sub">all 11 chapters are being written for you — usually under a minute</p>
+        <p className="sr__full-loading-sub">your face, color, hair and makeup analysis — usually under a minute</p>
         <div className="sr__full-loading-bar">
           <div className="sr__full-loading-progress" />
         </div>
@@ -1167,13 +864,6 @@ export function StyleReportView({ result, lookLab, photoDataUrl, unlocked = fals
               />
             )}
             {r.beforeAfter && <BeforeAfterChapter data={r.beforeAfter} />}
-            <OutfitsChapter data={r.outfits} />
-            <CapsuleChapter data={r.clothing} />
-            {r.styleRules && r.styleRules.length > 0 && (
-              <StyleRulesChapter rules={r.styleRules} />
-            )}
-            <ShoppingListSection data={r.shoppingList} />
-            <ReportCTAs />
           </>
         ) : (
           <FullReportSkeleton />

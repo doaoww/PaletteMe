@@ -475,13 +475,13 @@
 }
 
 .home-hub__headline-script {
-  font-family: var(--script);
+  font-family: var(--serif);
   color: var(--pink-deep);
   font-weight: 400;
 }
 
 .home-hub__greeting-name {
-  font-family: var(--script);
+  font-family: var(--serif);
   color: var(--pink-deep);
 }
 
@@ -641,7 +641,7 @@
 }
 
 .home-hub__profile-script {
-  font-family: var(--script);
+  font-family: var(--serif);
   font-size: 1.15em;
   color: var(--pink-deep);
   font-weight: 400;
@@ -1683,10 +1683,6 @@
   color: var(--ink);
 }
 
-.scan-page__title-script {
-  font-family: var(--script);
-  color: var(--pink-deep);
-}
 
 .scan-page__subtitle {
   margin: 12px 0 0;
@@ -2196,10 +2192,12 @@
 
 .scan-credit-bank__bar span {
   display: block;
+  width: 100%;
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--pink-deep), #f39ab8);
-  transition: width 0.25s var(--ease);
+  transform-origin: left center;
+  transition: transform 0.25s var(--ease);
 }
 
 .scan-credit-bank p {

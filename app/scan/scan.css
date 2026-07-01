@@ -41,10 +41,6 @@
   color: var(--ink);
 }
 
-.scan-page__title-script {
-  font-family: var(--script);
-  color: var(--pink-deep);
-}
 
 .scan-page__subtitle {
   margin: 12px 0 0;

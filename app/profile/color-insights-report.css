@@ -62,7 +62,7 @@
 }
 
 .cir-script {
-  font-family: var(--script);
+  font-family: var(--serif);
   font-weight: 400;
   color: var(--primary);
 }
@@ -131,10 +131,12 @@
 }
 
 .cir-meter__fill {
+  width: 100%;
   height: 100%;
   border-radius: inherit;
   background: var(--primary);
-  transition: width 1s var(--ease-soft);
+  transform-origin: left center;
+  transition: transform 1s var(--ease-soft);
 }
 
 .cir-descriptors {
@@ -399,6 +401,28 @@
   font-family: var(--sans);
   font-size: 0.58rem;
   color: var(--ink-soft);
+}
+
+.cir-palette-tier {
+  margin-top: 28px;
+}
+
+.cir-palette-tier__label {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+}
+
+.cir-palette-tier__note {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+  opacity: 0.75;
 }
 
 .cir-neutral-grid {
@@ -736,4 +760,201 @@
 .app-chrome--profile-result .profile-result-wrap {
   height: auto;
   overflow: visible;
+}
+
+/* ── Style unlock banner ──────────────────────────────────────────────── */
+
+.cir-style-unlock {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--cream-3));
+  border: 1.5px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: 16px;
+  padding: 20px 20px 20px;
+}
+
+@media (min-width: 600px) {
+  .cir-style-unlock {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.cir-style-unlock__kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 6px;
+}
+
+.cir-style-unlock__title {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+
+.cir-style-unlock__body {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.cir-style-unlock__btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 20px;
+  border-radius: 100px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Silhouette guide ────────────────────────────────────────────────── */
+
+.cir-silhouette {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.cir-silhouette__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 600px) {
+  .cir-silhouette__grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.cir-silhouette__col-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 10px;
+}
+
+.cir-silhouette__col-label--avoid {
+  color: color-mix(in srgb, #c0392b 60%, var(--ink-soft));
+}
+
+.cir-silhouette__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cir-silhouette__list li {
+  font-size: 0.84rem;
+  color: var(--ink);
+  line-height: 1.45;
+  padding-left: 14px;
+  position: relative;
+}
+
+.cir-silhouette__list li::before {
+  content: "·";
+  position: absolute;
+  left: 0;
+  color: var(--ink-soft);
+}
+
+.cir-silhouette__list--avoid li::before {
+  content: "×";
+  color: color-mix(in srgb, #c0392b 60%, var(--ink-soft));
+}
+
+.cir-silhouette__tip {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: color-mix(in srgb, var(--accent) 6%, var(--cream-3));
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+  padding: 14px 16px;
+  border-radius: 8px;
+}
+
+.cir-silhouette__tip-icon {
+  font-size: 0.9rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cir-silhouette__tip p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+/* ── Face shape guide ────────────────────────────────────────────────── */
+
+.cir-face-shape {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.cir-face-shape__title {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+
+.cir-face-shape__tip {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+
+.cir-face-shape__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cir-face-shape__row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.cir-face-shape__row-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  min-width: 80px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.cir-face-shape__row-value {
+  font-size: 0.86rem;
+  color: var(--ink);
+  line-height: 1.5;
 }

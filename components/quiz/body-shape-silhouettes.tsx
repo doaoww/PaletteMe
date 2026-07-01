@@ -1,4 +1,4 @@
-import type { BodyShape, WardrobeType } from "@/lib/quiz-data";
+﻿import type { BodyShape, WardrobeType } from "@/lib/quiz/quiz-data";
 
 const WOMENSWEAR_SHAPE_IMAGES: Partial<Record<BodyShape, string>> = {
   hourglass:           "/images/body-shapes/hourglass.png",

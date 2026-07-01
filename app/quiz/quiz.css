@@ -329,9 +329,6 @@
   text-align: center;
 }
 
-.quiz-page__title .scr {
-  color: var(--pink-deep);
-}
 
 .quiz-page__result-kicker {
   font-family: var(--sans);

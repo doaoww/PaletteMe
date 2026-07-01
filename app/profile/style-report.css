@@ -1974,6 +1974,16 @@
   color: var(--on-surface);
 }
 
+.sr__outfit-item--text {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 1px dashed var(--outline-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
 .sr__outfit-color-logic {
   font-size: 0.78rem;
   color: var(--ink-soft);

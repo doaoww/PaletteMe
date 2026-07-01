@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+﻿import { NextResponse } from "next/server";
+import { createClient } from "@/lib/db/supabase-server";
 import {
   getUserByAuthId,
   isSupabaseConfigured,
   linkAnonymousUser,
-} from "@/lib/supabase-db";
+} from "@/lib/db/supabase-db";
 
 export const runtime = "nodejs";
 

@@ -1,7 +1,7 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import type { ReactNode } from "react";
 import { BodyShapeSilhouette } from "@/components/quiz/body-shape-silhouettes";
-import type { BodyShape, WardrobeType } from "@/lib/quiz-data";
+import type { BodyShape, WardrobeType } from "@/lib/quiz/quiz-data";
 
 type SwatchSize = "sm" | "md" | "lg";
 
@@ -118,6 +118,7 @@ export function WardrobeCard({
               src={image}
               alt=""
               fill
+              priority
               className="quiz-wardrobe-card__img"
               sizes="180px"
             />

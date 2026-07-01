@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-import { createClient } from "@/lib/supabase-server";
+import Replicate from "replicate";
+import { buildFlux2ProInput } from "@/lib/report/replicate-input";
+import { createClient } from "@/lib/db/supabase-server";
+import { parseImageDataUrl } from "@/lib/report/data-url";
+import { extractReplicateImageUrl } from "@/lib/report/replicate-output";
 import { z } from "zod";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 const RequestSchema = z.object({
-  // base64 data URL: "data:image/jpeg;base64,..."
   photoDataUrl: z.string(),
   hairstyles: z.array(z.object({
     name: z.string(),
@@ -19,36 +19,32 @@ const RequestSchema = z.object({
   })),
 });
 
-function dataUrlToBuffer(dataUrl: string): { buffer: Buffer; mimeType: string } {
-  const [header, data] = dataUrl.split(",");
-  const mimeType = header.replace("data:", "").replace(";base64", "");
-  return { buffer: Buffer.from(data, "base64"), mimeType };
-}
-
 async function generateHairstyle(
   photoDataUrl: string,
-  styleName: string,
-  styleDescription: string
+  styleDescription: string,
 ): Promise<string | null> {
   try {
-    const { buffer, mimeType } = dataUrlToBuffer(photoDataUrl);
-    const ext = mimeType.includes("png") ? "png" : "jpg";
+    const parsedPhoto = parseImageDataUrl(photoDataUrl);
+    if (!parsedPhoto) return null;
 
-    // openai.images.edit requires a File-like object
-    const file = new File([new Uint8Array(buffer)], `photo.${ext}`, { type: mimeType });
+    const imageBytes = new Uint8Array(parsedPhoto.buffer.length);
+    imageBytes.set(parsedPhoto.buffer);
+    const blob = new Blob([imageBytes], { type: parsedPhoto.mimeType });
 
-    const response = await openai.images.edit({
-      model: "gpt-image-1",
-      image: file,
-      prompt: `Change only the hairstyle to: ${styleDescription}. Keep the face, skin tone, eye colour, and all facial features completely identical. Only the hair shape, length, and style should change. Photorealistic, natural lighting.`,
-      n: 1,
-      size: "1024x1024",
+    const replicate = new Replicate({
+      auth: process.env.REPLICATE_API_TOKEN,
+      fileEncodingStrategy: "upload",
     });
 
-    // gpt-image-1 returns base64 by default
-    const b64 = response.data?.[0]?.b64_json;
-    if (b64) return `data:image/png;base64,${b64}`;
-    return response.data?.[0]?.url ?? null;
+    const prompt = `Professional portrait of the same person with the following hairstyle: ${styleDescription}. Identical hair colour, face, skin tone, clothing and background as in the reference photo. Salon-quality natural hair.`;
+
+    const output = await replicate.run("black-forest-labs/flux-2-pro", {
+      input: buildFlux2ProInput(prompt, blob),
+    });
+
+    const resultUrl = extractReplicateImageUrl(output);
+
+    return resultUrl || null;
   } catch {
     return null;
   }
@@ -63,30 +59,36 @@ export async function POST(req: NextRequest) {
 
   const { photoDataUrl, hairstyles } = parsed.data;
 
-  // Derive userId from the server session — never trust client-supplied userId
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const userId = user?.id ?? null;
 
-  // Generate hairstyles sequentially to avoid rate limits
+  // Return cached results if they exist
+  if (userId) {
+    const { data: cached } = await supabase
+      .from("look_lab_hairstyles")
+      .select("hairstyles")
+      .eq("user_id", userId)
+      .single();
+    if (cached?.hairstyles) {
+      return NextResponse.json({ hairstyles: cached.hairstyles });
+    }
+  }
+
+  // Generate sequentially to avoid rate limits
   const results: (typeof hairstyles[number] & { generatedImageUrl?: string | null })[] = [];
   for (const style of hairstyles) {
-    const imageUrl = await generateHairstyle(
-      photoDataUrl,
-      style.name,
-      style.description
-    );
+    const imageUrl = await generateHairstyle(photoDataUrl, style.description);
     results.push({ ...style, generatedImageUrl: imageUrl });
   }
 
-  // Cache to Supabase so subsequent loads skip generation (skip if unauthenticated)
   if (userId) {
     try {
       await supabase
         .from("look_lab_hairstyles")
         .upsert({ user_id: userId, hairstyles: results }, { onConflict: "user_id" });
     } catch {
-      // Non-fatal — client still receives results
+      // Non-fatal
     }
   }
 

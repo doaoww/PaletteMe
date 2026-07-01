@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import {
   DEFAULT_WEEKLY_SCAN_CREDITS,
   getBrowserScanCreditState,
-} from "@/lib/scan-credits";
+} from "@/lib/scan/scan-credits";
 
 export const APP_NAV = [
   { href: "/home", label: "home", icon: "home" },
@@ -101,7 +101,7 @@ export function SignOutButton({ onNavigate }: { onNavigate?: () => void }) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!supabaseUrl || !supabaseKey) return;
-    import("@/lib/supabase").then(({ createClient }) => {
+    import("@/lib/db/supabase").then(({ createClient }) => {
       createClient().auth.getUser().then(({ data: { user } }) => {
         setVisible(!!user);
       });
@@ -114,7 +114,7 @@ export function SignOutButton({ onNavigate }: { onNavigate?: () => void }) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!supabaseUrl || !supabaseKey) return;
-    const { createClient } = await import("@/lib/supabase");
+    const { createClient } = await import("@/lib/db/supabase");
     await createClient().auth.signOut();
     onNavigate?.();
     router.push("/quiz");

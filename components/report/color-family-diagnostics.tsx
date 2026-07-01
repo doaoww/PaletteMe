@@ -11,12 +11,13 @@ type Step = "families" | "best-colors";
 
 type Props = {
   neutralDrapingUrl: string;
+  userPhotoUrl?: string;
   colorDiagnostics: ColorDiagnostics;
   bestColors: BestColor[];
   onComplete: () => void;
 };
 
-export function ColorFamilyDiagnostics({ neutralDrapingUrl, colorDiagnostics, bestColors, onComplete }: Props) {
+export function ColorFamilyDiagnostics({ neutralDrapingUrl, userPhotoUrl, colorDiagnostics, bestColors, onComplete }: Props) {
   const [step, setStep] = useState<Step>("families");
 
   return (
@@ -24,14 +25,15 @@ export function ColorFamilyDiagnostics({ neutralDrapingUrl, colorDiagnostics, be
       {step === "families" && (
         <FamilySwiper
           neutralDrapingUrl={neutralDrapingUrl}
+          userPhotoUrl={userPhotoUrl}
           families={colorDiagnostics.families}
-          neutrals={colorDiagnostics.neutrals ?? []}
           onComplete={() => setStep("best-colors")}
         />
       )}
       {step === "best-colors" && (
         <BestColorsSlide
           neutralDrapingUrl={neutralDrapingUrl}
+          userPhotoUrl={userPhotoUrl}
           bestColors={bestColors}
           onComplete={onComplete}
         />

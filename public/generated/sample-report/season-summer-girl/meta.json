@@ -1,0 +1,74 @@
+{
+  "generatedAt": "2026-07-01T10:49:45.320Z",
+  "sourcePhoto": "public/images/landing/season-summer.jpg",
+  "wardrobeType": "woman",
+  "modelSeasonSuggestion": "True Summer",
+  "modelSeasonSuggestionConfidence": "moderate",
+  "confirmedSeason": {
+    "id": "true-summer",
+    "name": "True Summer",
+    "percentage": 99,
+    "reason": "medium depth, medium contrast, clear chroma, and cool evidence support a softened True Summer direction."
+  },
+  "alternatives": [
+    {
+      "id": "soft-summer",
+      "name": "Soft Summer",
+      "percentage": 85,
+      "reason": "medium depth, medium contrast, clear chroma, and cool evidence support a softened Soft Summer direction."
+    },
+    {
+      "id": "true-winter",
+      "name": "True Winter",
+      "percentage": 83,
+      "reason": "Winter stays likely when depth and contrast combine with cool, icy, or sharp evidence."
+    }
+  ],
+  "traits": {
+    "undertone": "cool",
+    "depth": "medium",
+    "contrast": "medium",
+    "chroma": "clear",
+    "hairColor": "cool brown",
+    "eyeColor": "blue",
+    "skinDescription": "cool rosy skin with pink cast",
+    "photoQuality": "usable",
+    "qualityNote": null,
+    "seasonSuggestion": "True Summer",
+    "seasonSuggestionConfidence": "moderate",
+    "faceShape": "oval",
+    "foreheadWidth": "medium",
+    "jawLine": "defined",
+    "chinShape": "round",
+    "featureScale": "medium",
+    "hairTexture": "medium",
+    "hairWave": "wavy",
+    "eyeShape": "almond",
+    "eyeSet": "average",
+    "lipFullness": "full"
+  },
+  "validation": {
+    "valid": true,
+    "critical": [],
+    "warnings": []
+  },
+  "imageSlots": [
+    "neutral-draping",
+    "metal-silver",
+    "metal-yellow-gold",
+    "makeup-lips-good",
+    "makeup-lips-bad",
+    "makeup-blush-good",
+    "makeup-blush-bad",
+    "glasses-0",
+    "glasses-1",
+    "glasses-2",
+    "hair-color-0",
+    "hair-style-0",
+    "hair-color-1",
+    "hair-style-1",
+    "hair-color-2",
+    "hair-style-2",
+    "final-look"
+  ]
+}

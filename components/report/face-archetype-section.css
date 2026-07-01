@@ -1,0 +1,222 @@
+.archetype-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0 1.25rem 1.5rem;
+}
+
+/* ── Hero ── */
+.archetype-section__hero {
+  text-align: center;
+  padding: 1.75rem 1rem 1.5rem;
+  background: linear-gradient(160deg, #fdf3ed 0%, #faf8f5 100%);
+  border-radius: 18px;
+  border: 1px solid #ede8e4;
+}
+
+.archetype-section__primary {
+  font-family: var(--font-serif, "DM Serif Display", serif);
+  font-weight: 400;
+  font-size: 2rem;
+  color: #1a1209;
+  margin: 0 0 0.5rem;
+  line-height: 1.1;
+}
+
+.archetype-section__tagline {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.85rem;
+  color: #7a6a5a;
+  margin: 0;
+  line-height: 1.55;
+  max-width: 28ch;
+  margin-inline: auto;
+}
+
+/* ── Reason ── */
+.archetype-section__reason {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.9rem;
+  color: #4a3828;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── Sub-label ── */
+.archetype-section__sub-label {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9c8c7c;
+  margin: 0 0 0.75rem;
+}
+
+/* ── Feature chips ── */
+.archetype-section__features {
+  display: flex;
+  flex-direction: column;
+}
+
+.archetype-section__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.archetype-chip {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.78rem;
+  color: #4a3828;
+  background: #fff;
+  border: 1px solid #ddd3c8;
+  border-radius: 100px;
+  padding: 4px 12px;
+  line-height: 1.4;
+}
+
+/* ── Styling notes grid ── */
+.archetype-section__notes {
+  display: flex;
+  flex-direction: column;
+}
+
+.archetype-notes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.archetype-note {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background: #faf8f5;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ede8e4;
+}
+
+.archetype-note__icon {
+  font-size: 0.85rem;
+  color: #c4896a;
+  flex-shrink: 0;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.archetype-note__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.archetype-note__label {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9c8c7c;
+  margin: 0;
+}
+
+.archetype-note__text {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.83rem;
+  color: #2c1f10;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── Secondary influences ── */
+.archetype-section__influences {
+  display: flex;
+  flex-direction: column;
+}
+
+.archetype-influences {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.archetype-influence {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.archetype-influence__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.archetype-influence__name {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.85rem;
+  color: #2c1f10;
+  font-weight: 500;
+}
+
+.archetype-influence__pct {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.78rem;
+  color: #9c8c7c;
+}
+
+.archetype-influence__bar-track {
+  height: 4px;
+  background: #ede8e4;
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.archetype-influence__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c4896a, #e0a880);
+  border-radius: 100px;
+  transform-origin: left;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 768px) {
+  /* Remove inner horizontal padding — parent .report-section has 3.5rem */
+  .archetype-section {
+    padding: 0 0 2rem;
+  }
+
+  /* Hero: wider with centred max-width */
+  .archetype-section__hero {
+    padding: 2.5rem 3rem 2rem;
+  }
+
+  .archetype-section__primary {
+    font-size: 2.5rem;
+  }
+
+  .archetype-section__tagline {
+    max-width: 44ch;
+    font-size: 0.9rem;
+  }
+
+  /* Features + influences: side by side */
+  .archetype-section__features,
+  .archetype-section__influences {
+    max-width: 72ch;
+  }
+
+  /* Styling notes: 2-column grid */
+  .archetype-notes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  /* Influence bars: wider */
+  .archetype-influences {
+    gap: 1rem;
+  }
+}

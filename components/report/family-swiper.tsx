@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ColorFamilyDiagnostic, NeutralShade } from "@/lib/report/color-diagnostics-schema";
+import type { ColorFamilyDiagnostic } from "@/lib/report/color-diagnostics-schema";
 import { DrapePortrait } from "./drape-portrait";
 import "./family-swiper.css";
 
@@ -14,27 +14,21 @@ const FAMILY_META: Record<string, { label: string; paletteImage: string }> = {
   deep:    { label: "deep tones",    paletteImage: "/palettes/deep.png" },
 };
 
-type Slide =
-  | { kind: "family"; data: ColorFamilyDiagnostic }
-  | { kind: "neutrals"; shades: NeutralShade[] };
+type Slide = { kind: "family"; data: ColorFamilyDiagnostic };
 
 type Props = {
   neutralDrapingUrl: string;
+  userPhotoUrl?: string;
   families: ColorFamilyDiagnostic[];
-  neutrals: NeutralShade[];
   onComplete: () => void;
   reportMode?: boolean;
 };
 
-export function FamilySwiper({ neutralDrapingUrl, families, neutrals, onComplete, reportMode = false }: Props) {
+export function FamilySwiper({ neutralDrapingUrl, userPhotoUrl, families, onComplete, reportMode = false }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [activeNeutralIdx, setActiveNeutralIdx] = useState(0);
 
-  const slides: Slide[] = [
-    ...families.map(f => ({ kind: "family" as const, data: f })),
-    { kind: "neutrals" as const, shades: neutrals },
-  ];
+  const slides = families.map(f => ({ kind: "family" as const, data: f }));
 
   const total = slides.length;
   const isLast = activeIdx === total - 1;
@@ -60,61 +54,26 @@ export function FamilySwiper({ neutralDrapingUrl, families, neutrals, onComplete
   }, []);
 
   return (
-    <div className="family-swiper">
+    <div className={`family-swiper${reportMode ? " family-swiper--report" : ""}`}>
       <div className="family-swiper__track" ref={trackRef}>
-        {slides.map((slide, i) => {
-          if (slide.kind === "family") {
-            const meta = FAMILY_META[slide.data.id];
-            return (
-              <div key={slide.data.id} className="family-swiper__slide">
-                <div className="family-swiper__portrait-wrap">
-                  <DrapePortrait
-                    baseImageUrl={neutralDrapingUrl}
-                    overlayImage={meta?.paletteImage}
-                    alt={`${meta?.label ?? slide.data.id} colour family`}
-                  />
-                  {slide.data.isWinner && (
-                    <span className="family-swiper__winner-badge">suits you</span>
-                  )}
-                </div>
-                <div className="family-swiper__slide-body">
-                  <p className="family-swiper__family-label">{meta?.label ?? slide.data.id}</p>
-                  <p className="family-swiper__comment">{slide.data.comment}</p>
-                </div>
-              </div>
-            );
-          }
-          // Neutrals slide — interactive circles, same drape mechanic as BestColorsSlide
-          const activeNeutral = slide.shades[activeNeutralIdx];
+        {slides.map((slide) => {
+          const meta = FAMILY_META[slide.data.id];
           return (
-            <div key="neutrals" className="family-swiper__slide">
+            <div key={slide.data.id} className="family-swiper__slide">
               <div className="family-swiper__portrait-wrap">
                 <DrapePortrait
-                  baseImageUrl={neutralDrapingUrl}
-                  overlayColor={activeNeutral?.hex}
-                  alt="neutral colour try-on"
+                  baseImageUrl={userPhotoUrl || neutralDrapingUrl}
+                  overlayImage={meta?.paletteImage}
+                  alt={`${meta?.label ?? slide.data.id} colour family`}
                 />
+                {slide.data.isWinner
+                  ? <span className="family-swiper__winner-badge">suits you</span>
+                  : <span className="family-swiper__avoid-badge">avoid</span>
+                }
               </div>
               <div className="family-swiper__slide-body">
-                <p className="family-swiper__family-label">neutrals</p>
-                <div className="family-swiper__neutral-circles">
-                  {slide.shades.map((shade, ni) => (
-                    <button
-                      key={shade.hex}
-                      className={`family-swiper__neutral-circle${ni === activeNeutralIdx ? " family-swiper__neutral-circle--active" : ""}`}
-                      style={{ background: shade.hex }}
-                      onClick={() => setActiveNeutralIdx(ni)}
-                      aria-label={shade.name}
-                      title={shade.name}
-                    />
-                  ))}
-                </div>
-                {activeNeutral && (
-                  <div className="family-swiper__neutral-info">
-                    <p className="family-swiper__neutral-name">{activeNeutral.name}</p>
-                    <p className="family-swiper__comment">{activeNeutral.comment}</p>
-                  </div>
-                )}
+                <p className="family-swiper__family-label">{meta?.label ?? slide.data.id}</p>
+                <p className="family-swiper__comment">{slide.data.comment}</p>
               </div>
             </div>
           );

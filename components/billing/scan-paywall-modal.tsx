@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
-import { PRICING_TIERS } from "@/lib/pricing-tiers";
+import { PRICING_TIERS } from "@/lib/billing/pricing-tiers";
 
 type Props = {
   open: boolean;

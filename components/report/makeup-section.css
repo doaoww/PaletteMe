@@ -1,21 +1,122 @@
 .makeup-section {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 2.5rem;
 }
 
+/* ── Category block ── */
+.makeup-category {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.makeup-category__title {
+  font-family: "DM Serif Display", serif;
+  font-weight: 400;
+  font-size: 1.1rem;
+  color: #2a1f1a;
+  margin: 0;
+}
+
+/* ── Contrast pair ── */
+.makeup-contrast {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.makeup-contrast__side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.makeup-contrast__side--bad .makeup-contrast__img-wrap {
+  opacity: 0.82;
+}
+
+.makeup-contrast__img-wrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  aspect-ratio: 3/4;
+  background: #ede8e2;
+}
+
+.makeup-contrast__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.makeup-contrast__skeleton {
+  width: 100%;
+  height: 100%;
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.makeup-contrast__badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-radius: 100px;
+  padding: 3px 9px;
+}
+
+.makeup-contrast__badge--bad {
+  background: rgba(0 0 0 / 0.5);
+  color: #fff;
+}
+
+.makeup-contrast__badge--good {
+  background: #2a1f1a;
+  color: #f5ede3;
+}
+
+.makeup-contrast__shade-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.makeup-contrast__dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(0 0 0 / 0.1);
+}
+
+.makeup-contrast__shade-name {
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.78rem;
+  color: #4a3828;
+  line-height: 1.3;
+}
+
+/* ── Eyes shade pickers ── */
 .makeup-section__eyes {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
-.makeup-section__eyes-title {
-  font-family: "DM Serif Display", serif;
-  font-weight: 400;
-  font-size: 1.1rem;
-  color: #2a1f1a;
-  margin: 0;
+@media (min-width: 768px) {
+  .makeup-contrast {
+    max-width: 420px;
+    gap: 1rem;
+  }
 }
 
 /* Shade Picker */
@@ -76,4 +177,67 @@
   line-height: 1.55;
   color: #5c4d44;
   margin: 0;
+}
+
+/* ── Avoid shades ── */
+.avoid-shades {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.avoid-shades__label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b05030;
+  margin: 0;
+}
+
+.avoid-shades__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.avoid-shade {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  background: #fdf5f0;
+  border: 1px solid #f0ddd4;
+  border-radius: 10px;
+}
+
+.avoid-shade__dot {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-top: 1px;
+  border: 1.5px solid rgba(0,0,0,0.1);
+}
+
+.avoid-shade__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.avoid-shade__name {
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2a1f1a;
+}
+
+.avoid-shade__reason {
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: #7a4a38;
 }

@@ -1,0 +1,29 @@
+.sample-report-page {
+  min-height: 100svh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(900px 520px at 80% -10%, color-mix(in srgb, var(--pink) 16%, transparent), transparent 68%),
+    linear-gradient(180deg, #fff4f7 0%, #fff8f8 46%, #fff4f7 100%);
+  color: var(--ink);
+}
+
+.sample-report-shell {
+  position: relative;
+  z-index: 1;
+  padding: clamp(18px, 3vw, 32px) 0 clamp(72px, 8vw, 120px);
+}
+
+.sample-report-shell .report {
+  position: relative;
+  margin-top: 0;
+}
+
+.sample-report-shell .report::before {
+  position: absolute;
+}
+
+@media (max-width: 640px) {
+  .sample-report-shell {
+    padding-top: 16px;
+  }
+}

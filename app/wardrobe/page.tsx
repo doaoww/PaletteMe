@@ -1,18 +1,18 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomNav } from "@/components/nav/bottom-nav";
-import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
-import { loadQuizProfile } from "@/lib/quiz";
-import { createClient } from "@/lib/supabase";
+import { isSupabaseAuthConfigured } from "@/lib/auth/auth-flow";
+import { loadQuizProfile } from "@/lib/quiz/quiz";
+import { createClient } from "@/lib/db/supabase";
 import {
   loadWardrobeItemsForCurrentUser,
   type PersistedWardrobeItem,
   type WardrobeItem,
-} from "@/lib/wardrobe-store";
+} from "@/lib/wardrobe/wardrobe-store";
 import "../app-shell.css";
 
 const SUPABASE_AUTH_ENV = {
@@ -70,7 +70,7 @@ export default function WardrobePage() {
   return (
     <div className="app-shell">
       <header className="app-topbar glass-nav">
-        <Link href="/home" className="wordmark app-topbar__wordmark">
+        <Link href="/" className="wordmark app-topbar__wordmark">
           palette<span className="me">me</span>
         </Link>
         <span className="app-chip">{count} items</span>

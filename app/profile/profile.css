@@ -1248,6 +1248,7 @@
   font-family: var(--sans);
   color: var(--berry);
   letter-spacing: 0;
+  text-decoration: none;
 }
 
 .rc-lab-icon,
@@ -1650,7 +1651,7 @@
 .rc-lab-insight-card--stylist {
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.9), color-mix(in srgb, var(--cream) 72%, var(--blush)));
-  border-left: 3px solid color-mix(in srgb, var(--primary) 42%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
 .rc-lab-insight-card--credits {
@@ -1716,7 +1717,7 @@
   padding: 20px 22px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.88), color-mix(in srgb, var(--cream) 76%, var(--blush)));
-  border-left: 3px solid color-mix(in srgb, var(--berry) 28%, transparent);
+  border: 1px solid color-mix(in srgb, var(--berry) 18%, transparent);
 }
 
 .rc-lab-secret {
@@ -2313,9 +2314,9 @@
 }
 
 .p2-reveal__season {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--serif);
   font-size: 72px;
-  font-weight: 800;
+  font-weight: 400;
   line-height: 1.1;
   margin: 0;
   color: #111111;
@@ -2691,7 +2692,6 @@
 .p2-report__card {
   background: color-mix(in srgb, #fff 88%, var(--blush));
   border: 1px solid var(--outline-variant);
-  border-left-width: 4px;
   border-radius: 16px;
   padding: clamp(18px, 3vw, 24px);
   margin-bottom: 16px;

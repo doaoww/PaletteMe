@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase";
+import { createClient } from "@/lib/db/supabase";
 
 export function TopBar() {
   const [solid, setSolid] = useState(false);
@@ -34,14 +34,15 @@ export function TopBar() {
 
   return (
     <>
-      <div className="progress" style={{ width: `${progress}%` }} />
+      <div className="progress" style={{ transform: `scaleX(${progress / 100})` }} />
       <header className={`topbar${solid ? " solid" : ""}`}>
         <Link href="/" className="wordmark brand">
           palette<span className="me">me</span>
         </Link>
         <nav className="navlinks">
           <a href="#free">how it works</a>
-          <a href="#features">features</a>
+          <a href="#features">what you get</a>
+          <a href="#report-preview">report preview</a>
           <a href="#pricing">pricing</a>
           <a href="#faq">faq</a>
         </nav>
@@ -55,8 +56,8 @@ export function TopBar() {
               sign in
             </Link>
           )}
-          <Link href="/quiz" className="cta-mini topbar__cta-desktop">
-            let&apos;s start
+          <Link href="/style-setup" className="cta-mini topbar__cta-desktop">
+            upload my photo
           </Link>
         </div>
       </header>

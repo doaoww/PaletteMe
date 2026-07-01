@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent } from "react";
@@ -9,7 +9,7 @@ import {
   type CameraFacingMode,
   isLiveCameraSupported,
   shouldDisableCameraAfterError,
-} from "@/lib/selfie-capture";
+} from "@/lib/shared/selfie-capture";
 
 type Props = {
   onFile: (file: File) => void;
@@ -20,6 +20,7 @@ type Props = {
   cameraFacingMode?: CameraFacingMode;
   captureLabel?: string;
   capturedFilePrefix?: string;
+  flashDefault?: boolean;
 };
 
 export function SelfieCapture({
@@ -31,6 +32,7 @@ export function SelfieCapture({
   cameraFacingMode = "user",
   captureLabel = "capture selfie",
   capturedFilePrefix = "paletteme-selfie",
+  flashDefault = false,
 }: Props) {
   const uploadRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -41,6 +43,8 @@ export function SelfieCapture({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
+  const [activeFacingMode, setActiveFacingMode] = useState<CameraFacingMode>(cameraFacingMode);
+  const [flashOn, setFlashOn] = useState(flashDefault);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -88,7 +92,7 @@ export function SelfieCapture({
     uploadRef.current?.click();
   };
 
-  const startCamera = async () => {
+  const startCameraWithMode = async (facingMode: CameraFacingMode) => {
     if (
       !isLiveCameraSupported({
         isSecureContext: window.isSecureContext,
@@ -103,11 +107,13 @@ export function SelfieCapture({
     try {
       setCameraError(null);
       const stream = await navigator.mediaDevices.getUserMedia(
-        buildCameraVideoConstraints(cameraFacingMode),
+        buildCameraVideoConstraints(facingMode),
       );
       setCameraReady(false);
       streamRef.current = stream;
       setCameraStream(stream);
+      // Auto-enable fill light whenever camera opens so the photo is better lit
+      setFlashOn(true);
     } catch (error) {
       const errorName =
         typeof error === "object" && error !== null && "name" in error
@@ -118,6 +124,15 @@ export function SelfieCapture({
       }
       setCameraError("We could not open your camera. Allow webcam access or choose a photo.");
     }
+  };
+
+  const startCamera = () => startCameraWithMode(activeFacingMode);
+
+  const flipCamera = async () => {
+    const next: CameraFacingMode = activeFacingMode === "user" ? "environment" : "user";
+    setActiveFacingMode(next);
+    stopCamera();
+    await startCameraWithMode(next);
   };
 
   const waitForVideoFrame = async (video: HTMLVideoElement) => {
@@ -183,6 +198,11 @@ export function SelfieCapture({
 
   return (
     <div className="selfie-capture" style={{ maxWidth }}>
+      {/* White fill-light overlay — covers screen behind camera to act as fill light */}
+      {flashOn && cameraStream ? (
+        <div className="selfie-capture__flash-overlay" aria-hidden />
+      ) : null}
+
       <input
         {...buildSelfieInputProps("upload")}
         ref={uploadRef}
@@ -216,7 +236,7 @@ export function SelfieCapture({
           <small>{detail}</small>
           {cameraStream ? (
             <div
-              className="selfie-capture__camera"
+              className={`selfie-capture__camera${flashOn ? " selfie-capture__camera--lit" : ""}`}
               onClick={(event) => event.stopPropagation()}
               onKeyDown={(event) => event.stopPropagation()}
             >
@@ -226,6 +246,7 @@ export function SelfieCapture({
                 autoPlay
                 muted
                 playsInline
+                style={activeFacingMode === "user" ? { transform: "scaleX(-1)" } : undefined}
                 onLoadedMetadata={() => {
                   setCameraReady(
                     canCaptureVideoFrame({
@@ -243,6 +264,34 @@ export function SelfieCapture({
                   );
                 }}
               />
+              <div className="selfie-capture__ctrl-row">
+                {flashOn ? (
+                  <span className="selfie-capture__fill-light-label">fill light on</span>
+                ) : null}
+                <button
+                  type="button"
+                  className={`selfie-capture__ctrl-btn${flashOn ? " selfie-capture__ctrl-btn--active" : ""}`}
+                  aria-label={flashOn ? "turn off fill light" : "turn on fill light"}
+                  title={flashOn ? "fill light on — screen illuminates your face" : "turn on fill light"}
+                  onClick={() => setFlashOn((prev) => !prev)}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                    <path d="M13 2 4.5 13.5H11l-1 8.5 9.5-11.5H13L14 2z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className="selfie-capture__ctrl-btn"
+                  aria-label="flip camera"
+                  disabled={isCapturing}
+                  onClick={() => void flipCamera()}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M1 4v6h6" />
+                    <path d="M3.51 15a9 9 0 1 0 .49-5.78" />
+                  </svg>
+                </button>
+              </div>
               <div className="selfie-capture__camera-actions">
                 <button
                   type="button"

@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createAiJob, getPublicAiJob } from "@/lib/server/ai/jobs";
-import { buildOutfitPrompt, STYLE_DECISION_SYSTEM_PROMPT } from "@/lib/server/ai/prompts";
-import { OutfitPlanSchema } from "@/lib/server/ai/schemas";
-import { runStructuredStyleResponse } from "@/lib/server/openai";
-import { listPersistedWardrobeItems } from "@/lib/server/wardrobe";
+import { createAiJob, getPublicAiJob } from "@/server/ai/jobs";
+import { buildOutfitPrompt, STYLE_DECISION_SYSTEM_PROMPT } from "@/server/ai/prompts";
+import { OutfitPlanSchema } from "@/server/ai/schemas";
+import { runStructuredStyleResponse } from "@/server/services/openai";
+import { listPersistedWardrobeItems } from "@/server/services/wardrobe";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;

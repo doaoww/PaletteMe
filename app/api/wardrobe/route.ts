@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import {
   applyPersistedWardrobeCorrection,
   listPersistedWardrobeItems,
   savePersistedWardrobeItem,
   type WardrobeCorrection,
-} from "@/lib/server/wardrobe";
+} from "@/server/services/wardrobe";
 
 export const runtime = "nodejs";
 

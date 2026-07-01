@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase-server";
-import { isSupabaseAuthConfigured, normalizeAuthNext } from "@/lib/auth-flow";
+﻿import { createClient } from "@/lib/db/supabase-server";
+import { isSupabaseAuthConfigured, normalizeAuthNext } from "@/lib/auth/auth-flow";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";

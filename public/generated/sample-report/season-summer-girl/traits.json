@@ -1,0 +1,23 @@
+{
+  "undertone": "cool",
+  "depth": "medium",
+  "contrast": "medium",
+  "chroma": "clear",
+  "hairColor": "cool brown",
+  "eyeColor": "blue",
+  "skinDescription": "cool rosy skin with pink cast",
+  "photoQuality": "usable",
+  "qualityNote": null,
+  "seasonSuggestion": "True Summer",
+  "seasonSuggestionConfidence": "moderate",
+  "faceShape": "oval",
+  "foreheadWidth": "medium",
+  "jawLine": "defined",
+  "chinShape": "round",
+  "featureScale": "medium",
+  "hairTexture": "medium",
+  "hairWave": "wavy",
+  "eyeShape": "almond",
+  "eyeSet": "average",
+  "lipFullness": "full"
+}

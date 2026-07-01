@@ -7,19 +7,17 @@ export function QuizCta() {
         <div className="quiz-cta__inner">
           <div>
             <div className="eyebrow">
-              <span className="kicker">color quiz</span>
+              <span className="kicker">one photo</span>
             </div>
-            <h2>
-              Questions <span className="scr">first</span>, selfie second
-            </h2>
+            <h2>Your visual blueprint starts here</h2>
             <p>
-              Goals, undertone, body shape, style vibe — then one selfie to
-              reveal your colors and outfit direction.
+              Upload a clear photo and see the colors, contrast, hair, glasses
+              and details that suit your features.
             </p>
           </div>
-          <Link href="/quiz" className="cta-mini">
-        let&apos;s start
-      </Link>
+          <Link href="/style-setup" className="cta-mini">
+            upload my photo
+          </Link>
         </div>
       </div>
     </section>

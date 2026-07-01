@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { LookLabSeason } from "./look-lab-season";
@@ -9,7 +9,7 @@ import { useMediaPipe } from "./use-mediapipe";
 import { applyDraping } from "./transforms/apply-draping";
 import { applyMakeup } from "./transforms/apply-makeup";
 import { applyHairColor } from "./transforms/apply-hair-color";
-import type { LookLabData } from "@/lib/look-lab-schema";
+import type { LookLabData } from "@/lib/look-lab/look-lab-schema";
 import "./look-lab.css";
 
 type LookLabProps = {
@@ -90,22 +90,22 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
     []
   );
 
-  if (!ready && !error) {
-    return <div className="look-lab look-lab--loading">Loading your visual analysis…</div>;
-  }
-
-  if (error) {
-    return <div className="look-lab look-lab--error">Could not load visual transforms. Try refreshing.</div>;
-  }
-
   return (
     <div className="look-lab">
-      {/* Block 1 — always visible */}
+      {/* Block 1 — colour season; pure canvas, no MediaPipe needed */}
       <LookLabSeason
         photoDataUrl={photoDataUrl}
         best={lookLab.colorSeason.best}
         alternatives={lookLab.colorSeason.alternatives}
       />
+
+      {/* MediaPipe loading/error state — shown below Block 1 only */}
+      {!ready && !error && (
+        <div className="look-lab--loading">Loading visual transforms…</div>
+      )}
+      {error && (
+        <div className="look-lab--error">Could not load visual transforms. Try refreshing.</div>
+      )}
 
       {!unlocked && (
         <div className="look-lab__locked-hint">
@@ -209,8 +209,10 @@ export function LookLab({ lookLab, photoDataUrl, unlocked }: LookLabProps) {
                 ) : (
                   <div className="look-lab-hairstyle-card__placeholder">Generating…</div>
                 )}
-                <span className="look-lab-card__label">{style.name}</span>
-                <p className="look-lab-card__explanation">{style.faceShapeReason}</p>
+                <div className="look-lab-hairstyle-card__meta">
+                  <span className="look-lab-card__label">{style.name}</span>
+                  <p className="look-lab-card__explanation">{style.faceShapeReason}</p>
+                </div>
               </div>
             ))}
           </LookLabBlock>

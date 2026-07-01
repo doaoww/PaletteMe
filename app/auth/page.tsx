@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
-import { normalizeAuthNext } from "@/lib/auth-flow";
+﻿import { redirect } from "next/navigation";
+import { normalizeAuthNext } from "@/lib/auth/auth-flow";
 
 type AuthPageProps = {
   searchParams: Promise<{

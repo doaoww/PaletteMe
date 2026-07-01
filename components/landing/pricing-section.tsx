@@ -1,28 +1,19 @@
 import Link from "next/link";
-import { PRICING_TIERS } from "@/lib/pricing-tiers";
+import { PRICING_TIERS } from "@/lib/billing/pricing-tiers";
 
 export function PricingSection() {
   return (
     <section id="pricing" className="pricing">
       <div className="wrap">
-        <div className="how__head reveal">
-          <div className="eyebrow">
-            <span className="kicker">pricing</span>
-          </div>
-          <h2>
-            Start free. <span className="scr">Upgrade</span> when you scan more.
-          </h2>
-          <p>
-            Your color analysis is always free. Pay only when you want more
-            clothing scans, exports, or early access to wardrobe tools.
-          </p>
+        <div className="pricing__head">
+          <h2>Start free. Go deeper for $5.99.</h2>
         </div>
 
         <div className="pricing__grid">
           {PRICING_TIERS.map((tier) => (
             <article
               key={tier.id}
-              className={`pricing__card${tier.highlight ? " pricing__card--highlight" : ""}`}
+              className={`pricing__card pricing__card--${tier.id}${tier.highlight ? " pricing__card--highlight" : ""}`}
             >
               {tier.badge ? (
                 <span className="pricing__badge">{tier.badge}</span>
@@ -32,6 +23,7 @@ export function PricingSection() {
                 {tier.price}
                 <span>{tier.period}</span>
               </p>
+              <p className="pricing__desc">{tier.description}</p>
               <ul className="pricing__features">
                 {tier.features.map((feature) => (
                   <li

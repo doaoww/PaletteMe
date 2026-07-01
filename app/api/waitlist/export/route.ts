@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { readWaitlist } from "@/lib/waitlist-store";
+﻿import { NextResponse } from "next/server";
+import { readWaitlist } from "@/lib/shared/waitlist-store";
 
 /** GET /api/waitlist/export?key=YOUR_ADMIN_SECRET — download emails as CSV */
 export async function GET(request: Request) {

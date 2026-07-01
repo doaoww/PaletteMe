@@ -1,0 +1,202 @@
+.glasses-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0 1.25rem 1.5rem;
+}
+
+/* ── Summary rows ── */
+.glasses-section__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #faf8f5;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #ede8e4;
+}
+
+.glasses-section__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #ede8e4;
+}
+
+.glasses-section__row:last-child {
+  border-bottom: none;
+}
+
+.glasses-section__row--avoid {
+  background: #fdf5f0;
+}
+
+.glasses-section__label {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9c8c7c;
+  min-width: 90px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.glasses-section__value {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.85rem;
+  color: #2c1f10;
+  line-height: 1.5;
+}
+
+.glasses-section__value--avoid {
+  color: #a05a3a;
+}
+
+/* ── Frame cards ── */
+.glasses-section__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.glasses-card {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid #ede8e4;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+/* Visual slot — same width on mobile, full-width on desktop */
+.glasses-card__visual {
+  flex-shrink: 0;
+  width: 90px;
+}
+
+.glasses-card__img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+
+/* Shimmer skeleton */
+.glasses-card__skeleton {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  background: linear-gradient(110deg, #f0ece8 30%, #e8e2dc 50%, #f0ece8 70%);
+  background-size: 200% 100%;
+  animation: glasses-shimmer 1.6s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes glasses-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.glasses-card__skeleton-icon {
+  color: rgba(160, 104, 64, 0.35);
+  width: 64px;
+  height: auto;
+  display: block;
+}
+
+.glasses-card__skeleton-icon svg {
+  width: 100%;
+  height: auto;
+}
+
+.glasses-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.glasses-card__shape {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1209;
+  margin: 0;
+}
+
+.glasses-card__why {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.82rem;
+  color: #4a3828;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.glasses-card__meta {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.78rem;
+  color: #7a6a5a;
+  margin: 0;
+  margin-top: 0.15rem;
+}
+
+.glasses-card__colors-label {
+  font-weight: 600;
+  color: #9c8c7c;
+}
+
+.glasses-card__avoid {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.75rem;
+  color: #a05a3a;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  /* Remove inner horizontal padding — parent .report-section already has 3.5rem */
+  .glasses-section {
+    padding: 0 0 2rem;
+  }
+
+  /* Summary rows: 2-column grid */
+  .glasses-section__summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-radius: 16px;
+  }
+
+  .glasses-section__row {
+    border-bottom: none;
+    border-right: 1px solid #ede8e4;
+  }
+
+  .glasses-section__row:nth-child(even) {
+    border-right: none;
+  }
+
+  .glasses-section__row:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+
+  /* 3-column card grid */
+  .glasses-section__cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .glasses-card {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .glasses-card__visual {
+    width: 100%;
+  }
+}

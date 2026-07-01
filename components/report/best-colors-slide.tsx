@@ -7,12 +7,13 @@ import "./best-colors-slide.css";
 
 type Props = {
   neutralDrapingUrl: string;
+  userPhotoUrl?: string;
   bestColors: BestColor[];
   onComplete: () => void;
   reportMode?: boolean;
 };
 
-export function BestColorsSlide({ neutralDrapingUrl, bestColors, onComplete, reportMode = false }: Props) {
+export function BestColorsSlide({ neutralDrapingUrl, userPhotoUrl, bestColors, onComplete, reportMode = false }: Props) {
   const [activeHex, setActiveHex] = useState<string>(bestColors[0]?.hex ?? "");
   const activeColor = bestColors.find(c => c.hex === activeHex);
 
@@ -25,7 +26,7 @@ export function BestColorsSlide({ neutralDrapingUrl, bestColors, onComplete, rep
 
       <div className="best-colors-slide__portrait-wrap">
         <DrapePortrait
-          baseImageUrl={neutralDrapingUrl}
+          baseImageUrl={userPhotoUrl || neutralDrapingUrl}
           overlayColor={activeHex || undefined}
           alt="best colour try-on"
         />

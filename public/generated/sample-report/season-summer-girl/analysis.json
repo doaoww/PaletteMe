@@ -1,0 +1,657 @@
+{
+  "miniResult": {
+    "seasonName": "True Summer",
+    "tagline": "Cool · Clear · Balanced",
+    "headline": "You are a True Summer",
+    "summary": "Your cool rosy skin and blue eyes reflect the serene and balanced tones of True Summer. Soft periwinkles and gentle greys naturally enliven your complexion. Embracing these shades will make your features come alive with clarity and harmony.",
+    "imagePrompt": "editorial portrait of the person draped in Rose Mauve, Soft Navy, and Lavender Blue, confident pose. High-end editorial fashion photography, natural lighting, professional.",
+    "imageUrl": null
+  },
+  "fullReport": {
+    "contrast": {
+      "level": "medium",
+      "explanation": "We detected a balanced medium contrast between your cool brown hair and rosy skin. This harmony sets the stage for medium-contrast clothing which supports your natural features without overwhelming them. By using this level of contrast in your outfits, your face stays the primary focus. If you've noticed that very high-contrast pairings like black and white feel severe, this is why."
+    },
+    "colorAnalysis": {
+      "topSeason": {
+        "id": "true-summer",
+        "name": "True Summer",
+        "percentage": 99,
+        "reason": "medium depth, medium contrast, clear chroma, and cool evidence support a softened True Summer direction."
+      },
+      "alternativeSeasons": [
+        {
+          "id": "soft-summer",
+          "name": "Soft Summer",
+          "percentage": 85,
+          "reason": "medium depth, medium contrast, clear chroma, and cool evidence support a softened Soft Summer direction."
+        },
+        {
+          "id": "true-winter",
+          "name": "True Winter",
+          "percentage": 83,
+          "reason": "Winter stays likely when depth and contrast combine with cool, icy, or sharp evidence."
+        }
+      ],
+      "bestColors": [
+        {
+          "hex": "#C08080",
+          "name": "Rose Mauve",
+          "isBest": true,
+          "explanation": "Rose Mauve echoes your natural rosy skin, enhancing its clarity and vitality, bringing your complexion into focus with elegance."
+        },
+        {
+          "hex": "#4A6FA5",
+          "name": "Soft Navy",
+          "isBest": true,
+          "explanation": "Soft Navy enhances the depth and cool essence of your blue eyes, creating a harmonious visual connection that draws attention to your gaze."
+        },
+        {
+          "hex": "#7B83B8",
+          "name": "Lavender Blue",
+          "isBest": true,
+          "explanation": "Lavender Blue reflects the serene tone of your complexion, making your skin appear more even and balanced."
+        },
+        {
+          "hex": "#D4809C",
+          "name": "Cool Pink",
+          "isBest": true,
+          "explanation": "Cool Pink brings out the pink undertones in your skin, adding a vibrant yet natural glow to your cheeks."
+        },
+        {
+          "hex": "#7A9E7E",
+          "name": "Cool Sage",
+          "isBest": true,
+          "explanation": "Sage Green complements your cool undertones, adding a natural harmony while allowing your features to stand out without overshadowing."
+        },
+        {
+          "hex": "#5B7FA6",
+          "name": "Steel Blue",
+          "isBest": true,
+          "explanation": "Steel Blue enhances the clarity of your complexion, making your skin appear more even and lively."
+        },
+        {
+          "hex": "#C49898",
+          "name": "Dusty Rose",
+          "isBest": true,
+          "explanation": "Dusty Rose gently highlights the natural warmth in your skin, ensuring a balanced and fresh appearance."
+        },
+        {
+          "hex": "#8F9FD0",
+          "name": "Periwinkle",
+          "isBest": true,
+          "explanation": "Periwinkle reflects the subtle cool tones in your eyes and skin, brightening your overall look."
+        },
+        {
+          "hex": "#6B9E9A",
+          "name": "Muted Teal",
+          "isBest": false,
+          "explanation": "Muted Teal enhances your overall cool palette, adding depth and dimension without overpowering your natural features."
+        },
+        {
+          "hex": "#8898B0",
+          "name": "Grey Blue",
+          "isBest": false,
+          "explanation": "Grey Blue harmonizes with your cool skin, creating a feeling of tranquility and balance."
+        },
+        {
+          "hex": "#A84060",
+          "name": "Cool Raspberry",
+          "isBest": false,
+          "explanation": "Cool Raspberry adds a touch of vibrancy to your look, giving your complexion a lively and fresh appearance."
+        },
+        {
+          "hex": "#8598B0",
+          "name": "Dusty Blue",
+          "isBest": false,
+          "explanation": "Dusty Blue adds a soft, gentle glow to your skin, making it appear cleaner and more even."
+        },
+        {
+          "hex": "#B83048",
+          "name": "Cool Red",
+          "isBest": false,
+          "explanation": "Cool Red mirrors the natural pinkness in your skin, providing a lively and complementary flush to your cheeks."
+        },
+        {
+          "hex": "#907080",
+          "name": "Soft Plum",
+          "isBest": false,
+          "explanation": "Soft Plum adds a subtle richness that aligns with your natural depth, enhancing your skin's natural beauty."
+        },
+        {
+          "hex": "#A898C0",
+          "name": "Muted Lavender",
+          "isBest": false,
+          "explanation": "Muted Lavender reflects the cool undertone of your skin, providing a calming and balanced look."
+        },
+        {
+          "hex": "#C0B8B0",
+          "name": "Cool Greige",
+          "isBest": false,
+          "explanation": "Greige serves as a neutral base, softening shadows and allowing your facial features to stand out smoothly."
+        },
+        {
+          "hex": "#B7C6D8",
+          "name": "Powder Denim",
+          "isBest": false,
+          "explanation": "Powder Denim stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#AEB6C8",
+          "name": "Cloud Blue",
+          "isBest": false,
+          "explanation": "Cloud Blue stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#CAB2C8",
+          "name": "Orchid Haze",
+          "isBest": false,
+          "explanation": "Orchid Haze stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#B99AAA",
+          "name": "Rose Taupe",
+          "isBest": false,
+          "explanation": "Rose Taupe stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#78869E",
+          "name": "Storm Blue",
+          "isBest": false,
+          "explanation": "Storm Blue stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#9FA9B8",
+          "name": "Blue Grey",
+          "isBest": false,
+          "explanation": "Blue Grey stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#D2A7B5",
+          "name": "Soft Rose Pink",
+          "isBest": false,
+          "explanation": "Soft Rose Pink stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#8B7B94",
+          "name": "Heather Plum",
+          "isBest": false,
+          "explanation": "Heather Plum stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#6F8798",
+          "name": "Slate Teal",
+          "isBest": false,
+          "explanation": "Slate Teal stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#CFB8C1",
+          "name": "Mauve Mist",
+          "isBest": false,
+          "explanation": "Mauve Mist stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#ABB8A9",
+          "name": "Eucalyptus",
+          "isBest": false,
+          "explanation": "Eucalyptus stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#6F7890",
+          "name": "Smoky Navy",
+          "isBest": false,
+          "explanation": "Smoky Navy stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#B7A8B8",
+          "name": "Mauve Grey",
+          "isBest": false,
+          "explanation": "Mauve Grey stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#D6C7CF",
+          "name": "Rose Pearl",
+          "isBest": false,
+          "explanation": "Rose Pearl stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#8A9A8A",
+          "name": "Soft Juniper",
+          "isBest": false,
+          "explanation": "Soft Juniper stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        },
+        {
+          "hex": "#A36F86",
+          "name": "Muted Berry",
+          "isBest": false,
+          "explanation": "Muted Berry stays within the True Summer range, so it gives the face colour without becoming warmer or sharper than the features can carry."
+        }
+      ],
+      "avoidColors": [
+        {
+          "hex": "#F05A28",
+          "name": "Clear Orange",
+          "explanation": "Too warm and loud, making shadows around the face look stronger."
+        },
+        {
+          "hex": "#FFD23F",
+          "name": "Bright Yellow",
+          "explanation": "Adds yellow light the skin does not naturally repeat."
+        },
+        {
+          "hex": "#000000",
+          "name": "Pure Black",
+          "explanation": "Too stark for the soft cool balance around the eyes and skin."
+        },
+        {
+          "hex": "#FFFFFF",
+          "name": "Optic White",
+          "explanation": "Looks sharper than the face and can make the skin read flatter."
+        },
+        {
+          "hex": "#FF2E7E",
+          "name": "Hot Pink",
+          "explanation": "Too saturated, so it competes with the face before supporting it."
+        },
+        {
+          "hex": "#C19A6B",
+          "name": "Camel",
+          "explanation": "Pulls beige-yellow warmth into the complexion."
+        },
+        {
+          "hex": "#8B4513",
+          "name": "Rust Brown",
+          "explanation": "Adds earthy warmth that disconnects from the cool eyes."
+        },
+        {
+          "hex": "#7FFF00",
+          "name": "Neon Green",
+          "explanation": "Too acidic and bright for the natural softness."
+        },
+        {
+          "hex": "#0047AB",
+          "name": "Electric Cobalt",
+          "explanation": "Too vivid and hard-edged, overpowering the features."
+        },
+        {
+          "hex": "#FF7F50",
+          "name": "Coral",
+          "explanation": "The warmth can make redness and under-eye shadows more visible."
+        }
+      ],
+      "neutralDrapingPrompt": "Person shown from shoulders up, a piece of smooth white or soft-ivory fabric draped flat across their shoulders and chest area, fabric fills the lower portion of frame. Soft studio lighting. Clean neutral grey background. The face is unchanged and clearly visible. Product photography lighting, professional, clean."
+    },
+    "makeupComparisons": [
+      {
+        "category": "lips",
+        "categoryLabel": "Lip colour",
+        "goodShade": {
+          "hex": "#B9798E",
+          "name": "Rose Mauve",
+          "imagePrompt": ""
+        },
+        "badShade": {
+          "hex": "#E46B32",
+          "name": "Clear Orange",
+          "imagePrompt": ""
+        },
+        "explanation": "Rose mauve connects with the cool rose already visible in the lips and cheeks, so the mouth looks defined but still natural. Clear orange adds warmth the skin does not repeat, making the area around the mouth look flatter and less even.",
+        "avoidShades": [
+          {
+            "hex": "#F05A28",
+            "name": "Clear Orange",
+            "reason": "Too warm and saturated for the cool balance of the face."
+          },
+          {
+            "hex": "#FF2E7E",
+            "name": "Hot Pink",
+            "reason": "Too bright, so it competes with the eyes and skin."
+          },
+          {
+            "hex": "#8B4513",
+            "name": "Rust Brown",
+            "reason": "Too earthy and heavy for this palette."
+          }
+        ]
+      },
+      {
+        "category": "blush",
+        "categoryLabel": "Blush",
+        "goodShade": {
+          "hex": "#C99AA7",
+          "name": "Dusty Rose",
+          "imagePrompt": ""
+        },
+        "badShade": {
+          "hex": "#FF8A65",
+          "name": "Peach Coral",
+          "imagePrompt": ""
+        },
+        "explanation": "Dusty rose sits close to the natural cheek colour, so it makes the skin look calmer and the eyes clearer. Peach coral introduces yellow-orange warmth, which can make under-eye shadows and surface redness look more visible.",
+        "avoidShades": [
+          {
+            "hex": "#FF8A65",
+            "name": "Peach Coral",
+            "reason": "Too warm and bright against the cool skin."
+          },
+          {
+            "hex": "#F4A261",
+            "name": "Apricot",
+            "reason": "Adds a yellow cast instead of freshness."
+          },
+          {
+            "hex": "#FF6F61",
+            "name": "Clear Coral",
+            "reason": "Too saturated for the face's balanced softness."
+          }
+        ]
+      }
+    ],
+    "hairOptions": [
+      {
+        "name": "Cool Brunette",
+        "color": "cool medium brunette",
+        "style": "long soft layers with face-framing movement",
+        "description": "Long soft layers keep the face open and follow the natural movement of the hair. The shape gives lift around the cheekbones without adding bulk at the jaw.",
+        "imagePrompt": ""
+      },
+      {
+        "name": "Mushroom Brown",
+        "color": "cool mushroom brown",
+        "style": "shoulder-length layered waves",
+        "description": "A shoulder-length shape gives the waves structure while keeping the outline gentle. The length sits away from the chin, so the face stays balanced rather than boxed in.",
+        "imagePrompt": ""
+      },
+      {
+        "name": "Soft Ash Brown",
+        "color": "soft ash brown",
+        "style": "long curtain layers with a soft bend",
+        "description": "Curtain layers draw attention toward the eyes and cheekbones. The bend adds polish without making the style feel stiff or overly dramatic.",
+        "imagePrompt": ""
+      }
+    ],
+    "finalLook": {
+      "description": "Wearing Rose Mauve encourages a serene softness, making your skin appear more even and alive, and your blue eyes become a focal point of depth and clarity. The color seamlessly integrates into your natural palette, enhancing rather than overshadowing your innate beauty.",
+      "outfit": null,
+      "jewelry": null,
+      "imagePrompt": ""
+    },
+    "colorDiagnostics": {
+      "families": [
+        {
+          "id": "warm",
+          "comment": "Warm shades can introduce an uncomfortable warmth against your cool rosy skin, making it appear flushed and slightly overdone. Colors like orange and peach will clash with your skin's innate clarity, drawing eyes away from your face's harmonious balance.",
+          "isWinner": false
+        },
+        {
+          "id": "cool",
+          "comment": "Cool tones in blues, pinks, and muted greens resonate deeply with your natural complexion. These shades flatter by echoing your skin's rosy undertone and brightening your blue eyes, providing a serene contrast that heightens your overall elegance.",
+          "isWinner": true
+        },
+        {
+          "id": "bright",
+          "comment": "Bright colors occasionally overpower your medium depth and contrast, pushing your natural features into the background. These shades can dominate rather than elevate your inherent softness, reducing the natural harmony you carry.",
+          "isWinner": false
+        },
+        {
+          "id": "muted",
+          "comment": "Muted tones support the natural clarity of your skin and eyes, lending a subtle and seamless transition across your features. These colors integrate effortlessly, offering a backdrop that enhances your gentle depth and natural beauty.",
+          "isWinner": true
+        },
+        {
+          "id": "light",
+          "comment": "Light shades like soft blues and gentle pinks mirror the natural lightness in your rosy skin. These colors lift shadows and provide a refreshing balance, offering an airy, bright impression to your features.",
+          "isWinner": true
+        },
+        {
+          "id": "deep",
+          "comment": "Deep tones can occasionally weigh down your complexion, competing with your face's natural contrast levels. They define more than enhance, which can lead to an overly stark appearance, pulling attention away from your face.",
+          "isWinner": false
+        }
+      ],
+      "neutrals": [
+        {
+          "hex": "#D8D4D0",
+          "name": "Soft Grey",
+          "verdict": "best",
+          "comment": "Clean near the face without becoming icy."
+        },
+        {
+          "hex": "#B9CDD1",
+          "name": "Blue Grey",
+          "verdict": "best",
+          "comment": "Repeats the cool softness in the eyes."
+        },
+        {
+          "hex": "#7D879F",
+          "name": "Soft Navy",
+          "verdict": "best",
+          "comment": "A better dark than black for definition."
+        },
+        {
+          "hex": "#E8D8DA",
+          "name": "Rose White",
+          "verdict": "best",
+          "comment": "Softer than optic white and more flattering near the skin."
+        },
+        {
+          "hex": "#C6B8BE",
+          "name": "Mushroom Taupe",
+          "verdict": "okay",
+          "comment": "Works when it stays cool and greyed."
+        },
+        {
+          "hex": "#B8BCC7",
+          "name": "Dove Grey",
+          "verdict": "okay",
+          "comment": "Quiet, polished and easy to combine."
+        },
+        {
+          "hex": "#A7A5B2",
+          "name": "Lavender Grey",
+          "verdict": "okay",
+          "comment": "Adds a cool veil without looking colourful."
+        },
+        {
+          "hex": "#6E7789",
+          "name": "Slate",
+          "verdict": "okay",
+          "comment": "Good for trousers, coats and frames."
+        },
+        {
+          "hex": "#F1ECEC",
+          "name": "Cool Soft White",
+          "verdict": "okay",
+          "comment": "A safer white than stark optic white."
+        },
+        {
+          "hex": "#C89A56",
+          "name": "Camel",
+          "verdict": "avoid",
+          "comment": "Too golden and warm close to the face."
+        }
+      ],
+      "neutralsComment": "A blend of cool greys and soft whites provides a harmonious neutral base for your wardrobe, naturally enhancing your features without introducing unwanted warmth.",
+      "makeup": {
+        "blush": [
+          {
+            "hex": "#C99AA7",
+            "name": "Dusty Rose",
+            "explanation": "Repeats the natural cheek colour without adding peachy warmth."
+          },
+          {
+            "hex": "#D4809C",
+            "name": "Cool Pink",
+            "explanation": "Freshens the face while staying cool and controlled."
+          },
+          {
+            "hex": "#B98FA0",
+            "name": "Rose Mauve",
+            "explanation": "Adds believable colour for everyday makeup."
+          },
+          {
+            "hex": "#A8788D",
+            "name": "Muted Berry Rose",
+            "explanation": "A deeper blush option that still stays soft."
+          }
+        ],
+        "lips": [
+          {
+            "hex": "#B9798E",
+            "name": "Rose Mauve",
+            "explanation": "Defines the lips without separating from the face."
+          },
+          {
+            "hex": "#A36F86",
+            "name": "Muted Berry",
+            "explanation": "Adds depth while staying cool and softly blended."
+          },
+          {
+            "hex": "#C08080",
+            "name": "Soft Rose",
+            "explanation": "Reads polished, not painted on."
+          },
+          {
+            "hex": "#8F5F78",
+            "name": "Cool Plum Rose",
+            "explanation": "An evening shade that keeps the face balanced."
+          }
+        ],
+        "eyeshadowDay": [
+          {
+            "hex": "#A8AEB8",
+            "name": "Soft Slate",
+            "explanation": "Defines the eyes without the harsh edge of black."
+          },
+          {
+            "hex": "#B8A9B6",
+            "name": "Mauve Taupe",
+            "explanation": "Repeats the cool rose-grey quality in the face."
+          },
+          {
+            "hex": "#9FA9B8",
+            "name": "Blue Grey",
+            "explanation": "Brings attention to the blue eyes softly."
+          },
+          {
+            "hex": "#C0B8B0",
+            "name": "Cool Greige",
+            "explanation": "A quiet wash that works for daily makeup."
+          }
+        ],
+        "eyeshadowEvening": [
+          {
+            "hex": "#6F7689",
+            "name": "Smoky Blue Grey",
+            "explanation": "Evening depth that stays cool and blended."
+          },
+          {
+            "hex": "#8D738A",
+            "name": "Muted Plum",
+            "explanation": "Adds shape without becoming bright purple."
+          },
+          {
+            "hex": "#5B7FA6",
+            "name": "Steel Blue",
+            "explanation": "A cool accent that supports the eye colour."
+          },
+          {
+            "hex": "#6F7890",
+            "name": "Smoky Navy",
+            "explanation": "A softer alternative to black liner."
+          }
+        ]
+      }
+    },
+    "glasses": {
+      "bestShapes": [
+        "soft oval",
+        "rounded rectangle",
+        "gentle cat-eye"
+      ],
+      "frameThickness": "thin to medium",
+      "frameColors": "smoke grey, soft navy, cool taupe, silver",
+      "material": "thin acetate or polished metal",
+      "avoid": "heavy black square frames and warm amber tortoise",
+      "cards": [
+        {
+          "shape": "Soft oval",
+          "why": "The rounded line repeats the gentle balance in the face and avoids hard contrast.",
+          "colors": "smoke grey, soft navy or cool taupe",
+          "avoid": "thick black acetate"
+        },
+        {
+          "shape": "Rounded rectangle",
+          "why": "Adds structure while keeping the corners soft enough for the features.",
+          "colors": "blue-grey, silver or translucent cool grey",
+          "avoid": "warm caramel tortoise"
+        },
+        {
+          "shape": "Gentle cat-eye",
+          "why": "Lifts the eye area without making the frame feel theatrical.",
+          "colors": "dusty plum, smoke or muted navy",
+          "avoid": "oversized sharp black frames"
+        }
+      ]
+    },
+    "faceArchetype": {
+      "primary": "Classic",
+      "tagline": "Your facial features align most closely with the Classic aesthetic.",
+      "reason": "Your oval face shape and defined jaw create a harmonious balance that epitomizes the Classic aesthetic. Medium feature scale combined with cool undertones allows your natural symmetry to shine, perfectly matching this clean yet elegant style. Your almond eye shape adds to the refined, timeless essence that defines the Classic approach.",
+      "facialFeatures": [
+        "oval face shape",
+        "defined jaw",
+        "round chin",
+        "medium features",
+        "almond eye shape"
+      ],
+      "secondaryInfluences": [
+        {
+          "name": "Soft Classic",
+          "percentage": 70
+        },
+        {
+          "name": "Soft Dramatic",
+          "percentage": 55
+        }
+      ],
+      "stylingNotes": {
+        "hair": "Classic styles with soft layers align well with medium wavy hair, maintaining elegance and natural movement.",
+        "glasses": "Medium-sized frames in cool shades ensure your natural symmetry is the focal point.",
+        "accessories": "Choose medium-scale accessories in timeless shapes that adhere to your classic aesthetic.",
+        "makeup": "Soft yet defined looks—thin eyeliner with cool pink tones accentuate almond eyes.",
+        "outfits": "Opt for tailored silhouettes that emphasize your symmetrical shape; avoid overly rigid styles."
+      }
+    },
+    "signatureSummary": {
+      "colors": "cool blues, greys, and rosy pinks",
+      "neutral": "soft charcoal",
+      "makeup": "cool pink blush, rose mauve lips",
+      "hair": "cool brown tones, soft layers",
+      "glasses": "oval or soft rectangular, cool grey",
+      "archetype": "Classic-inspired",
+      "aesthetic": "Subtle Elegance",
+      "summary": "Your best look isn't built around trends — it's built around harmony. When your colours, hair, jewellery, and makeup all follow the same visual language, your features naturally become the centre of attention: brighter, more defined, and effortlessly polished. Instead of people noticing your outfit first, they notice you."
+    },
+    "grooming": null,
+    "metals": {
+      "best": [
+        {
+          "metal": "Silver",
+          "reason": "Silver resonates with your cool coloring, drawing out the serene hues in your overall palette."
+        },
+        {
+          "metal": "White Gold",
+          "reason": "White Gold offers a refined complement to your True Summer depth, less stark than silver yet seamlessly integrated."
+        }
+      ],
+      "avoid": [
+        {
+          "metal": "Yellow Gold",
+          "reason": "Yellow Gold introduces a warm note discordant with your cool tones, clashing visibly at the neckline."
+        }
+      ],
+      "explanation": "Cool metals align with your True Summer palette, enhancing harmony and refinement."
+    }
+  }
+}

@@ -1,0 +1,356 @@
+/* Reference landing utilities */
+
+.landing-ref {
+  --cream-ref: oklch(0.985 0.012 35);
+  --cream-deep: oklch(0.96 0.018 30);
+  --ink-ref: oklch(0.18 0.005 270);
+  --ink-soft-ref: oklch(0.42 0.01 270);
+  --pink-ref: oklch(0.62 0.24 5);
+  --pink-blush: oklch(0.96 0.025 5);
+  --border-soft: oklch(0.9 0.035 5);
+  --shadow-card: 0 20px 40px -20px rgb(23 23 23 / 0.12), 0 4px 12px -4px rgb(23 23 23 / 0.06);
+  --shadow-float: 0 30px 60px -25px rgb(255 45 122 / 0.25), 0 10px 20px -10px rgb(23 23 23 / 0.08);
+  --shadow-pill: 0 16px 32px -12px rgb(255 45 122 / 0.45);
+  --font-serif-ref: "DM Serif Display", Georgia, serif;
+  --font-sans-ref: "DM Sans", system-ui, sans-serif;
+  --font-script-ref: "Allura", cursive;
+
+  min-height: 100vh;
+  background: var(--cream-ref);
+  color: var(--ink-ref);
+  font-family: var(--font-sans-ref);
+  font-feature-settings: "ss01", "cv11";
+}
+
+.landing-ref h1,
+.landing-ref h2,
+.landing-ref h3,
+.landing-ref h4 {
+  font-family: var(--font-serif-ref);
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+.landing-ref .font-serif { font-family: var(--font-serif-ref); }
+.landing-ref .font-script { font-family: var(--font-script-ref); }
+
+.landing-ref .marker-pink {
+  position: relative;
+  display: inline-block;
+}
+.landing-ref .marker-pink::after {
+  content: "";
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  bottom: 0.05em;
+  height: 0.18em;
+  background: var(--pink-ref);
+  border-radius: 999px;
+  transform: skewX(-8deg) scaleX(0.96);
+  z-index: -1;
+  opacity: 0.9;
+}
+
+.landing-ref .paper-card {
+  background: white;
+  border-radius: 1.75rem;
+  box-shadow: var(--shadow-card);
+}
+
+.landing-ref .cta-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.05rem 1.6rem 1.05rem 2rem;
+  background: var(--pink-ref);
+  color: white;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 1.0625rem;
+  box-shadow: var(--shadow-pill);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.landing-ref .cta-pill:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 22px 40px -12px rgb(255 45 122 / 0.55);
+}
+.landing-ref .cta-pill:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.landing-ref .cta-pill--compact {
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem 0.55rem 1.1rem;
+  font-size: 0.875rem;
+  box-shadow: 0 10px 22px -10px rgb(255 45 122 / 0.4);
+}
+
+.landing-ref .cta-pill--subtle {
+  background: color-mix(in oklch, white 72%, var(--cream-ref));
+  color: var(--pink-ref);
+  border: 1px solid color-mix(in oklch, var(--pink-ref) 38%, white);
+  box-shadow: none;
+}
+
+.landing-ref .cta-pill--subtle span:last-child {
+  background: color-mix(in oklch, var(--pink-ref) 10%, white);
+}
+
+.landing-ref .cta-pill--subtle:hover {
+  color: white;
+  background: var(--pink-ref);
+  box-shadow: 0 14px 28px -16px rgb(255 45 122 / 0.5);
+}
+
+.landing-ref .lift {
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s;
+}
+.landing-ref .lift:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-float);
+}
+
+.landing-ref .tap {
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.landing-ref .tap:active {
+  transform: scale(0.97);
+}
+
+.landing-ref .tilt-l { transform: rotate(-3deg); }
+.landing-ref .tilt-r { transform: rotate(3deg); }
+
+.landing-ref .reveal {
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.landing-ref .reveal.is-revealed {
+  opacity: 1;
+}
+
+.landing-ref .no-scrollbar {
+  scrollbar-width: none;
+}
+.landing-ref .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tailwind-like helpers used in markup */
+.landing-ref .bg-cream { background: var(--cream-ref); }
+.landing-ref .bg-pink-blush { background: var(--pink-blush); }
+.landing-ref .bg-pink-blush\/60 { background: color-mix(in oklch, var(--pink-blush) 60%, transparent); }
+.landing-ref .bg-pink { background: var(--pink-ref); }
+.landing-ref .text-pink { color: var(--pink-ref); }
+.landing-ref .text-ink { color: var(--ink-ref); }
+.landing-ref .text-ink-soft { color: var(--ink-soft-ref); }
+.landing-ref .text-white { color: white; }
+.landing-ref .border-pink { border-color: var(--pink-ref); }
+.landing-ref .border-border-soft\/60 { border-color: color-mix(in oklch, var(--border-soft) 60%, transparent); }
+.landing-ref .border-ink\/15 { border-color: color-mix(in oklch, var(--ink-ref) 15%, transparent); }
+.landing-ref .shadow-pill { box-shadow: var(--shadow-pill); }
+.landing-ref .shadow-card { box-shadow: var(--shadow-card); }
+
+.landing-ref .bg-cream\/85 {
+  background: color-mix(in oklch, var(--cream-ref) 85%, transparent);
+}
+
+.landing-ref .hover\:bg-pink-blush:hover {
+  background: var(--pink-blush);
+}
+
+.landing-ref .hover\:text-ink:hover {
+  color: var(--ink-ref);
+}
+
+.landing-ref .hover\:bg-pink:hover {
+  background: var(--pink-ref);
+}
+
+.landing-ref .hover\:text-white:hover {
+  color: white;
+}
+
+.landing-ref .hover\:scale-\[1\.02\]:hover {
+  transform: scale(1.02);
+}
+
+.landing-ref .border-t {
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-color: var(--border-soft);
+}
+
+.landing-ref .border-b {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+.landing-ref .border-2 {
+  border-width: 2px;
+  border-style: solid;
+}
+
+.landing-ref .backdrop-blur-md {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@media (min-width: 1024px) {
+  .landing-ref {
+    --landing-header-h: 73px;
+  }
+
+  .landing-ref .landing-section {
+    min-height: calc(100svh - var(--landing-header-h));
+    display: flex;
+    align-items: center;
+    scroll-margin-top: var(--landing-header-h);
+  }
+
+  .landing-ref .landing-section__inner {
+    width: 100%;
+    padding-top: clamp(2rem, 4svh, 3.5rem);
+    padding-bottom: clamp(2rem, 4svh, 3.5rem);
+  }
+
+  .landing-ref .landing-section--hero .landing-section__inner {
+    padding-top: clamp(2rem, 5svh, 4rem);
+    padding-bottom: clamp(2rem, 5svh, 4rem);
+  }
+
+  .landing-ref .landing-section--hero .hero-grid {
+    gap: clamp(3rem, 4.5vw, 4.5rem);
+  }
+
+  .landing-ref .landing-section--hero .hero-copy {
+    align-self: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .landing-ref .landing-section--hero .hero-kicker {
+    margin-bottom: clamp(0.75rem, 1.8svh, 1rem);
+  }
+
+  .landing-ref .landing-section--hero .hero-headline {
+    font-size: clamp(56px, 5vw, 82px);
+    line-height: 0.95;
+    max-width: min(100%, 570px);
+  }
+
+  .landing-ref .landing-section--hero .hero-subtitle {
+    max-width: 520px;
+    margin-top: clamp(1rem, 2.2svh, 1.35rem);
+  }
+
+  .landing-ref .landing-section--hero .hero-cta-row {
+    margin-top: clamp(1.4rem, 3svh, 2rem);
+  }
+
+  .landing-ref .landing-section--hero .hero-visual {
+    align-self: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .landing-ref .landing-section--hero .hero-visual-frame {
+    width: clamp(560px, 44vw, 760px);
+    max-width: 100%;
+  }
+
+  .landing-ref .landing-section--hero .hero-visual-frame > img {
+    width: 100%;
+    height: auto;
+  }
+
+  .landing-ref .landing-section--problem header {
+    max-width: 920px;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .landing-ref .landing-section--problem .problem-comparison {
+    max-width: 980px;
+    margin-top: clamp(1.75rem, 4svh, 2.75rem);
+    margin-inline: auto;
+  }
+
+  .landing-ref .landing-section--problem .paper-card {
+    max-width: 320px;
+    margin-inline: auto;
+    border-radius: 1.35rem;
+  }
+
+  .landing-ref .landing-section--problem .problem-punchline {
+    display: none;
+  }
+
+  .landing-ref .landing-section--how header,
+  .landing-ref .landing-section--results header,
+  .landing-ref .landing-section--pricing header {
+    margin-bottom: clamp(1.75rem, 4svh, 3rem);
+  }
+
+  .landing-ref .landing-section--how ol {
+    gap: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  .landing-ref .landing-section--how .lift {
+    border-radius: 1.5rem;
+    overflow: hidden;
+  }
+
+  .landing-ref .landing-section--how .lift img {
+    height: min(36svh, 310px);
+    object-fit: cover;
+    object-position: center top;
+  }
+
+  .landing-ref .landing-section--blueprint .blueprint-portrait {
+    max-width: min(100%, 330px);
+  }
+
+  .landing-ref .landing-section--blueprint article {
+    min-height: 136px;
+  }
+
+  .landing-ref .landing-section--results .results-before {
+    max-width: 390px;
+    margin-inline: auto;
+  }
+
+  .landing-ref .landing-section--results figcaption {
+    padding: 0.875rem 1rem;
+  }
+
+  .landing-ref .landing-section--results figcaption .font-serif {
+    font-size: 1.05rem;
+    line-height: 1.1;
+  }
+
+  .landing-ref .landing-section--pricing .landing-section__inner {
+    padding-top: clamp(1.5rem, 3svh, 2.5rem);
+    padding-bottom: clamp(1.5rem, 3svh, 2.5rem);
+  }
+
+  .landing-ref .landing-section--pricing header {
+    margin-bottom: clamp(1.5rem, 3svh, 2.25rem);
+  }
+
+  .landing-ref .landing-section--pricing .paper-card {
+    padding: clamp(1.5rem, 3svh, 2rem);
+  }
+
+  .landing-ref .landing-section--faq .paper-card button {
+    padding-top: 1.1rem;
+    padding-bottom: 1.1rem;
+  }
+
+  .landing-ref .landing-section--final {
+    min-height: calc(86svh - var(--landing-header-h));
+  }
+}

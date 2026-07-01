@@ -1,12 +1,13 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppChrome } from "@/components/nav/app-chrome";
-import { loadQuizProfile, type QuizProfile } from "@/lib/quiz";
-import { SEASONS } from "@/lib/landing-data";
-import { buildPreviewColors } from "@/lib/result-palette";
+import { loadQuizProfile, type QuizProfile } from "@/lib/quiz/quiz";
+import { loadLocalAnalysisResultForProfile } from "@/lib/profile/profile-restore";
+import { SEASONS, SUB_SEASONS } from "@/lib/shared/landing-data";
+import { buildPreviewColors } from "@/lib/analysis/result-palette";
 import { ProductFeed } from "@/components/feed/product-feed";
 import "../app-shell.css";
 import "./feed.css";
@@ -33,7 +34,41 @@ export default function FeedPage() {
       router.replace("/quiz");
       return;
     }
-    setProfile(p);
+
+    // Prefer the new style-analysis result (paletteme-style-analysis) over the
+    // old quiz analysis result (paletteme_analysis_result), since the AI stylist
+    // rebrand writes to the new key and the quiz writes to the old one.
+    let styleSubSeason: string | undefined;
+    let styleSeasonRaw: string | undefined;
+    try {
+      const raw = typeof window !== "undefined"
+        ? window.localStorage.getItem("paletteme-style-analysis")
+        : null;
+      if (raw) {
+        const parsed = JSON.parse(raw) as { meta?: { colorSeason?: string } };
+        const colorSeason = parsed?.meta?.colorSeason;
+        if (colorSeason) {
+          const match = SUB_SEASONS.find(
+            (s) => s.name.toLowerCase() === colorSeason.toLowerCase()
+          );
+          if (match) {
+            styleSeasonRaw = match.seasonId;
+            styleSubSeason = match.name;
+          }
+        }
+      }
+    } catch { /* localStorage read failed — ignore */ }
+
+    const analysisResult = loadLocalAnalysisResultForProfile();
+    const resolvedSeasonId = (
+      styleSeasonRaw ?? analysisResult?.seasonId ?? p.seasonId
+    ) as QuizProfile["seasonId"];
+    const merged: QuizProfile = {
+      ...p,
+      seasonId: resolvedSeasonId,
+      subSeason: styleSubSeason ?? analysisResult?.subSeason ?? p.subSeason,
+    };
+    setProfile(merged);
     setReady(true);
   }, [router]);
 

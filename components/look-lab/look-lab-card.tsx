@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef } from "react";
-import type { ColorOption, SeasonCard } from "@/lib/look-lab-schema";
+import type { ColorOption, SeasonCard } from "@/lib/look-lab/look-lab-schema";
 
 type Verdict = "best" | "okay" | "avoid";
 

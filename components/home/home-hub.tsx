@@ -1,28 +1,28 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppChrome } from "@/components/nav/app-chrome";
 import { ScanPaywallModal } from "@/components/billing/scan-paywall-modal";
-import { loadQuizProfile, type QuizProfile } from "@/lib/quiz";
-import { SEASONS } from "@/lib/landing-data";
-import { buildPreviewColors } from "@/lib/result-palette";
-import { loadLocalAnalysisResultForProfile } from "@/lib/profile-restore";
-import type { AnalysisResult } from "@/lib/analysis";
-import { isSupabaseAuthConfigured } from "@/lib/auth-flow";
-import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan-feature";
+import { loadQuizProfile, type QuizProfile } from "@/lib/quiz/quiz";
+import { SEASONS } from "@/lib/shared/landing-data";
+import { buildPreviewColors } from "@/lib/analysis/result-palette";
+import { loadLocalAnalysisResultForProfile } from "@/lib/profile/profile-restore";
+import type { AnalysisResult } from "@/lib/analysis/analysis";
+import { isSupabaseAuthConfigured } from "@/lib/auth/auth-flow";
+import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan/scan-feature";
 import {
   SCAN_API_ENDPOINT,
   formatScanHistoryItems,
   type ScanHistoryApiRecord,
   type ScanHistoryItemForUi,
-} from "@/lib/outfit-scan";
+} from "@/lib/scan/outfit-scan";
 import {
   DEFAULT_WEEKLY_SCAN_CREDITS,
   getBrowserScanCreditState,
-} from "@/lib/scan-credits";
-import { createClient } from "@/lib/supabase";
+} from "@/lib/scan/scan-credits";
+import { createClient } from "@/lib/db/supabase";
 
 const AUTH_ENV = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,

@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AddItemFlow } from "@/components/wardrobe/add-item-flow";
-import { loadQuizProfile } from "@/lib/quiz";
+import { loadQuizProfile } from "@/lib/quiz/quiz";
 import "../../app-shell.css";
 import "../../quiz/quiz.css";
 
@@ -20,7 +20,7 @@ export default function WardrobeAddPage() {
   return (
     <div className="app-shell">
       <header className="app-topbar glass-nav">
-        <Link href="/wardrobe" className="wordmark app-topbar__wordmark">
+        <Link href="/" className="wordmark app-topbar__wordmark">
           palette<span className="me">me</span>
         </Link>
         <span className="app-chip">add item</span>

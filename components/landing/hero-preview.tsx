@@ -1,6 +1,6 @@
-import Image from "next/image";
-import { IMAGES } from "@/lib/demo-images";
-import { PRODUCTS, SEASONS } from "@/lib/landing-data";
+﻿import Image from "next/image";
+import { IMAGES } from "@/lib/shared/demo-images";
+import { PRODUCTS, SEASONS } from "@/lib/shared/landing-data";
 
 const PALETTE = SEASONS[1].palette;
 const PICKS = PRODUCTS.slice(0, 3);

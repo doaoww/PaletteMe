@@ -21,7 +21,7 @@ export function ScrollReveal() {
           }
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.12 },
     );
 
     reveals.forEach((el) => io.observe(el));

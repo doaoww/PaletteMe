@@ -42,7 +42,7 @@ export default function SavedPage() {
   return (
     <div className="app-shell">
       <header className="app-topbar glass-nav">
-        <Link href="/home" className="wordmark app-topbar__wordmark">
+        <Link href="/" className="wordmark app-topbar__wordmark">
           palette<span className="me">me</span>
         </Link>
         <span className="app-chip app-chip--pink">saved</span>
@@ -51,7 +51,7 @@ export default function SavedPage() {
       <div className="app-shell__main">
         <p className="kicker" style={{ fontSize: "0.58rem", marginBottom: 10 }}>wishlist</p>
         <p className="font-serif" style={{ fontSize: "clamp(1.8rem,4vw,2.8rem)", lineHeight: 1.08, marginBottom: 32 }}>
-          Saved <span className="scr" style={{ color: "var(--pink)" }}>pieces</span>
+          Saved pieces
         </p>
 
         {!ready ? (

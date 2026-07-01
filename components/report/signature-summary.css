@@ -1,0 +1,144 @@
+.sig-summary {
+  padding: 0;
+}
+
+/* ── Full-bleed dark closing card ── */
+.sig-summary__card {
+  background: #1a1714;
+  padding: 2.5rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle warm glow in corner */
+.sig-summary__card::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(196,137,106,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Eyebrow line ── */
+.sig-summary__eyebrow {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(196,137,106,0.7);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.sig-summary__eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 18px;
+  height: 1.5px;
+  background: rgba(196,137,106,0.5);
+  flex-shrink: 0;
+}
+
+/* ── One-sentence summary ── */
+.sig-summary__sentence {
+  font-family: var(--font-serif, "DM Serif Display", serif);
+  font-weight: 400;
+  font-size: 1.65rem;
+  color: #f5ede3;
+  line-height: 1.3;
+  margin: 0;
+  text-wrap: balance;
+  letter-spacing: -0.01em;
+}
+
+/* ── Divider ── */
+.sig-summary__divider {
+  width: 40px;
+  height: 1.5px;
+  background: rgba(196,137,106,0.4);
+}
+
+/* ── Data rows ── */
+.sig-summary__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sig-summary__row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.sig-summary__row:last-child {
+  border-bottom: none;
+}
+
+.sig-summary__label {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
+.sig-summary__value {
+  font-family: var(--font-sans, "DM Sans", sans-serif);
+  font-size: 0.88rem;
+  color: rgba(245,237,227,0.82);
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .sig-summary__card {
+    padding: 4rem 3.5rem 4.5rem;
+    gap: 2.5rem;
+  }
+
+  .sig-summary__sentence {
+    font-size: 2.4rem;
+    max-width: 20ch;
+    letter-spacing: -0.02em;
+  }
+
+  /* 2-column rows on desktop */
+  .sig-summary__rows {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    column-gap: 4rem;
+  }
+
+  .sig-summary__row {
+    grid-template-columns: 9rem 1fr;
+  }
+
+  /* Odd rows get border-right to separate columns */
+  .sig-summary__row:nth-child(odd) {
+    padding-right: 2rem;
+  }
+  .sig-summary__row:nth-child(even) {
+    padding-left: 2rem;
+    border-left: 1px solid rgba(255,255,255,0.05);
+  }
+
+  /* Last pair: no bottom border if even total */
+  .sig-summary__row:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+}

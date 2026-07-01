@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { QuizProfile } from "@/lib/quiz";
+import type { QuizProfile } from "@/lib/quiz/quiz";
 import "@/app/feed/feed.css";
 
 type FeedProduct = {
@@ -70,7 +70,7 @@ function ProductCard({
   const retailerLabel = product.merchant ?? "retailer";
   const ctaLabel =
     product.source === "serpapi" || product.source === "curated-product"
-      ? `view at ${retailerLabel}`
+      ? "view"
       : "shop similar";
 
   const track = (action: "click" | "save") => {
@@ -124,20 +124,22 @@ function ProductCard({
           <span className="feed-product-card__match-pct">{Math.round(score * 100)}%</span>
         </div>
 
-        <div className="feed-product-card__swatch-content">
-          <span
-            className="feed-product-card__color-name"
-            style={{ color: isLight ? "rgba(0,0,0,0.82)" : "#fff" }}
-          >
-            {product.colorName ?? product.name}
-          </span>
-          <span
-            className="feed-product-card__category-badge"
-            style={{ color: isLight ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.75)" }}
-          >
-            {product.category ?? "style"}
-          </span>
-        </div>
+        {product.colorName && (
+          <div className="feed-product-card__swatch-content">
+            <span
+              className="feed-product-card__color-name"
+              style={{ color: isLight ? "rgba(0,0,0,0.82)" : "#fff" }}
+            >
+              {product.colorName}
+            </span>
+            <span
+              className="feed-product-card__category-badge"
+              style={{ color: isLight ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.75)" }}
+            >
+              {product.category ?? "style"}
+            </span>
+          </div>
+        )}
       </a>
 
       <div className="feed-product-card__body">
@@ -146,7 +148,7 @@ function ProductCard({
         {product.brandedName && (
           <div className="feed-product-card__brand">
             <span className="feed-product-card__brand-name">{product.brandedName.split(" at ")[0]}</span>
-            {product.merchant && (
+            {product.merchant && product.merchant !== product.brandedName.split(" at ")[0] && (
               <span className="feed-product-card__retailer-badge">{product.merchant}</span>
             )}
           </div>
@@ -233,6 +235,9 @@ export function ProductFeed({
       if (profile.answers?.makeupPref) params.set("makeupPref", profile.answers.makeupPref);
       if (profile.answers?.styleDirections?.length) {
         params.set("styleDirections", profile.answers.styleDirections.join(","));
+      }
+      if (profile.answers?.countryCode) {
+        params.set("countryCode", profile.answers.countryCode);
       }
       if (profile.answers?.occasions?.length) {
         params.set("occasions", profile.answers.occasions.join(","));

@@ -1,28 +1,27 @@
-"use client";
+﻿"use client";
 
-import * as amplitude from "@amplitude/unified";
 import Link from "next/link";
 import { ResultCarousel } from "@/components/profile/result-carousel";
 import { AppChrome } from "@/components/nav/app-chrome";
 import { useEffect, useRef, useState } from "react";
-import { SEASONS } from "@/lib/landing-data";
-import { LS_USER_ID } from "@/lib/quiz";
-import type { QuizProfile } from "@/lib/quiz";
-import type { AnalysisResult } from "@/lib/analysis";
+import { SEASONS } from "@/lib/shared/landing-data";
+import { LS_USER_ID } from "@/lib/quiz/quiz";
+import type { QuizProfile } from "@/lib/quiz/quiz";
+import type { AnalysisResult } from "@/lib/analysis/analysis";
 import {
   buildColorIntelligenceReport,
   getFreeColorPreview,
   type ColorTraits,
-} from "@/lib/color-intelligence";
-import { canAccessPremium, type PremiumLevel } from "@/lib/premium";
+} from "@/lib/analysis/color-intelligence";
+import { canAccessPremium, type PremiumLevel } from "@/lib/billing/premium";
 import {
   adaptAiScanResultToOutfitScanResult,
   buildOutfitScanFormData,
   requestAiScanResult,
   validateOutfitImage,
   type OutfitScanResult,
-} from "@/lib/outfit-scan";
-import { createClient } from "@/lib/supabase";
+} from "@/lib/scan/outfit-scan";
+import { createClient } from "@/lib/db/supabase";
 import {
   AUTH_UNAVAILABLE_MESSAGE,
   buildAuthCallbackUrl,
@@ -30,8 +29,8 @@ import {
   friendlyProfileLinkError,
   getSignUpCompletionMode,
   isSupabaseAuthConfigured,
-} from "@/lib/auth-flow";
-import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan-feature";
+} from "@/lib/auth/auth-flow";
+import { getScanComingSoonCopy, isScanFeatureEnabled } from "@/lib/scan/scan-feature";
 
 // ─── Save banner — shown at the bottom of results ─────────────────────────────
 
@@ -345,12 +344,10 @@ function CheckoutButton({
   href,
   children,
   muted,
-  product = "report",
 }: {
   href?: string;
   children: React.ReactNode;
   muted?: boolean;
-  product?: "report" | "pro";
 }) {
   if (!href) {
     return (
@@ -365,7 +362,6 @@ function CheckoutButton({
       href={href}
       className={muted ? "btn btn--ghost" : "btn"}
       style={{ display: "inline-block", textAlign: "center" }}
-      onClick={() => amplitude.track("Report Upgrade Initiated", { product })}
     >
       {children}
     </a>
@@ -385,8 +381,8 @@ function UpgradePanel({ paymentUrls, compact = false }: { paymentUrls: PaymentUr
         </p>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        <CheckoutButton href={paymentUrls.report} product="report">unlock report - $2.99</CheckoutButton>
-        <CheckoutButton href={paymentUrls.pro} muted product="pro">upgrade to pro</CheckoutButton>
+        <CheckoutButton href={paymentUrls.report}>unlock report - $2.99</CheckoutButton>
+        <CheckoutButton href={paymentUrls.pro} muted>upgrade to pro</CheckoutButton>
       </div>
     </div>
   );
@@ -409,7 +405,7 @@ function LockedReportPreview({ paymentUrls }: { paymentUrls: PaymentUrls }) {
           <span key={item} style={lockedChip}>{item}</span>
         ))}
       </div>
-      <CheckoutButton href={paymentUrls.report} product="report">get my full report - $2.99</CheckoutButton>
+      <CheckoutButton href={paymentUrls.report}>get my full report - $2.99</CheckoutButton>
     </div>
   );
 }
@@ -514,7 +510,7 @@ function ProScannerCard({
       </p>
       {!hasPro && (
         <div style={{ marginTop: 8 }}>
-          <CheckoutButton href={paymentUrls.pro} product="pro">unlock pro scanner</CheckoutButton>
+          <CheckoutButton href={paymentUrls.pro}>unlock pro scanner</CheckoutButton>
         </div>
       )}
       {hasPro && (
@@ -706,7 +702,7 @@ export function ProfileView({
         justifyContent: "space-between",
         padding: "18px var(--pad)",
       }}>
-        <Link href="/home" className="wordmark" style={{ color: "var(--ink)", fontSize: "1.2rem" }}>
+        <Link href="/" className="wordmark" style={{ color: "var(--ink)", fontSize: "1.2rem" }}>
           palette<span style={{ color: "var(--pink)" }}>me</span>
         </Link>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -745,7 +741,7 @@ export function ProfileView({
             className="font-serif"
             style={{ fontSize: "clamp(3rem,8vw,5.5rem)", lineHeight: 0.92, marginTop: 14 }}
           >
-            <span className="scr" style={{ color: "var(--pink)" }}>{season.name}</span>
+            {season.name}
           </h1>
           {hasReport && displaySubSeason && (
             <p style={{ fontFamily: "var(--sans)", fontSize: "1.05rem", fontWeight: 600, color: "var(--ink-soft)", marginTop: 8 }}>

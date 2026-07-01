@@ -2,15 +2,22 @@ import Link from "next/link";
 import Image from "next/image";
 import { TopBar } from "@/components/landing/topbar";
 import { SeasonsCarousel } from "@/components/landing/seasons-carousel";
-import { BeforeAfter } from "@/components/landing/before-after";
 import { FeatureDemos } from "@/components/landing/feature-demos";
+import { ReportDrapeDemo } from "@/components/landing/report-drape-demo";
 import { QuizCta } from "@/components/landing/quiz-cta";
 import { PricingSection } from "@/components/landing/pricing-section";
 import { WaitlistForm } from "@/components/landing/waitlist-form";
 import { ScrollReveal } from "@/components/landing/scroll-reveal";
 import { MobileActionBar } from "@/components/landing/mobile-action-bar";
-import { FAQS, REVIEWS } from "@/lib/landing-data";
+import { FAQS } from "@/lib/shared/landing-data";
 import "./landing.css";
+
+const HERO_TRUST_ITEMS = [
+  "One photo, full report",
+  "Twelve seasonal profiles",
+  "Results in minutes",
+  "Private & secure",
+] as const;
 
 export default function Home() {
   return (
@@ -19,143 +26,178 @@ export default function Home() {
       <MobileActionBar />
       <TopBar />
 
-      <section className="hero">
-        <div className="hero__main">
-          <div className="hero__copy">
-            <div className="hero__intro">
-              <div className="hero__eyebrow">
-                <span className="kicker">personal color analysis</span>
-                <span className="hero__live">
-                  <span className="pulse" />
-                  free · 60 seconds
-                </span>
-              </div>
-              <p className="hero__logo wordmark">
-                palette<span className="me">me</span>
-              </p>
-              <p className="hero__tagline">
-                Your AI stylist. Know what works for you.
-              </p>
-              <h1 className="hero__mast">
-                Find the colors that make{" "}
-                <span className="hero__mast-keep">
-                  <span className="scr">you</span> glow
-                </span>
-              </h1>
-            </div>
-            <p className="hero__value">
-              A short quiz about your natural coloring and style goals comes
-              first. Add a selfie only if you want extra accuracy — then get
-              your season, palette, and practical outfit guidance.
+      <section className="modern-hero">
+        <div className="modern-hero__inner">
+          <div className="modern-hero__copy">
+            <p className="modern-hero__kicker">AI APPEARANCE REPORT</p>
+            <h1 className="modern-hero__headline">
+              See what <em>actually</em>
+              <span>works on you.</span>
+            </h1>
+            <p className="modern-hero__subtitle">
+              Upload one clear photo and get a personal report for your colors,
+              makeup, hair, glasses, jewelry and style details.
             </p>
-            <div className="hero__cta">
-              <Link href="/quiz" className="cta-mini">
-                let&apos;s start
+            <div className="modern-hero__actions">
+              <Link href="/style-setup" className="modern-hero__button">
+                <span>Upload my photo</span>
+                <span className="modern-hero__button-icon" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 8h10" />
+                    <path d="M9 4l4 4-4 4" />
+                  </svg>
+                </span>
               </Link>
-              <a href="#free" className="cta-mini cta-ghost">
-                see how it works
-              </a>
+              <p className="modern-hero__microcopy">
+                Private analysis · takes less than 30 seconds
+              </p>
             </div>
-            <div className="hero__note">
-              <span>
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="M2 8.5l4 4 8-9" />
-                </svg>
-                no account needed to begin
-              </span>
-              <span>
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="M2 8.5l4 4 8-9" />
-                </svg>
-                photos processed securely for analysis
-              </span>
-            </div>
-            <ul className="hero__values" aria-label="What you get">
-              <li className="hero__value-card">
-                <span className="hero__value-card-title">color season</span>
-                <span className="hero__value-card-desc">
-                  warm, cool, light, deep — matched to you
-                </span>
-              </li>
-              <li className="hero__value-card">
-                <span className="hero__value-card-title">scan anything</span>
-                <span className="hero__value-card-desc">
-                  clothes, outfits, makeup, shopping finds
-                </span>
-              </li>
-              <li className="hero__value-card">
-                <span className="hero__value-card-title">wardrobe help</span>
-                <span className="hero__value-card-desc">
-                  what to wear, buy, or skip — with reasons
-                </span>
-              </li>
-            </ul>
           </div>
-          <div className="hero__preview">
-            <BeforeAfter />
+
+          <div className="modern-hero__visual">
+            <div className="hero-visual-stage" aria-label="PaletteMe appearance recommendations preview">
+              <div className="hero-oval" aria-hidden="true" />
+
+              <div className="hero-portrait-frame">
+                <Image
+                  src="/images/landing/hero-girl-portrait.png"
+                  alt="Portrait used for a PaletteMe appearance report preview"
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 88vw, (max-width: 1100px) 52vw, 38vw"
+                  className="hero-portrait"
+                />
+              </div>
+
+              <article className="floating-card floating-card--hair">
+                <div>
+                  <p>Best Hair</p>
+                  <strong>Soft Brunette</strong>
+                </div>
+                <div className="floating-card__media floating-card__media--hair">
+                  <Image
+                    src="/images/landing/hero-card-hair-clean.png"
+                    alt=""
+                    fill
+                    sizes="180px"
+                    className="floating-card__asset"
+                  />
+                </div>
+              </article>
+
+              <article className="floating-card floating-card--palette">
+                <div>
+                  <p>Soft Summer</p>
+                  <strong>best colors</strong>
+                </div>
+                <div className="hero-palette" aria-label="Soft Summer palette">
+                  {["#E6A1AC", "#D79AB5", "#BFCBDF", "#B9CDD1", "#B7C3B1", "#7D879F"].map((color) => (
+                    <span key={color} style={{ backgroundColor: color }} />
+                  ))}
+                </div>
+              </article>
+
+              <article className="floating-card floating-card--blush">
+                <div>
+                  <p>Best Blush</p>
+                  <strong>Dusty Rose</strong>
+                </div>
+                <div className="floating-card__media floating-card__media--blush">
+                  <Image
+                    src="/images/landing/hero-card-blush-clean.png"
+                    alt=""
+                    fill
+                    sizes="170px"
+                    className="floating-card__asset"
+                  />
+                </div>
+              </article>
+
+              <article className="floating-card floating-card--metals">
+                <div>
+                  <p>Best Metals</p>
+                  <strong>Silver</strong>
+                </div>
+                <div className="floating-card__media floating-card__media--metals">
+                  <Image
+                    src="/images/landing/hero-card-metals-clean.png"
+                    alt=""
+                    fill
+                    sizes="190px"
+                    className="floating-card__asset"
+                  />
+                </div>
+              </article>
+
+              <article className="floating-card floating-card--glasses">
+                <div>
+                  <p>Best Glasses</p>
+                  <strong>Soft Oval</strong>
+                </div>
+                <div className="floating-card__media floating-card__media--glasses">
+                  <Image
+                    src="/images/landing/hero-card-glasses-clean.png"
+                    alt=""
+                    fill
+                    sizes="180px"
+                    className="floating-card__asset"
+                  />
+                </div>
+              </article>
+
+              <article className="floating-card floating-card--style">
+                <div>
+                  <p>Your Style</p>
+                  <strong>Soft Minimal</strong>
+                </div>
+                <div className="floating-card__media floating-card__media--style">
+                  <Image
+                    src="/images/landing/hero-card-style-clean.png"
+                    alt=""
+                    fill
+                    sizes="180px"
+                    className="floating-card__asset"
+                  />
+                </div>
+              </article>
+
+            </div>
           </div>
         </div>
 
-        <div className="hero__foot">
-          <div className="hero__steps">
-            <Link href="/quiz" className="hstep">
-              <span className="num">01</span>
-              <span>
-                <b>answer a quick style quiz</b>
-                <small>wardrobe type, coloring, body shape, and what you need help with</small>
-              </span>
-            </Link>
-            <Link href="/quiz" className="hstep">
-              <span className="num">02</span>
-              <span>
-                <b>selfie optional — your call</b>
-                <small>skip for a fast result, or upload one photo to boost accuracy</small>
-              </span>
-            </Link>
-            <Link href="/quiz" className="hstep">
-              <span className="num">03</span>
-              <span>
-                <b>get your palette and next steps</b>
-                <small>season, best colors, what to wear near your face, and scan tools</small>
-              </span>
-            </Link>
-          </div>
+        <div className="hero-trust-strip" aria-label="PaletteMe report highlights">
+          <ul className="hero-trust-strip__list">
+            {HERO_TRUST_ITEMS.map((item) => (
+              <li key={item} className="hero-trust-strip__item">
+                <span className="hero-trust-strip__spark" aria-hidden="true" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="guessing-section" aria-labelledby="guessing-heading">
+        <div className="guessing-section__inner">
+          <h2 id="guessing-heading">
+            Most of us are guessing. Buying shades that almost work, wearing
+            colours that quietly <span>drain us.</span>
+          </h2>
+          <p>
+            Your face already holds the answer &mdash; a precise undertone,
+            depth and contrast. PaletteMe reads it and tells you exactly what
+            to wear, instead of leaving you to guess.
+          </p>
         </div>
       </section>
 
       <FeatureDemos />
 
+      <ReportDrapeDemo />
+
       <SeasonsCarousel />
 
       <QuizCta />
-
-      <section id="reviews" className="reviews">
-        <div className="wrap">
-          <div className="reviews__head reveal">
-            <h2>
-              Find yourself in <span className="scr">your</span> colors
-            </h2>
-          </div>
-          <div className="rgrid">
-            {/* TODO(asset-replace): REVIEWS portraits are women-only stock — see lib/landing-data.ts. */}
-            {REVIEWS.map((r) => (
-              <figure key={r.role} className="review">
-                <div className="review__photo">
-                  <Image
-                    src={r.photo}
-                    alt={r.role}
-                    fill
-                    sizes="320px"
-                    style={{ objectFit: "cover", objectPosition: "top center" }}
-                  />
-                  <span className="review__season-tag">{r.role}</span>
-                </div>
-                <p className="review__desc">{r.desc}</p>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <PricingSection />
 
@@ -190,26 +232,27 @@ export default function Home() {
           <div className="foot__grid">
             <div>
               <p className="blurb">
-                Quiz-first color analysis. Scan clothes. Shop what suits you.
+                AI appearance analysis from one photo. See what suits your
+                face, coloring, contrast and features.
               </p>
             </div>
             <div>
               <h5>product</h5>
-              <a href="#free">free flow</a>
-              <a href="#features">all features</a>
-              <Link href="/quiz">quiz</Link>
-              <Link href="/quiz">analysis</Link>
+              <a href="#free">how it works</a>
+              <a href="#features">what you get</a>
+              <a href="#report-preview">report preview</a>
+              <Link href="/sample-report">sample report</Link>
+              <Link href="/style-setup">upload photo</Link>
             </div>
             <div>
               <h5>company</h5>
-              <a href="#waitlist">waitlist</a>
               <a href="#faq">faq</a>
-              <a href="#faq">privacy</a>
+              <Link href="/privacy">privacy</Link>
             </div>
           </div>
           <div className="foot__bottom">
-            <span>© 2026 PaletteMe</span>
-            <span>made with color science</span>
+            <span>Copyright 2026 PaletteMe</span>
+            <span>made for clearer appearance decisions</span>
           </div>
         </div>
       </footer>

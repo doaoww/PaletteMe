@@ -25,9 +25,10 @@
 .best-colors-slide__title {
   font-family: "DM Serif Display", serif;
   font-weight: 400;
-  font-size: 1.75rem;
-  color: #2a1f1a;
+  font-size: 2rem;
+  color: #1a1506;
   margin: 0;
+  text-wrap: balance;
 }
 
 .best-colors-slide__portrait-wrap {
@@ -67,18 +68,18 @@
 }
 
 .best-colors-slide__color-name {
-  font-family: "DM Sans", sans-serif;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #2a1f1a;
+  font-family: "DM Serif Display", serif;
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: #1a1506;
   margin: 0;
 }
 
 .best-colors-slide__explanation {
   font-family: "DM Sans", sans-serif;
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: #5c4d44;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #3d3530;
   margin: 0;
 }
 

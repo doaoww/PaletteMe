@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase";
+import { createClient } from "@/lib/db/supabase";
 import {
   AUTH_UNAVAILABLE_MESSAGE,
   buildAuthCallbackUrl,
@@ -11,9 +11,9 @@ import {
   getSignUpCompletionMode,
   isSupabaseAuthConfigured,
   normalizeAuthNext,
-} from "@/lib/auth-flow";
-import { LS_USER_ID, LS_COLORTYPE, LS_BEST_COLORS, LS_QUIZ } from "@/lib/quiz";
-import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe-store";
+} from "@/lib/auth/auth-flow";
+import { LS_USER_ID, LS_COLORTYPE, LS_BEST_COLORS, LS_QUIZ } from "@/lib/quiz/quiz";
+import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe/wardrobe-store";
 import Link from "next/link";
 import { BottomNav } from "@/components/nav/bottom-nav";
 
@@ -263,10 +263,6 @@ function LoginContent() {
             </button>
 
             {errorMsg && <p style={errorStyle}>{errorMsg}</p>}
-
-            <Link href="/quiz" style={skipStyle}>
-              take the quiz instead →
-            </Link>
           </div>
         )}
 
@@ -447,12 +443,6 @@ const errorStyle: React.CSSProperties = {
   width: "100%",
 };
 
-const skipStyle: React.CSSProperties = {
-  fontSize: "0.85rem",
-  color: "var(--ink-soft)",
-  textDecoration: "none",
-  marginTop: "4px",
-};
 
 const backBtn: React.CSSProperties = {
   background: "none",

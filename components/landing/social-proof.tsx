@@ -1,6 +1,6 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
-import { SOCIAL_PROOF, SEASONS } from "@/lib/landing-data";
+import { SOCIAL_PROOF, SEASONS } from "@/lib/shared/landing-data";
 
 export function SocialProof() {
   return (
@@ -11,7 +11,7 @@ export function SocialProof() {
             <span className="kicker">transformations</span>
           </div>
           <h2>
-            Real people. <span className="scr">Real</span> results.
+            Real people. Real results.
           </h2>
           <p>
             One selfie. 60 seconds. They went from guessing to knowing — and
