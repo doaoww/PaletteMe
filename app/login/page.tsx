@@ -15,7 +15,6 @@ import {
 import { LS_USER_ID, LS_COLORTYPE, LS_BEST_COLORS, LS_QUIZ } from "@/lib/quiz/quiz";
 import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe/wardrobe-store";
 import Link from "next/link";
-import { BottomNav } from "@/components/nav/bottom-nav";
 
 type Mode = "choice" | "email" | "loading" | "check-email";
 
@@ -167,14 +166,13 @@ function LoginContent() {
   }
 
   return (
-    <>
     <main
       style={{
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "20px 20px 96px",
+        padding: "20px",
         fontFamily: "var(--sans)",
       }}
     >
@@ -311,8 +309,6 @@ function LoginContent() {
         )}
       </div>
     </main>
-    <BottomNav />
-    </>
   );
 }
 

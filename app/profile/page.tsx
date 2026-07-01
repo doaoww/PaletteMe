@@ -3,13 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AnalysisResult } from "@/lib/analysis/analysis";
-import { loadQuizProfile, type QuizProfile } from "@/lib/quiz/quiz";
-import { saveCompleteQuizResultToSupabase } from "@/lib/profile/post-quiz-supabase";
-import {
-  loadLocalAnalysisResultForProfile,
-  loadSupabaseQuizProfile,
-  saveRestoredQuizProfileToBrowserStorage,
-} from "@/lib/profile/profile-restore";
+import type { QuizProfile } from "@/lib/quiz/quiz";
 import { getPaymentUrls, isFreeTestingMode, resolvePremiumLevel, type PremiumLevel } from "@/lib/billing/premium";
 import { ProfileView } from "@/components/profile/profile-view";
 import { ReportView } from "@/components/report/report-view";
@@ -20,7 +14,6 @@ import { generateSlot } from "@/lib/report/generate-slot";
 import { buildImageSlots } from "@/lib/report/image-slots";
 import "@/components/report/report.css";
 import { isSupabaseAuthConfigured } from "@/lib/auth/auth-flow";
-import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe/wardrobe-store";
 import "./profile.css";
 import "./color-insights-report.css";
 import "../app-shell.css";
@@ -166,58 +159,11 @@ function ProfileContent() {
         }
       } catch { /* malformed — fall through */ }
 
-      let signedInUser: { id: string; email?: string | null } | null = null;
-      let supabaseClient: Awaited<ReturnType<typeof import("@/lib/db/supabase")["createClient"]>> | null = null;
-
-      if (authConfigured) {
-        try {
-          const { createClient } = await import("@/lib/db/supabase");
-          supabaseClient = createClient();
-          const {
-            data: { user },
-          } = await supabaseClient.auth.getUser();
-          signedInUser = user;
-
-          if (user) {
-            void syncLocalWardrobeAfterAuth(user.id).catch(() => {});
-            const restored = await loadSupabaseQuizProfile(supabaseClient, user.id);
-            if (restored) {
-              saveRestoredQuizProfileToBrowserStorage(restored);
-              if (cancelled) return;
-              setProfile(restored.profile);
-              setAnalysisResult(restored.analysisResult as AnalysisResult | null);
-              setReady(true);
-              return;
-            }
-          }
-        } catch {
-          signedInUser = null;
-          supabaseClient = null;
-        }
-      }
-
-      const localProfile = loadQuizProfile();
-      const localAnalysisResult = loadLocalAnalysisResultForProfile<AnalysisResult>();
-
-      if (localProfile) {
-        if (cancelled) return;
-        setProfile(localProfile);
-        setAnalysisResult(localAnalysisResult);
-        setReady(true);
-
-        if (signedInUser && supabaseClient) {
-          saveCompleteQuizResultToSupabase({
-            supabase: supabaseClient,
-            user: signedInUser,
-            profile: localProfile,
-            analysisResult: localAnalysisResult,
-          }).catch(() => {});
-        } else if (authConfigured) {
-          setRequiresAuth(true);
-        }
-        return;
-      }
-
+      // No new-flow report yet (no session, or style_reports/localStorage not
+      // populated) — send to the current onboarding rather than falling back
+      // to any pre-rebrand quiz/color-analysis data that might still exist
+      // for this account. The old ProfileView/quiz-profile path stays in the
+      // codebase but is no longer reachable from here.
       if (!cancelled) router.replace("/style-setup");
     }
 
