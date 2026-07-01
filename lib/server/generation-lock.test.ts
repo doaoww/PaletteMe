@@ -76,11 +76,16 @@ test("row stale-generating but attempts exhausted -> attempts-exhausted, no recl
 // didn't match it exactly, so every filter method just returns the same
 // chainable node regardless of order.
 function makeFakeSupabase(opts: {
-  upsertReturns: unknown[];
+  // Normal shape: the flat array of rows returned by the single upsert call
+  // in a test. Batch shape (array of arrays): when a scenario calls upsert
+  // more than once (e.g. retry-after-proceed), pass one batch per call in
+  // call order; the last batch is reused if there are more calls than batches.
+  upsertReturns: unknown[] | unknown[][];
   selectReturns: unknown[];
   updateReturns: unknown[];
 }) {
   const calls: { method: string; args: unknown }[] = [];
+  let upsertCallCount = 0;
 
   function chainable(terminalData: unknown) {
     const node: Record<string, (...args: unknown[]) => unknown> = {};
@@ -102,6 +107,11 @@ function makeFakeSupabase(opts: {
     return node;
   }
 
+  const isBatchMode =
+    Array.isArray(opts.upsertReturns) &&
+    opts.upsertReturns.length > 0 &&
+    Array.isArray(opts.upsertReturns[0]);
+
   return {
     calls,
     client: {
@@ -109,7 +119,16 @@ function makeFakeSupabase(opts: {
         return {
           upsert(row: unknown, upsertOpts: unknown) {
             calls.push({ method: "upsert", args: { table, row, upsertOpts } });
-            return chainable(opts.upsertReturns);
+            let data: unknown;
+            if (isBatchMode) {
+              const batches = opts.upsertReturns as unknown[][];
+              const idx = Math.min(upsertCallCount, batches.length - 1);
+              data = batches[idx];
+            } else {
+              data = opts.upsertReturns;
+            }
+            upsertCallCount += 1;
+            return chainable(data);
           },
           select() {
             calls.push({ method: "select-start", args: { table } });
@@ -194,6 +213,43 @@ test("claimGenerationRow: conflict + failed row + lost reclaim race -> still-gen
     match: { user_id: "u1" },
   });
   assert.equal(result.outcome, "still-generating");
+});
+
+test("claimGenerationRow: conflict, row gone on follow-up select, retry insert succeeds -> owned", async () => {
+  const fake = makeFakeSupabase({
+    // First upsert: conflict (empty). Second upsert (the retry): succeeds.
+    upsertReturns: [[], [{ status: "generating", updated_at: new Date().toISOString(), attempt_count: 1 }]],
+    selectReturns: [], // follow-up select finds nothing -> row is gone -> "proceed"
+    updateReturns: [],
+  });
+  const result = await claimGenerationRow({
+    supabase: fake.client as never,
+    table: "style_reports",
+    match: { user_id: "u1" },
+  });
+  assert.equal(result.outcome, "owned");
+  if (result.outcome === "owned") {
+    assert.equal(result.row.attempt_count, 1);
+  }
+  const upsertCalls = fake.calls.filter(c => c.method === "upsert");
+  assert.equal(upsertCalls.length, 2);
+});
+
+test("claimGenerationRow: conflict, row gone on follow-up select, retry insert also loses race -> still-generating", async () => {
+  const fake = makeFakeSupabase({
+    // Both upsert attempts return empty: someone else won the race in between.
+    upsertReturns: [[], []],
+    selectReturns: [],
+    updateReturns: [],
+  });
+  const result = await claimGenerationRow({
+    supabase: fake.client as never,
+    table: "style_reports",
+    match: { user_id: "u1" },
+  });
+  assert.equal(result.outcome, "still-generating");
+  const upsertCalls = fake.calls.filter(c => c.method === "upsert");
+  assert.equal(upsertCalls.length, 2);
 });
 
 test("finalizeGeneration: calls update with the given patch", async () => {
