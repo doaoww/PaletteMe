@@ -12,7 +12,6 @@ import {
 } from "@/lib/profile/profile-restore";
 import { getPaymentUrls, isFreeTestingMode, resolvePremiumLevel, type PremiumLevel } from "@/lib/billing/premium";
 import { ProfileView } from "@/components/profile/profile-view";
-import { StyleReportView, type StyleAnalysisResult } from "@/components/profile/style-report-view";
 import { ReportView } from "@/components/report/report-view";
 import { SeasonReveal } from "@/components/report/season-reveal";
 import { ColorFamilyDiagnostics } from "@/components/report/color-family-diagnostics";
@@ -25,8 +24,6 @@ import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe/wardrobe-store";
 import "./profile.css";
 import "./color-insights-report.css";
 import "../app-shell.css";
-
-const STYLE_ANALYSIS_KEY = "paletteme-style-analysis";
 
 const PROFILE_PREMIUM_ENV = {
   NEXT_PUBLIC_FREE_TESTING_MODE: process.env.NEXT_PUBLIC_FREE_TESTING_MODE,
@@ -53,7 +50,8 @@ function ProfileContent() {
   const authConfigured = isSupabaseAuthConfigured(AUTH_ENV);
   const freeTestingMode = isFreeTestingMode(PROFILE_PREMIUM_ENV);
   const [newAnalysis, setNewAnalysis] = useState<NewAnalysisResult | null>(null);
-  const [styleAnalysisResult, setStyleAnalysisResult] = useState<StyleAnalysisResult | null>(null);
+  const [wardrobeType, setWardrobeType] = useState<"woman" | "man" | "other">("woman");
+  const [reportSections, setReportSections] = useState<string[]>([]);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [profile, setProfile] = useState<QuizProfile | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -71,10 +69,17 @@ function ProfileContent() {
   const [images, setImages] = useState<Record<string, string>>({});
   const [totalSlots, setTotalSlots] = useState(0);
   const generationStarted = useRef(false);
+  const IMAGE_CACHE_KEY = "paletteme-report-images";
 
   useEffect(() => {
     const stored = localStorage.getItem("paletteme-face-photo");
     if (stored) setPhotoDataUrl(stored);
+    const wt = localStorage.getItem("paletteme-wardrobe-type");
+    if (wt === "man" || wt === "other") setWardrobeType(wt);
+    try {
+      const rs = localStorage.getItem("paletteme-report-sections");
+      if (rs) setReportSections(JSON.parse(rs) as string[]);
+    } catch { /* malformed */ }
   }, []);
 
   useEffect(() => {
@@ -85,15 +90,32 @@ function ProfileContent() {
     if (!hasDiagnostics) setPhase("report");
     else if (!diagnosticsDone) setPhase("reveal");
 
-    const slots = buildImageSlots(newAnalysis.fullReport);
+    const slots = buildImageSlots(newAnalysis.fullReport, wardrobeType, reportSections);
     setTotalSlots(slots.length);
+
+    // Restore previously generated images from localStorage
+    let cached: Record<string, string> = {};
+    try {
+      const raw = localStorage.getItem(IMAGE_CACHE_KEY);
+      if (raw) cached = JSON.parse(raw) as Record<string, string>;
+    } catch { /* malformed */ }
+
+    const alreadyDone = slots.filter(s => cached[s.slotId]);
+    if (alreadyDone.length > 0) setImages(cached);
+
+    const pending = slots.filter(s => !cached[s.slotId]);
+    if (pending.length === 0) return;
 
     void (async () => {
       if (!photoDataUrl) return;
       generationStarted.current = true;
-      for (const slot of slots) {
-        const url = await generateSlot(photoDataUrl, slot.prompt, slot.slotId, slot.promptStrength);
-        if (url) setImages(prev => ({ ...prev, [slot.slotId]: url }));
+      for (const slot of pending) {
+        const url = await generateSlot(photoDataUrl, slot.slotId);
+        if (url) {
+          cached = { ...cached, [slot.slotId]: url };
+          localStorage.setItem(IMAGE_CACHE_KEY, JSON.stringify(cached));
+          setImages(prev => ({ ...prev, [slot.slotId]: url }));
+        }
       }
     })();
   }, [newAnalysis, photoDataUrl]);
@@ -103,7 +125,33 @@ function ProfileContent() {
     setPremiumLevel(resolvePremiumLevel(searchParams, undefined, PROFILE_PREMIUM_ENV));
 
     async function restoreProfile() {
-      // Check for new report analysis (photo + 1 question flow)
+      // Check Supabase first — it is the source of truth for the new report flow.
+      if (authConfigured) {
+        try {
+          const { createClient } = await import("@/lib/db/supabase");
+          const supabase = createClient();
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: reportRow } = await supabase
+              .from("style_reports")
+              .select("full_report, status")
+              .eq("user_id", user.id)
+              .maybeSingle();
+
+            if (reportRow?.status === "done" && reportRow.full_report) {
+              const parsed = reportRow.full_report as NewAnalysisResult;
+              if (!cancelled) {
+                setNewAnalysis(parsed);
+                setReady(true);
+              }
+              try { localStorage.setItem("paletteme-analysis", JSON.stringify(parsed)); } catch { /* quota */ }
+              return;
+            }
+          }
+        } catch { /* Supabase check failed — fall through to localStorage below */ }
+      }
+
+      // Fallback: localStorage only (no session / Supabase unavailable / row not found yet).
       try {
         const raw = localStorage.getItem("paletteme-analysis");
         if (raw) {
@@ -117,23 +165,6 @@ function ProfileContent() {
           }
         }
       } catch { /* malformed — fall through */ }
-
-      // Check for legacy AI stylist analysis
-      try {
-        const raw = localStorage.getItem(STYLE_ANALYSIS_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw) as StyleAnalysisResult;
-          if (parsed?.miniResult) {
-            if (!cancelled) {
-              setStyleAnalysisResult(parsed);
-              setReady(true);
-            }
-            return;
-          }
-        }
-      } catch {
-        // malformed storage — fall through to legacy profile
-      }
 
       let signedInUser: { id: string; email?: string | null } | null = null;
       let supabaseClient: Awaited<ReturnType<typeof import("@/lib/db/supabase")["createClient"]>> | null = null;
@@ -196,53 +227,6 @@ function ProfileContent() {
     };
   }, [router, searchParams, authConfigured]);
 
-  // When mini-result is present but fullReport is missing, call /api/style-analysis/full
-  useEffect(() => {
-    if (!styleAnalysisResult?.miniResult) return;
-    // Guard: fullReport is null until fetched, non-null after. Prevents re-fetch loop.
-    if (styleAnalysisResult.fullReport !== null) return;
-    if (!styleAnalysisResult.profileData) return;
-
-    let cancelled = false;
-
-    async function loadFullReport() {
-      if (!styleAnalysisResult?.profileData) return;
-      try {
-        const res = await fetch("/api/style-analysis/full", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            profileData: styleAnalysisResult.profileData,
-            quiz: styleAnalysisResult.quizData ?? {},
-            meta: {
-              skinType: styleAnalysisResult.meta.skinType,
-              skinConcerns: styleAnalysisResult.meta.skinConcerns,
-              location: styleAnalysisResult.meta.location,
-            },
-          }),
-        });
-        if (!res.ok || cancelled) return;
-        const data = await res.json() as { fullReport?: unknown };
-        if (cancelled || !data.fullReport) return;
-
-        const updated: StyleAnalysisResult = {
-          ...styleAnalysisResult,
-          fullReport: data.fullReport as StyleAnalysisResult["fullReport"],
-        };
-
-        try {
-          localStorage.setItem(STYLE_ANALYSIS_KEY, JSON.stringify(updated));
-        } catch { /* quota — non-fatal */ }
-
-        setStyleAnalysisResult(updated);
-      } catch {
-        // Full report failed — mini-result stays visible, user can try refreshing
-      }
-    }
-
-    void loadFullReport();
-    return () => { cancelled = true; };
-  }, [styleAnalysisResult?.miniResult, styleAnalysisResult?.fullReport, styleAnalysisResult?.profileData]);
 
   useEffect(() => {
     if (requiresAuth) {
@@ -263,7 +247,7 @@ function ProfileContent() {
         <SeasonReveal
           miniResult={miniResult}
           seasonId={fullReport.colorAnalysis.topSeason.id}
-          nextReady={"neutral-draping" in images}
+          nextReady={process.env.NEXT_PUBLIC_SKIP_IMAGE_GEN === "true" || "neutral-draping" in images}
           onNext={() => setPhase("diagnostics")}
         />
       );
@@ -273,6 +257,7 @@ function ProfileContent() {
       return (
         <ColorFamilyDiagnostics
           neutralDrapingUrl={images["neutral-draping"] ?? ""}
+          userPhotoUrl={photoDataUrl ?? undefined}
           colorDiagnostics={cd}
           bestColors={fullReport.colorAnalysis.bestColors}
           onComplete={() => {
@@ -289,17 +274,8 @@ function ProfileContent() {
         photoDataUrl={photoDataUrl ?? ""}
         images={images}
         totalSlots={totalSlots}
-      />
-    );
-  }
-
-  if (styleAnalysisResult) {
-    return (
-      <StyleReportView
-        result={styleAnalysisResult}
-        lookLab={styleAnalysisResult?.fullReport?.lookLab ?? null}
-        photoDataUrl={photoDataUrl}
-        unlocked={premiumLevel !== "free"}
+        wardrobeType={wardrobeType}
+        reportSections={reportSections}
       />
     );
   }
