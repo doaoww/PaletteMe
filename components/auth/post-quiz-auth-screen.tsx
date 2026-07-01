@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
-import * as amplitude from "@amplitude/unified";
-import { createClient } from "@/lib/supabase";
+import { createClient } from "@/lib/db/supabase";
 import {
   AUTH_UNAVAILABLE_MESSAGE,
   buildAuthCallbackUrl,
@@ -10,15 +9,11 @@ import {
   friendlyProfileLinkError,
   getSignUpCompletionMode,
   isSupabaseAuthConfigured,
-} from "@/lib/auth-flow";
-import { saveCompleteQuizResultToSupabase } from "@/lib/post-quiz-supabase";
-import type { QuizProfile } from "@/lib/quiz";
-import { syncLocalWardrobeAfterAuth } from "@/lib/wardrobe-store";
+} from "@/lib/auth/auth-flow";
 
 type Props = {
-  profile: QuizProfile;
-  onComplete: () => void;
-  onSkip?: () => void;
+  onAuthed: (user: { id: string; email?: string | null }) => void;
+  googleRedirectPath: string;
 };
 
 type Mode = "choice" | "email" | "loading" | "check-email";
@@ -28,7 +23,7 @@ const SUPABASE_AUTH_ENV = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 };
 
-export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
+export function PostQuizAuthScreen({ onAuthed, googleRedirectPath }: Props) {
   const [mode, setMode] = useState<Mode>("choice");
   const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState("");
@@ -48,7 +43,7 @@ export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: buildAuthCallbackUrl(window.location.origin, "/profile"),
+        redirectTo: buildAuthCallbackUrl(window.location.origin, googleRedirectPath),
       },
     });
 
@@ -90,16 +85,8 @@ export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
         return;
       }
 
-      const saved = await saveAuthedQuizResult(supabase, data.user);
-      if (!saved) return;
-      if (data.user) {
-        amplitude.setUserId(data.user.id);
-        const identifyObj = new amplitude.Identify();
-        identifyObj.setOnce("auth_method", "email");
-        amplitude.identify(identifyObj);
-        amplitude.track("Account Created", { auth_method: "email" });
-      }
-      onComplete();
+      const ok = await handleAuthedUser(data.user);
+      if (!ok) return;
       return;
     }
 
@@ -110,17 +97,11 @@ export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
       return;
     }
 
-    const saved = await saveAuthedQuizResult(supabase, data.user);
-    if (!saved) return;
-    if (data.user) {
-      amplitude.setUserId(data.user.id);
-      amplitude.track("User Signed In", { auth_method: "email" });
-    }
-    onComplete();
+    const ok = await handleAuthedUser(data.user);
+    if (!ok) return;
   }
 
-  async function saveAuthedQuizResult(
-    supabase: ReturnType<typeof createClient>,
+  async function handleAuthedUser(
     user: { id: string; email?: string | null } | null
   ): Promise<boolean> {
     if (!user) {
@@ -128,21 +109,7 @@ export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
       setMode("email");
       return false;
     }
-
-    void syncLocalWardrobeAfterAuth(user.id).catch(() => {});
-
-    const result = await saveCompleteQuizResultToSupabase({
-      supabase,
-      user,
-      profile,
-    });
-
-    if (!result.ok) {
-      setErrorMsg(friendlyProfileLinkError("profile_link_failed"));
-      setMode("email");
-      return false;
-    }
-
+    onAuthed(user);
     return true;
   }
 
@@ -166,11 +133,6 @@ export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
             We sent a confirmation link to <strong>{email}</strong>. Open it to
             save your palette across devices.
           </p>
-          {onSkip ? (
-            <button type="button" style={btnPrimary} onClick={onSkip}>
-              view results on this device
-            </button>
-          ) : null}
         </section>
       </main>
     );
@@ -222,11 +184,6 @@ export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
           >
             {isSignUp ? "already have an account? sign in" : "no account? create one"}
           </button>
-          {onSkip ? (
-            <button type="button" style={skipBtn} onClick={onSkip}>
-              skip for now
-            </button>
-          ) : null}
         </section>
       </main>
     );
@@ -251,11 +208,6 @@ export function PostQuizAuthScreen({ profile, onComplete, onSkip }: Props) {
           continue with email
         </button>
 
-        {onSkip ? (
-          <button type="button" style={skipBtn} onClick={onSkip}>
-            skip for now
-          </button>
-        ) : null}
         {errorMsg && <p style={errorStyle}>{errorMsg}</p>}
       </section>
     </main>
