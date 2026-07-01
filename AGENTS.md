@@ -394,6 +394,14 @@ Context: `/api/report/analyze` and `/api/report/generate-visual` had no authenti
 Decision: Both routes now require a Supabase session (401 otherwise) and use an atomic claim/lock (`lib/server/generation-lock.ts`) against two new tables, `style_reports` (one row per user, MVP-intentional) and `report_visuals` (one row per user+slot), before calling OpenAI or Replicate. A completed row is always served from cache; a `generating` row blocks duplicate calls; a `failed` or stale (>15 min) row can be safely reclaimed, capped at 5 attempts. Image prompts are rebuilt server-side from the stored report — the client sends only a `slotId`, never a prompt string. `/style-setup` gates the "create my report" action behind sign-in (reusing the same no-skip pattern as ADR-014). `/profile` reads `style_reports` as source of truth; `localStorage` is a paint cache only.
 Consequences: No endpoint that calls a paid AI provider should ever skip the auth check or the claim/lock pattern going forward — new AI routes must reuse `lib/server/generation-lock.ts` rather than inventing a new caching scheme. Multi-report-per-user support requires a schema migration (see the comment in `supabase/migrations/20260701120000_create_style_reports.sql`), not just new application code.
 
+### ADR-019 - Polar as the real paid-report entitlement source
+
+Date: 2026-07-01
+Status: accepted
+Context: `/api/report/full` (the paid full-report phase from ADR-018/mini-result split) needed a real entitlement check, not just a client-trusted `premiumLevel` flag. The user has an existing Polar (polar.sh) account and wants one-time "unlock full report" purchases specifically, not a subscription yet.
+Decision: `/api/billing/polar/checkout` creates a Polar checkout session (`lib/billing/polar.ts`) stamping `metadata.user_id` on it. `/api/billing/polar/webhook` verifies the signed `order.paid` event (`@polar-sh/sdk/webhooks`' `validateEvent`, `POLAR_WEBHOOK_SECRET`) and writes a `report_entitlements` row via the service-role Supabase client (no user session exists in a webhook request). `/api/report/full` checks `report_entitlements` for the user (bypassed only by `isFreeTestingMode()`, same as ADR-007). The client persists a `paletteme-pending-unlock` localStorage entry before redirecting to Polar checkout and auto-resumes the full-report call on return, retrying on 402 briefly to absorb the webhook-arrival race.
+Consequences: `report_entitlements` is written ONLY by the webhook handler — no other code path should insert into it, since that table is the actual security boundary for paid content. The old `lib/billing/premium.ts` client-trusted `premiumLevel`/`resolvePremiumLevel` mechanism still governs the legacy `ProfileView` paywall and is unaffected; it is not a real gate and should not be treated as one for new paid features.
+
 ---
 
 ## Feature Changelog

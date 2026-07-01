@@ -19,6 +19,15 @@ import {
   buildSeasonId,
 } from "../shared";
 
+async function hasPolarEntitlement(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("report_entitlements")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return !!data;
+}
+
 // Paid full-report phase: only reachable after the user unlocks past the mini-result
 // paywall. Never fires automatically — the client explicitly calls this once, after
 // /api/report/analyze already showed the free season/celebrity preview. Reuses the
@@ -32,7 +41,6 @@ const RequestSchema = z.object({
   quizAnswers: QuizAnswersSchema.nullish(),
   traits: ExtractionSchema,
   scoredTop3: z.tuple([ScoredSeasonSchema, ScoredSeasonSchema, ScoredSeasonSchema]),
-  premiumLevel: z.enum(["free", "report", "pro"]).nullish(),
 });
 
 async function generateReport(
@@ -68,17 +76,13 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const { photoDataUrl, wardrobeType, quizAnswers, traits, scoredTop3, premiumLevel } = parsed.data;
+  const { photoDataUrl, wardrobeType, quizAnswers, traits, scoredTop3 } = parsed.data;
 
   // Server-side entitlement gate. In free-testing-mode (ADR-007) everyone is
-  // unlocked, matching lib/billing/premium.ts's own resolvePremiumLevel behavior.
-  // Once free-testing-mode is turned off, this becomes a real gate — trusting the
-  // client-resolved premiumLevel is consistent with this app's existing MVP payment
-  // model (ADR-003: Stripe Payment Links, no webhooks yet, client/localStorage-driven
-  // unlock). It does not weaken cost protection: the claim/lock below still caps this
-  // route to at most one successful full-report generation per user regardless of
-  // what premiumLevel is claimed.
-  const entitled = isFreeTestingMode() || (premiumLevel && premiumLevel !== "free");
+  // unlocked. Otherwise, require a real Polar purchase: report_entitlements is
+  // only ever written by the signature-verified webhook in
+  // /api/billing/polar/webhook, so this is not client-trusted.
+  const entitled = isFreeTestingMode() || (await hasPolarEntitlement(supabase, user.id));
   if (!entitled) {
     return Response.json({ error: "Payment required to unlock the full report." }, { status: 402 });
   }

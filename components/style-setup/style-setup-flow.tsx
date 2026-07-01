@@ -162,8 +162,35 @@ export function StyleSetupFlow() {
         const { data: { user } } = await supabase.auth.getUser();
         setAuthChecked(true);
         if (user) {
+          const pendingUnlockRaw = localStorage.getItem("paletteme-pending-unlock");
           const pendingRaw = localStorage.getItem("paletteme-pending-submission");
-          if (pendingRaw && step === "photo" && !resumeAttempted.current) {
+
+          if (pendingUnlockRaw && step === "photo" && !resumeAttempted.current) {
+            // Returning from a Polar checkout redirect — resume straight into the
+            // full-report call instead of re-showing the mini result.
+            resumeAttempted.current = true;
+            try {
+              const pending = JSON.parse(pendingUnlockRaw) as {
+                photoDataUrl: string; wardrobeType: WardrobeType; occasion: Occasion;
+                styleConcern: StyleConcern; reportSections: ReportSection[];
+                traits: Traits; scoredTop3: [ScoredSeason, ScoredSeason, ScoredSeason];
+                seasonPreview: SeasonPreview | null;
+              };
+              setPhotoDataUrl(pending.photoDataUrl);
+              setWardrobeType(pending.wardrobeType);
+              setOccasion(pending.occasion);
+              setStyleConcern(pending.styleConcern);
+              setReportSections(pending.reportSections);
+              setMiniData({ traits: pending.traits, scoredTop3: pending.scoredTop3 });
+              if (pending.seasonPreview) setSeasonPreview(pending.seasonPreview);
+              setStep("season-reveal");
+              localStorage.removeItem("paletteme-pending-unlock");
+              void callFullReport(
+                pending.photoDataUrl, pending.wardrobeType, pending.occasion, pending.styleConcern,
+                pending.reportSections, pending.traits, pending.scoredTop3, true,
+              );
+            } catch { /* malformed, ignore and let the user redo the flow */ }
+          } else if (pendingRaw && step === "photo" && !resumeAttempted.current) {
             resumeAttempted.current = true;
             try {
               const pending = JSON.parse(pendingRaw) as {
@@ -250,33 +277,44 @@ export function StyleSetupFlow() {
   }
 
   // Paid full phase: only reachable from the season-reveal screen's explicit
-  // "unlock" click. Reuses the traits/season data the mini phase already computed —
-  // never re-runs trait extraction, so this is pure incremental cost on unlock only.
-  async function handleUnlock() {
-    if (!photoDataUrl || !wardrobeType || !miniData) return;
+  // "unlock" click (or the post-Polar-checkout resume below). Reuses the
+  // traits/season data the mini phase already computed — never re-runs trait
+  // extraction, so this is pure incremental cost on unlock only.
+  //
+  // `isResumeFromPayment` controls whether a 402 (not entitled yet) is
+  // retried a few times before giving up: on the FIRST click from a
+  // never-paid user, 402 should send them to checkout immediately, not
+  // after a pointless multi-second wait. On the resume-after-checkout path,
+  // the Polar webhook may land a moment after the browser redirects back,
+  // so a short retry window is the right call there.
+  async function callFullReport(
+    photo: string,
+    wardrobe: WardrobeType,
+    occ: Occasion,
+    concern: StyleConcern,
+    sections: ReportSection[],
+    traits: Traits,
+    scoredTop3: [ScoredSeason, ScoredSeason, ScoredSeason],
+    isResumeFromPayment: boolean,
+  ) {
     setUnlocking(true);
     setError(null);
 
-    const sections = reportSections.length > 0 ? reportSections : ALL_SECTIONS;
-
-    let premiumLevel: "free" | "report" | "pro" = "free";
-    try {
-      const { resolvePremiumLevel } = await import("@/lib/billing/premium");
-      premiumLevel = resolvePremiumLevel({ get: () => null });
-    } catch { /* default "free" — server still allows this during free-testing-mode */ }
-
     const body = JSON.stringify({
-      photoDataUrl,
-      wardrobeType,
-      quizAnswers: { occasion, styleConcern, reportSections: sections },
-      traits: miniData.traits,
-      scoredTop3: miniData.scoredTop3,
-      premiumLevel,
+      photoDataUrl: photo,
+      wardrobeType: wardrobe,
+      quizAnswers: { occasion: occ, styleConcern: concern, reportSections: sections },
+      traits,
+      scoredTop3,
     });
     const headers = { "Content-Type": "application/json" };
 
     async function callFull(attempt: number): Promise<Response> {
       const res = await fetch("/api/report/full", { method: "POST", headers, body });
+      if (res.status === 402 && isResumeFromPayment && attempt < 5) {
+        await new Promise(r => setTimeout(r, 3000));
+        return callFull(attempt + 1);
+      }
       if (res.status === 409 && attempt < 3) {
         await new Promise(r => setTimeout(r, 5000));
         return callFull(attempt + 1);
@@ -292,7 +330,23 @@ export function StyleSetupFlow() {
       const res = await callFull(1);
 
       if (res.status === 402) {
-        throw new Error("payment required to unlock your full report.");
+        // Not entitled (yet) — send to Polar checkout, persisting everything
+        // needed to resume straight into this same call once payment lands.
+        try {
+          localStorage.setItem("paletteme-pending-unlock", JSON.stringify({
+            photoDataUrl: photo, wardrobeType: wardrobe, occasion: occ, styleConcern: concern,
+            reportSections: sections, traits, scoredTop3,
+            seasonPreview: seasonPreview,
+          }));
+        } catch { /* quota — resume after payment won't work, but checkout itself still will */ }
+
+        const checkoutRes = await fetch("/api/billing/polar/checkout", { method: "POST" });
+        if (!checkoutRes.ok) {
+          throw new Error("could not start checkout. please try again.");
+        }
+        const { url } = await checkoutRes.json() as { url: string };
+        window.location.href = url;
+        return;
       }
       if (res.status === 409) {
         throw new Error("your report is taking a little longer than usual — please try again in a moment.");
@@ -304,11 +358,18 @@ export function StyleSetupFlow() {
       const { data } = await res.json() as { data: unknown };
       try { localStorage.setItem("paletteme-analysis", JSON.stringify(data)); } catch { /* quota */ }
       try { localStorage.removeItem("paletteme-report-images"); } catch { /* quota */ }
+      try { localStorage.removeItem("paletteme-pending-unlock"); } catch { /* quota */ }
       router.push("/profile");
     } catch (err) {
       setUnlocking(false);
       setError(err instanceof Error ? err.message : "something went wrong.");
     }
+  }
+
+  function handleUnlock() {
+    if (!photoDataUrl || !wardrobeType || !occasion || !styleConcern || !miniData) return;
+    const sections = reportSections.length > 0 ? reportSections : ALL_SECTIONS;
+    void callFullReport(photoDataUrl, wardrobeType, occasion, styleConcern, sections, miniData.traits, miniData.scoredTop3, false);
   }
 
   function handleSubmit() {
